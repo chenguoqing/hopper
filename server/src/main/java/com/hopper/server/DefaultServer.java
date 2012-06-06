@@ -3,6 +3,7 @@ package com.hopper.server;
 import com.hopper.GlobalConfiguration;
 import com.hopper.Stage;
 import com.hopper.StageThreadPools;
+import com.hopper.common.lifecycle.Lifecycle;
 import com.hopper.common.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
 import com.hopper.server.handler.ServerMessageDecoder;
@@ -215,6 +216,19 @@ public class DefaultServer extends LifecycleProxy implements Server {
     @Override
     public ElectionState getElectionState() {
         return null;
+    }
+
+    /**
+     * If the server is participating in election or not on running state, it will be unavailable
+     */
+    @Override
+    public void checkServiceState() throws ServiceUnavailableException {
+        ElectionState state = getElectionState();
+
+        if (state == Server.ElectionState.LOOKING || state == Server.ElectionState.SYNC || getState() != Lifecycle
+                .LifecycleState.RUNNING) {
+            throw new ServiceUnavailableException();
+        }
     }
 
     /**

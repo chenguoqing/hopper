@@ -14,6 +14,9 @@ public class MutationReply implements Serializer {
     public static final int SUCCESS = 0;
     public static final int WAITING = 1;
     public static final int NO_QUORUM = 2;
+    public static final int STATUS_CAS = 3;
+    public static final int OWNER_CAS = 4;
+
 
     private int status;
 
@@ -27,10 +30,11 @@ public class MutationReply implements Serializer {
 
     @Override
     public void serialize(DataOutput out) throws IOException {
-
+        out.writeInt(status);
     }
 
     @Override
     public void deserialize(DataInput in) throws IOException {
+        this.status = in.readInt();
     }
 }

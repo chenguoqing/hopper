@@ -3,28 +3,30 @@ package com.hopper.server.handler;
 import com.hopper.GlobalConfiguration;
 import com.hopper.MessageService;
 import com.hopper.quorum.NoQuorumException;
-import com.hopper.server.Endpoint;
-import com.hopper.server.Verb;
-import com.hopper.server.VerbHandler;
+import com.hopper.server.*;
 import com.hopper.server.thrift.ChannelBound;
 import com.hopper.session.Message;
 import com.hopper.storage.OwnerCASException;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.StatusCASException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-5-31
- * Time: 下午2:19
- * To change this template use File | Settings | File Templates.
+ * MutationVerbHandler processes state related operations
  */
 public class MutationVerbHandler implements VerbHandler {
+    /**
+     * Logger
+     */
+    private static Logger logger = LoggerFactory.getLogger(MutationVerbHandler.class);
 
     private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+
+    private final Server server = config.getDefaultServer();
 
     private final StateStorage storage = config.getDefaultServer().getStorage();
 
@@ -46,62 +48,61 @@ public class MutationVerbHandler implements VerbHandler {
         MutationReply reply = new MutationReply();
         try {
             create(create.key, create.owner, create.initStatus, create.invalidateStatus);
-            reply.setStatus(MutationReply.SUCCESS);
+            // reply mutation request only the operation success
+            replyMutation(MutationReply.SUCCESS);
         } catch (NoQuorumException e) {
-            reply.setStatus(MutationReply.NO_QUORUM);
+            logger.warn("No quorum nodes are alive, drops the create request.");
+        } catch (ServiceUnavailableException e) {
+            logger.warn("The server is unavailable, drops the create request.");
         }
-
-        Message response = new Message();
-        response.setVerb(Verb.REPLY_MUTATION);
-        response.setId(Message.nextId());
-
-        // send response
-        Endpoint endpoint = config.getEndpoint(ChannelBound.get().getRemoteAddress());
-        MessageService.sendOneway(response, endpoint.serverId);
     }
 
     /**
      * Create a state with initial value, if the key is existed, return with success
      */
-    public void create(String key, String owner, int initStatus, int invalidateStatus) {
+    public void create(String key, String owner, int initStatus, int invalidateStatus) throws
+            ServiceUnavailableException {
+        // check server state
+        server.checkServiceState();
+
         // Local modification first
         StateNode node = new StateNode(key, StateNode.TYPE_TEMP, StateNode.DEFAULT_STATUS,
                 StateNode.DEFAULT_INVALIDATE_STATUS, config.getDefaultServer().getPaxos().getEpoch());
         storage.put(node);
 
-        // Synchronizes the modification to majority nodes
         if (config.getDefaultServer().isLeader()) {
             Mutation mutation = new Mutation();
             mutation.addCreate(key, owner, initStatus, invalidateStatus);
 
+            // Synchronizes the modification to majority nodes
             synchronizeMutationToQuorum(mutation);
         }
     }
 
     private void updateStatus(Mutation.UpdateStatus us) {
-        MutationReply reply = new MutationReply();
         try {
             updateStatus(us.key, us.expectStatus, us.newStatus, us.owner, us.lease);
-            reply.setStatus(MutationReply.SUCCESS);
+            replyMutation(MutationReply.SUCCESS);
         } catch (NoQuorumException e) {
-            reply.setStatus(MutationReply.NO_QUORUM);
+            logger.warn("No quorum nodes are alive, drops the create request.");
+        } catch (ServiceUnavailableException e) {
+            logger.warn("The server is unavailable, drops the create request.");
         } catch (StatusCASException e) {
+            replyMutation(MutationReply.STATUS_CAS);
         } catch (OwnerCASException e) {
+            replyMutation(MutationReply.OWNER_CAS);
         }
-
-        Message response = new Message();
-        response.setVerb(Verb.REPLY_MUTATION);
-        response.setId(Message.nextId());
-
-        // send response
-        Endpoint endpoint = config.getEndpoint(ChannelBound.get().getRemoteAddress());
-        MessageService.sendOneway(response, endpoint.serverId);
     }
 
     /**
      * Update the status bound with key with CAS condition
      */
-    public void updateStatus(String key, int expectStatus, int newStatus, String owner, int lease) {
+    public void updateStatus(String key, int expectStatus, int newStatus, String owner,
+                             int lease) throws ServiceUnavailableException {
+
+        // check server state
+        server.checkServiceState();
+
         StateNode node = getAndCreateNode(key);
         node.setStatus(expectStatus, newStatus, owner, lease);
 
@@ -162,5 +163,21 @@ public class MutationVerbHandler implements VerbHandler {
         if (replies.size() < config.getQuorumSize() - 1) {
             throw new NoQuorumException();
         }
+    }
+
+    /**
+     * Reply the mutation result to sender
+     */
+    private void replyMutation(int replyStatus) {
+        MutationReply reply = new MutationReply();
+        reply.setStatus(replyStatus);
+        Message response = new Message();
+        response.setVerb(Verb.REPLY_MUTATION);
+        response.setId(Message.nextId());
+        response.setBody(reply);
+
+        // send response
+        Endpoint endpoint = config.getEndpoint(ChannelBound.get().getRemoteAddress());
+        MessageService.sendOneway(response, endpoint.serverId);
     }
 }

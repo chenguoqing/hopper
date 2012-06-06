@@ -121,12 +121,12 @@ public class CacheManager extends LifecycleProxy implements Lifecycle {
 			List<Object> evictableKeys = new ArrayList<Object>();
 
 			for (Object key : caches.keySet()) {
-				CacheEntry entry = caches.get(key);
+                CacheEntry entry = caches.get(key);
 
-				if (entry == null || entry.isExpire()) {
-					evictableKeys.add(key);
-				}
-			}
+                if (entry == null || entry.isExpire()) {
+                    evictableKeys.add(key);
+                }
+            }
 
 			for (Object key : evictableKeys) {
 				caches.remove(key);

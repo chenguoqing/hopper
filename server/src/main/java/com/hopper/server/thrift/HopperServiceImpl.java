@@ -2,9 +2,9 @@ package com.hopper.server.thrift;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.MessageService;
-import com.hopper.common.lifecycle.Lifecycle;
 import com.hopper.quorum.NoQuorumException;
 import com.hopper.server.Server;
+import com.hopper.server.ServiceUnavailableException;
 import com.hopper.server.Verb;
 import com.hopper.server.handler.Mutation;
 import com.hopper.server.handler.MutationVerbHandler;
@@ -13,7 +13,9 @@ import com.hopper.session.ClientConnection;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
 import com.hopper.session.SessionIdGenerator;
+import com.hopper.storage.OwnerCASException;
 import com.hopper.storage.StateStorage;
+import com.hopper.storage.StatusCASException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +53,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     @Override
     public String login(String userName, String password) throws RetryException, AuthenticationException, TException {
 
-        checkRunning();
+        checkServiceState();
 
         ClientSession session = config.getSessionManager().getClientSession(ChannelBound.get());
 
@@ -73,7 +75,7 @@ public class HopperServiceImpl implements HopperService.Iface {
 
     @Override
     public void reLogin(String sessionId) throws RetryException, TException {
-        checkRunning();
+        checkServiceState();
 
         // Register a client session with a existed session id
         registerClientSession(sessionId);
@@ -143,7 +145,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     public void create(String key, String owner, int initStatus, int invalidateStatus) throws RetryException,
             TException {
 
-        checkRunning();
+        checkServiceState();
 
         Object[] logArgs = new Object[]{key, owner, initStatus, invalidateStatus, null};
 
@@ -159,6 +161,10 @@ public class HopperServiceImpl implements HopperService.Iface {
                 logger.error("Failed to create node[key:{0},owner:{1},initStatus:{2}," +
                         "invalidateStatus:{3}" + "] without enough nodes are live.", logArgs);
 
+                throw new RetryException(config.getRetryPeriod());
+            } catch (ServiceUnavailableException e) {
+                logger.error("Failed to create node[key:{0},owner:{1},initStatus:{2}," +
+                        "invalidateStatus:{3}" + "] because of current server is not in working status.", logArgs);
                 throw new RetryException(config.getRetryPeriod());
             }
             // Follower node should transfer the request to leader
@@ -184,11 +190,24 @@ public class HopperServiceImpl implements HopperService.Iface {
     @Override
     public void updateStatus(String key, int expectStatus, int newStatus, String owner,
                              int lease) throws RetryException, StateCASException, TException {
-        checkRunning();
+        checkServiceState();
+
+        Object[] logArgs = new Object[]{key, expectStatus, newStatus, owner, lease, null};
 
         if (server.isLeader()) {
             MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb.MUTATION);
-            mutationVerbHandler.updateStatus(key, expectStatus, newStatus, owner, lease);
+            try {
+                mutationVerbHandler.updateStatus(key, expectStatus, newStatus, owner, lease);
+            } catch (NoQuorumException e) {
+                logger.warn("Failed to update status[key:{0},expectStatus:{1},newStatus:{2},owner{3}," +
+                        "" + "lease:{4}] without enough nodes are live.", logArgs);
+            } catch (ServiceUnavailableException e) {
+                logger.warn("Failed to update status[key:{0},expectStatus:{1},newStatus:{2},owner{3}," +
+                        "" + "lease:{4}] because of current server is not in working status", logArgs);
+            } catch (StatusCASException e) {
+
+            } catch (OwnerCASException e) {
+            }
         } else {
 
         }
@@ -197,12 +216,12 @@ public class HopperServiceImpl implements HopperService.Iface {
     @Override
     public void updateLease(String key, int expectStatus, String owner, int lease) throws RetryException,
             StateCASException, TException {
-        checkRunning();
+        checkServiceState();
     }
 
     @Override
     public void watch(String key, int expectStatus) throws RetryException, ExpectStatusException, TException {
-        checkRunning();
+        checkServiceState();
     }
 
     @Override
@@ -213,11 +232,10 @@ public class HopperServiceImpl implements HopperService.Iface {
     /**
      * Check server running state
      */
-    private void checkRunning() throws RetryException {
-        Server.ElectionState state = server.getElectionState();
-
-        if (state == Server.ElectionState.LOOKING || state == Server.ElectionState.SYNC || server.getState() !=
-                Lifecycle.LifecycleState.RUNNING) {
+    private void checkServiceState() throws RetryException {
+        try {
+            server.checkServiceState();
+        } catch (ServiceUnavailableException e) {
             throw new RetryException(config.getRetryPeriod());
         }
     }

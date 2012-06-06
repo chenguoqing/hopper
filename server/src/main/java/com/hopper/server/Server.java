@@ -148,4 +148,9 @@ public interface Server extends Lifecycle {
      * Retrieve current {@link ElectionState}
      */
     ElectionState getElectionState();
+
+    /**
+     * Check if the server can service normally,if not throws  ServiceUnavailableException
+     */
+    void checkServiceState() throws ServiceUnavailableException;
 }
