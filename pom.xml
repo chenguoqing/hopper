@@ -91,16 +91,6 @@
                 <scope>compile</scope>
             </dependency>
 
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>log4j-over-slf4j</artifactId>
-                <version>${slf4j.api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
 
             <!-- Avro -->
             <dependency>
@@ -148,10 +138,6 @@
 
     <repositories>
         <repository>
-            <id>sdp-release</id>
-            <url>http://nexus.shengpaydev.com/content/groups/public</url>
-        </repository>
-        <repository>
             <id>main</id>
             <url>http://repo1.maven.org/maven2</url>
         </repository>
@@ -177,17 +163,6 @@
     </repositories>
 
     <pluginRepositories>
-        <pluginRepository>
-            <id>central</id>
-            <url>http://nexus.shengpaydev.com/nexus/content/groups/public
-            </url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
         <pluginRepository>
             <id>internal-plugin</id>
             <url>http://repo1.maven.org/maven2
