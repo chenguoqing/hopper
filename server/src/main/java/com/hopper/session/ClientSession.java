@@ -1,7 +1,7 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.server.thrift.BidDirectNotify;
+import com.hopper.thrift.BidDirectNotify;
 
 import java.util.concurrent.atomic.AtomicLong;
 

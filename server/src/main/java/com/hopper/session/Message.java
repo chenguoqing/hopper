@@ -1,7 +1,7 @@
 package com.hopper.session;
 
-import com.hopper.server.Verb;
-import com.hopper.server.handler.VerbMappings;
+import com.hopper.verb.Verb;
+import com.hopper.handler.VerbMappings;
 import com.hopper.utils.ByteUtils;
 
 import java.io.*;

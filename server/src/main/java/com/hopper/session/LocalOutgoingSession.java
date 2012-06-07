@@ -1,11 +1,11 @@
 package com.hopper.session;
 
-import com.hopper.common.lifecycle.LifecycleEvent;
-import com.hopper.common.lifecycle.LifecycleEvent.EventType;
-import com.hopper.common.lifecycle.LifecycleListener;
+import com.hopper.lifecycle.LifecycleEvent;
+import com.hopper.lifecycle.LifecycleEvent.EventType;
+import com.hopper.lifecycle.LifecycleListener;
 import com.hopper.server.ServerFactory;
-import com.hopper.server.Verb;
-import com.hopper.server.handler.HeartBeat;
+import com.hopper.verb.Verb;
+import com.hopper.handler.HeartBeat;
 import com.hopper.utils.ScheduleManager;
 
 public class LocalOutgoingSession extends SessionProxy implements OutgoingSession, LifecycleListener {

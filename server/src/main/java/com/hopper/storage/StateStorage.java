@@ -1,6 +1,6 @@
 package com.hopper.storage;
 
-import com.hopper.common.lifecycle.Lifecycle;
+import com.hopper.lifecycle.Lifecycle;
 import com.hopper.storage.merkle.MerkleTree;
 
 import java.io.IOException;

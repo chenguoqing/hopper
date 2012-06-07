@@ -2,8 +2,8 @@ package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.cache.CacheManager;
-import com.hopper.common.lifecycle.LifecycleException;
-import com.hopper.common.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleException;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.future.DefaultLatchFuture;
 import com.hopper.future.LatchFuture;
 import com.hopper.server.DefaultServer.ServerPiplelineFactory;

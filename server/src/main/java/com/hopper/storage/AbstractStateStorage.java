@@ -1,7 +1,7 @@
 package com.hopper.storage;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.common.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.storage.merkle.MerkleTree;
 
 import java.io.*;

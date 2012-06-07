@@ -4,10 +4,10 @@ import com.hopper.cache.CacheManager;
 import com.hopper.quorum.LeaderElection;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
-import com.hopper.server.avro.ClientService;
-import com.hopper.server.handler.ConnectionManager;
-import com.hopper.server.sync.DataSyncService;
-import com.hopper.server.thrift.HopperService;
+import com.hopper.avro.ClientService;
+import com.hopper.handler.ConnectionManager;
+import com.hopper.sync.DataSyncService;
+import com.hopper.thrift.HopperService;
 import com.hopper.session.SessionManager;
 import com.hopper.utils.ScheduleManager;
 

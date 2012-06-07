@@ -1,14 +1,14 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.common.lifecycle.LifecycleEvent;
-import com.hopper.common.lifecycle.LifecycleEvent.EventType;
-import com.hopper.common.lifecycle.LifecycleListener;
+import com.hopper.lifecycle.LifecycleEvent;
+import com.hopper.lifecycle.LifecycleEvent.EventType;
+import com.hopper.lifecycle.LifecycleListener;
 import com.hopper.future.LatchFuture;
-import com.hopper.server.Verb;
-import com.hopper.server.VerbHandler;
-import com.hopper.server.handler.HeartBeat;
-import com.hopper.server.handler.VerbMappings;
+import com.hopper.verb.Verb;
+import com.hopper.verb.VerbHandler;
+import com.hopper.handler.HeartBeat;
+import com.hopper.handler.VerbMappings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

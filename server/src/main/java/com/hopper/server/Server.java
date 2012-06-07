@@ -1,6 +1,6 @@
 package com.hopper.server;
 
-import com.hopper.common.lifecycle.Lifecycle;
+import com.hopper.lifecycle.Lifecycle;
 import com.hopper.quorum.Paxos;
 import com.hopper.storage.StateStorage;
 

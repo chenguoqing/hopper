@@ -1,10 +1,10 @@
 package com.hopper.quorum;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.server.Verb;
-import com.hopper.server.VerbHandler;
-import com.hopper.server.handler.Prepare;
-import com.hopper.server.handler.Promise;
+import com.hopper.verb.Verb;
+import com.hopper.verb.VerbHandler;
+import com.hopper.handler.Prepare;
+import com.hopper.handler.Promise;
 import com.hopper.session.Message;
 import com.hopper.session.OutgoingSession;
 

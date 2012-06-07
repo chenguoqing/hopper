@@ -1,6 +1,6 @@
 package com.hopper.session;
 
-import com.hopper.common.lifecycle.Lifecycle;
+import com.hopper.lifecycle.Lifecycle;
 import com.hopper.future.LatchFuture;
 import com.hopper.server.Endpoint;
 import org.jboss.netty.channel.Channel;

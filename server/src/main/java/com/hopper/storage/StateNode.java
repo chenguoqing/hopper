@@ -1,10 +1,9 @@
 package com.hopper.storage;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.MessageService;
-import com.hopper.Stage;
-import com.hopper.StageThreadPools;
-import com.hopper.session.ClientSession;
+import com.hopper.session.MessageService;
+import com.hopper.stage.Stage;
+import com.hopper.stage.StageThreadPools;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
