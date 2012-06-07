@@ -90,7 +90,7 @@ public class HopperService {
      * @param owner
      * @param lease
      */
-    public void updateLease(String key, int expectStatus, String owner, int lease) throws RetryException, CASException, org.apache.thrift.TException;
+    public void expandLease(String key, int expectStatus, String owner, int lease) throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException;
 
     /**
      * Watch the special status(add a listener)
@@ -98,7 +98,7 @@ public class HopperService {
      * @param key
      * @param expectStatus
      */
-    public void watch(String key, int expectStatus) throws RetryException, ExpectStatusException, org.apache.thrift.TException;
+    public void watch(String key, int expectStatus) throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException;
 
     /**
      * Callback method by server for notifying the status change
@@ -127,7 +127,7 @@ public class HopperService {
     public void updateStatus(String key, int expectStatus, int newStatus, String owner, int lease,
                              org.apache.thrift.async.AsyncMethodCallback<AsyncClient.updateStatus_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void updateLease(String key, int expectStatus, String owner, int lease, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.updateLease_call> resultHandler) throws org.apache.thrift.TException;
+    public void expandLease(String key, int expectStatus, String owner, int lease, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.expandLease_call> resultHandler) throws org.apache.thrift.TException;
 
     public void watch(String key, int expectStatus, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.watch_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -303,36 +303,39 @@ public class HopperService {
       return;
     }
 
-    public void updateLease(String key, int expectStatus, String owner, int lease) throws RetryException, CASException, org.apache.thrift.TException
+    public void expandLease(String key, int expectStatus, String owner, int lease) throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException
     {
-      send_updateLease(key, expectStatus, owner, lease);
-      recv_updateLease();
+      send_expandLease(key, expectStatus, owner, lease);
+      recv_expandLease();
     }
 
-    public void send_updateLease(String key, int expectStatus, String owner, int lease) throws org.apache.thrift.TException
+    public void send_expandLease(String key, int expectStatus, String owner, int lease) throws org.apache.thrift.TException
     {
-      updateLease_args args = new updateLease_args();
+      expandLease_args args = new expandLease_args();
       args.setKey(key);
       args.setExpectStatus(expectStatus);
       args.setOwner(owner);
       args.setLease(lease);
-      sendBase("updateLease", args);
+      sendBase("expandLease", args);
     }
 
-    public void recv_updateLease() throws RetryException, CASException, org.apache.thrift.TException
+    public void recv_expandLease() throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException
     {
-      updateLease_result result = new updateLease_result();
-      receiveBase(result, "updateLease");
+      expandLease_result result = new expandLease_result();
+      receiveBase(result, "expandLease");
       if (result.re != null) {
         throw result.re;
       }
       if (result.se != null) {
         throw result.se;
       }
+      if (result.nse != null) {
+        throw result.nse;
+      }
       return;
     }
 
-    public void watch(String key, int expectStatus) throws RetryException, ExpectStatusException, org.apache.thrift.TException
+    public void watch(String key, int expectStatus) throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException
     {
       send_watch(key, expectStatus);
       recv_watch();
@@ -346,7 +349,7 @@ public class HopperService {
       sendBase("watch", args);
     }
 
-    public void recv_watch() throws RetryException, ExpectStatusException, org.apache.thrift.TException
+    public void recv_watch() throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException
     {
       watch_result result = new watch_result();
       receiveBase(result, "watch");
@@ -355,6 +358,9 @@ public class HopperService {
       }
       if (result.ese != null) {
         throw result.ese;
+      }
+      if (result.nse != null) {
+        throw result.nse;
       }
       return;
     }
@@ -603,19 +609,19 @@ public class HopperService {
       }
     }
 
-    public void updateLease(String key, int expectStatus, String owner, int lease, org.apache.thrift.async.AsyncMethodCallback<updateLease_call> resultHandler) throws org.apache.thrift.TException {
+    public void expandLease(String key, int expectStatus, String owner, int lease, org.apache.thrift.async.AsyncMethodCallback<expandLease_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      updateLease_call method_call = new updateLease_call(key, expectStatus, owner, lease, resultHandler, this, ___protocolFactory, ___transport);
+      expandLease_call method_call = new expandLease_call(key, expectStatus, owner, lease, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class updateLease_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class expandLease_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
       private int expectStatus;
       private String owner;
       private int lease;
-      public updateLease_call(String key, int expectStatus, String owner, int lease, org.apache.thrift.async.AsyncMethodCallback<updateLease_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public expandLease_call(String key, int expectStatus, String owner, int lease, org.apache.thrift.async.AsyncMethodCallback<expandLease_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.expectStatus = expectStatus;
@@ -624,8 +630,8 @@ public class HopperService {
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("updateLease", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        updateLease_args args = new updateLease_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("expandLease", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        expandLease_args args = new expandLease_args();
         args.setKey(key);
         args.setExpectStatus(expectStatus);
         args.setOwner(owner);
@@ -634,13 +640,13 @@ public class HopperService {
         prot.writeMessageEnd();
       }
 
-      public void getResult() throws RetryException, CASException, org.apache.thrift.TException {
+      public void getResult() throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException {
         if (getState() != State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_updateLease();
+        (new Client(prot)).recv_expandLease();
       }
     }
 
@@ -669,7 +675,7 @@ public class HopperService {
         prot.writeMessageEnd();
       }
 
-      public void getResult() throws RetryException, ExpectStatusException, org.apache.thrift.TException {
+      public void getResult() throws RetryException, CASException, NoStateNodeException, org.apache.thrift.TException {
         if (getState() != State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -732,7 +738,7 @@ public class HopperService {
       processMap.put("ping", new ping());
       processMap.put("create", new create());
       processMap.put("updateStatus", new updateStatus());
-      processMap.put("updateLease", new updateLease());
+      processMap.put("expandLease", new expandLease());
       processMap.put("watch", new watch());
       processMap.put("statusChange", new statusChange());
       return processMap;
@@ -854,23 +860,25 @@ public class HopperService {
       }
     }
 
-    private static class updateLease<I extends Iface> extends org.apache.thrift.ProcessFunction<I, updateLease_args> {
-      public updateLease() {
-        super("updateLease");
+    private static class expandLease<I extends Iface> extends org.apache.thrift.ProcessFunction<I, expandLease_args> {
+      public expandLease() {
+        super("expandLease");
       }
 
-      protected updateLease_args getEmptyArgsInstance() {
-        return new updateLease_args();
+      protected expandLease_args getEmptyArgsInstance() {
+        return new expandLease_args();
       }
 
-      protected updateLease_result getResult(I iface, updateLease_args args) throws org.apache.thrift.TException {
-        updateLease_result result = new updateLease_result();
+      protected expandLease_result getResult(I iface, expandLease_args args) throws org.apache.thrift.TException {
+        expandLease_result result = new expandLease_result();
         try {
-          iface.updateLease(args.key, args.expectStatus, args.owner, args.lease);
+          iface.expandLease(args.key, args.expectStatus, args.owner, args.lease);
         } catch (RetryException re) {
           result.re = re;
         } catch (CASException se) {
           result.se = se;
+        } catch (NoStateNodeException nse) {
+          result.nse = nse;
         }
         return result;
       }
@@ -891,8 +899,10 @@ public class HopperService {
           iface.watch(args.key, args.expectStatus);
         } catch (RetryException re) {
           result.re = re;
-        } catch (ExpectStatusException ese) {
+        } catch (CASException ese) {
           result.ese = ese;
+        } catch (NoStateNodeException nse) {
+          result.nse = nse;
         }
         return result;
       }
@@ -5919,8 +5929,8 @@ public class HopperService {
 
   }
 
-  public static class updateLease_args implements org.apache.thrift.TBase<updateLease_args, updateLease_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("updateLease_args");
+  public static class expandLease_args implements org.apache.thrift.TBase<expandLease_args, expandLease_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("expandLease_args");
 
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField EXPECT_STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("expectStatus", org.apache.thrift.protocol.TType.I32, (short)2);
@@ -5929,8 +5939,8 @@ public class HopperService {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new updateLease_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new updateLease_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new expandLease_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new expandLease_argsTupleSchemeFactory());
     }
 
     public String key; // required
@@ -6021,13 +6031,13 @@ public class HopperService {
       tmpMap.put(_Fields.LEASE, new org.apache.thrift.meta_data.FieldMetaData("lease", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(updateLease_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(expandLease_args.class, metaDataMap);
     }
 
-    public updateLease_args() {
+    public expandLease_args() {
     }
 
-    public updateLease_args(
+    public expandLease_args(
       String key,
       int expectStatus,
       String owner,
@@ -6045,7 +6055,7 @@ public class HopperService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public updateLease_args(updateLease_args other) {
+    public expandLease_args(expandLease_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       if (other.isSetKey()) {
@@ -6058,8 +6068,8 @@ public class HopperService {
       this.lease = other.lease;
     }
 
-    public updateLease_args deepCopy() {
-      return new updateLease_args(this);
+    public expandLease_args deepCopy() {
+      return new expandLease_args(this);
     }
 
     @Override
@@ -6076,7 +6086,7 @@ public class HopperService {
       return this.key;
     }
 
-    public updateLease_args setKey(String key) {
+    public expandLease_args setKey(String key) {
       this.key = key;
       return this;
     }
@@ -6100,7 +6110,7 @@ public class HopperService {
       return this.expectStatus;
     }
 
-    public updateLease_args setExpectStatus(int expectStatus) {
+    public expandLease_args setExpectStatus(int expectStatus) {
       this.expectStatus = expectStatus;
       setExpectStatusIsSet(true);
       return this;
@@ -6123,7 +6133,7 @@ public class HopperService {
       return this.owner;
     }
 
-    public updateLease_args setOwner(String owner) {
+    public expandLease_args setOwner(String owner) {
       this.owner = owner;
       return this;
     }
@@ -6147,7 +6157,7 @@ public class HopperService {
       return this.lease;
     }
 
-    public updateLease_args setLease(int lease) {
+    public expandLease_args setLease(int lease) {
       this.lease = lease;
       setLeaseIsSet(true);
       return this;
@@ -6244,12 +6254,12 @@ public class HopperService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof updateLease_args)
-        return this.equals((updateLease_args)that);
+      if (that instanceof expandLease_args)
+        return this.equals((expandLease_args)that);
       return false;
     }
 
-    public boolean equals(updateLease_args that) {
+    public boolean equals(expandLease_args that) {
       if (that == null)
         return false;
 
@@ -6297,13 +6307,13 @@ public class HopperService {
       return 0;
     }
 
-    public int compareTo(updateLease_args other) {
+    public int compareTo(expandLease_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      updateLease_args typedOther = (updateLease_args)other;
+      expandLease_args typedOther = (expandLease_args)other;
 
       lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
       if (lastComparison != 0) {
@@ -6362,7 +6372,7 @@ public class HopperService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("updateLease_args(");
+      StringBuilder sb = new StringBuilder("expandLease_args(");
       boolean first = true;
 
       sb.append("key:");
@@ -6414,15 +6424,15 @@ public class HopperService {
       }
     }
 
-    private static class updateLease_argsStandardSchemeFactory implements SchemeFactory {
-      public updateLease_argsStandardScheme getScheme() {
-        return new updateLease_argsStandardScheme();
+    private static class expandLease_argsStandardSchemeFactory implements SchemeFactory {
+      public expandLease_argsStandardScheme getScheme() {
+        return new expandLease_argsStandardScheme();
       }
     }
 
-    private static class updateLease_argsStandardScheme extends StandardScheme<updateLease_args> {
+    private static class expandLease_argsStandardScheme extends StandardScheme<expandLease_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, updateLease_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, expandLease_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6475,7 +6485,7 @@ public class HopperService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, updateLease_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, expandLease_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -6501,16 +6511,16 @@ public class HopperService {
 
     }
 
-    private static class updateLease_argsTupleSchemeFactory implements SchemeFactory {
-      public updateLease_argsTupleScheme getScheme() {
-        return new updateLease_argsTupleScheme();
+    private static class expandLease_argsTupleSchemeFactory implements SchemeFactory {
+      public expandLease_argsTupleScheme getScheme() {
+        return new expandLease_argsTupleScheme();
       }
     }
 
-    private static class updateLease_argsTupleScheme extends TupleScheme<updateLease_args> {
+    private static class expandLease_argsTupleScheme extends TupleScheme<expandLease_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, updateLease_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, expandLease_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetKey()) {
@@ -6541,7 +6551,7 @@ public class HopperService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, updateLease_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, expandLease_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(4);
         if (incoming.get(0)) {
@@ -6565,25 +6575,28 @@ public class HopperService {
 
   }
 
-  public static class updateLease_result implements org.apache.thrift.TBase<updateLease_result, updateLease_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("updateLease_result");
+  public static class expandLease_result implements org.apache.thrift.TBase<expandLease_result, expandLease_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("expandLease_result");
 
     private static final org.apache.thrift.protocol.TField RE_FIELD_DESC = new org.apache.thrift.protocol.TField("re", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField SE_FIELD_DESC = new org.apache.thrift.protocol.TField("se", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField NSE_FIELD_DESC = new org.apache.thrift.protocol.TField("nse", org.apache.thrift.protocol.TType.STRUCT, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new updateLease_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new updateLease_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new expandLease_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new expandLease_resultTupleSchemeFactory());
     }
 
     public RetryException re; // required
     public CASException se; // required
+    public NoStateNodeException nse; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       RE((short)1, "re"),
-      SE((short)2, "se");
+      SE((short)2, "se"),
+      NSE((short)3, "nse");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -6602,6 +6615,8 @@ public class HopperService {
             return RE;
           case 2: // SE
             return SE;
+          case 3: // NSE
+            return NSE;
           default:
             return null;
         }
@@ -6649,49 +6664,57 @@ public class HopperService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       tmpMap.put(_Fields.SE, new org.apache.thrift.meta_data.FieldMetaData("se", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      tmpMap.put(_Fields.NSE, new org.apache.thrift.meta_data.FieldMetaData("nse", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(updateLease_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(expandLease_result.class, metaDataMap);
     }
 
-    public updateLease_result() {
+    public expandLease_result() {
     }
 
-    public updateLease_result(
+    public expandLease_result(
       RetryException re,
-      CASException se)
+      CASException se,
+      NoStateNodeException nse)
     {
       this();
       this.re = re;
       this.se = se;
+      this.nse = nse;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public updateLease_result(updateLease_result other) {
+    public expandLease_result(expandLease_result other) {
       if (other.isSetRe()) {
         this.re = new RetryException(other.re);
       }
       if (other.isSetSe()) {
         this.se = new CASException(other.se);
       }
+      if (other.isSetNse()) {
+        this.nse = new NoStateNodeException(other.nse);
+      }
     }
 
-    public updateLease_result deepCopy() {
-      return new updateLease_result(this);
+    public expandLease_result deepCopy() {
+      return new expandLease_result(this);
     }
 
     @Override
     public void clear() {
       this.re = null;
       this.se = null;
+      this.nse = null;
     }
 
     public RetryException getRe() {
       return this.re;
     }
 
-    public updateLease_result setRe(RetryException re) {
+    public expandLease_result setRe(RetryException re) {
       this.re = re;
       return this;
     }
@@ -6715,7 +6738,7 @@ public class HopperService {
       return this.se;
     }
 
-    public updateLease_result setSe(CASException se) {
+    public expandLease_result setSe(CASException se) {
       this.se = se;
       return this;
     }
@@ -6732,6 +6755,30 @@ public class HopperService {
     public void setSeIsSet(boolean value) {
       if (!value) {
         this.se = null;
+      }
+    }
+
+    public NoStateNodeException getNse() {
+      return this.nse;
+    }
+
+    public expandLease_result setNse(NoStateNodeException nse) {
+      this.nse = nse;
+      return this;
+    }
+
+    public void unsetNse() {
+      this.nse = null;
+    }
+
+    /** Returns true if field nse is set (has been assigned a value) and false otherwise */
+    public boolean isSetNse() {
+      return this.nse != null;
+    }
+
+    public void setNseIsSet(boolean value) {
+      if (!value) {
+        this.nse = null;
       }
     }
 
@@ -6753,6 +6800,14 @@ public class HopperService {
         }
         break;
 
+      case NSE:
+        if (value == null) {
+          unsetNse();
+        } else {
+          setNse((NoStateNodeException)value);
+        }
+        break;
+
       }
     }
 
@@ -6763,6 +6818,9 @@ public class HopperService {
 
       case SE:
         return getSe();
+
+      case NSE:
+        return getNse();
 
       }
       throw new IllegalStateException();
@@ -6779,6 +6837,8 @@ public class HopperService {
         return isSetRe();
       case SE:
         return isSetSe();
+      case NSE:
+        return isSetNse();
       }
       throw new IllegalStateException();
     }
@@ -6787,12 +6847,12 @@ public class HopperService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof updateLease_result)
-        return this.equals((updateLease_result)that);
+      if (that instanceof expandLease_result)
+        return this.equals((expandLease_result)that);
       return false;
     }
 
-    public boolean equals(updateLease_result that) {
+    public boolean equals(expandLease_result that) {
       if (that == null)
         return false;
 
@@ -6814,6 +6874,15 @@ public class HopperService {
           return false;
       }
 
+      boolean this_present_nse = true && this.isSetNse();
+      boolean that_present_nse = true && that.isSetNse();
+      if (this_present_nse || that_present_nse) {
+        if (!(this_present_nse && that_present_nse))
+          return false;
+        if (!this.nse.equals(that.nse))
+          return false;
+      }
+
       return true;
     }
 
@@ -6822,13 +6891,13 @@ public class HopperService {
       return 0;
     }
 
-    public int compareTo(updateLease_result other) {
+    public int compareTo(expandLease_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      updateLease_result typedOther = (updateLease_result)other;
+      expandLease_result typedOther = (expandLease_result)other;
 
       lastComparison = Boolean.valueOf(isSetRe()).compareTo(typedOther.isSetRe());
       if (lastComparison != 0) {
@@ -6850,6 +6919,16 @@ public class HopperService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetNse()).compareTo(typedOther.isSetNse());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNse()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.nse, typedOther.nse);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -6867,7 +6946,7 @@ public class HopperService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("updateLease_result(");
+      StringBuilder sb = new StringBuilder("expandLease_result(");
       boolean first = true;
 
       sb.append("re:");
@@ -6883,6 +6962,14 @@ public class HopperService {
         sb.append("null");
       } else {
         sb.append(this.se);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("nse:");
+      if (this.nse == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.nse);
       }
       first = false;
       sb.append(")");
@@ -6909,15 +6996,15 @@ public class HopperService {
       }
     }
 
-    private static class updateLease_resultStandardSchemeFactory implements SchemeFactory {
-      public updateLease_resultStandardScheme getScheme() {
-        return new updateLease_resultStandardScheme();
+    private static class expandLease_resultStandardSchemeFactory implements SchemeFactory {
+      public expandLease_resultStandardScheme getScheme() {
+        return new expandLease_resultStandardScheme();
       }
     }
 
-    private static class updateLease_resultStandardScheme extends StandardScheme<updateLease_result> {
+    private static class expandLease_resultStandardScheme extends StandardScheme<expandLease_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, updateLease_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, expandLease_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6945,6 +7032,15 @@ public class HopperService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 3: // NSE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.nse = new NoStateNodeException();
+                struct.nse.read(iprot);
+                struct.setNseIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -6956,7 +7052,7 @@ public class HopperService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, updateLease_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, expandLease_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -6970,22 +7066,27 @@ public class HopperService {
           struct.se.write(oprot);
           oprot.writeFieldEnd();
         }
+        if (struct.nse != null) {
+          oprot.writeFieldBegin(NSE_FIELD_DESC);
+          struct.nse.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
 
     }
 
-    private static class updateLease_resultTupleSchemeFactory implements SchemeFactory {
-      public updateLease_resultTupleScheme getScheme() {
-        return new updateLease_resultTupleScheme();
+    private static class expandLease_resultTupleSchemeFactory implements SchemeFactory {
+      public expandLease_resultTupleScheme getScheme() {
+        return new expandLease_resultTupleScheme();
       }
     }
 
-    private static class updateLease_resultTupleScheme extends TupleScheme<updateLease_result> {
+    private static class expandLease_resultTupleScheme extends TupleScheme<expandLease_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, updateLease_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, expandLease_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetRe()) {
@@ -6994,19 +7095,25 @@ public class HopperService {
         if (struct.isSetSe()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetNse()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
         if (struct.isSetRe()) {
           struct.re.write(oprot);
         }
         if (struct.isSetSe()) {
           struct.se.write(oprot);
         }
+        if (struct.isSetNse()) {
+          struct.nse.write(oprot);
+        }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, updateLease_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, expandLease_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
           struct.re = new RetryException();
           struct.re.read(iprot);
@@ -7016,6 +7123,11 @@ public class HopperService {
           struct.se = new CASException();
           struct.se.read(iprot);
           struct.setSeIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.nse = new NoStateNodeException();
+          struct.nse.read(iprot);
+          struct.setNseIsSet(true);
         }
       }
     }
@@ -7479,6 +7591,7 @@ public class HopperService {
 
     private static final org.apache.thrift.protocol.TField RE_FIELD_DESC = new org.apache.thrift.protocol.TField("re", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField ESE_FIELD_DESC = new org.apache.thrift.protocol.TField("ese", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField NSE_FIELD_DESC = new org.apache.thrift.protocol.TField("nse", org.apache.thrift.protocol.TType.STRUCT, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -7487,12 +7600,14 @@ public class HopperService {
     }
 
     public RetryException re; // required
-    public ExpectStatusException ese; // required
+    public CASException ese; // required
+    public NoStateNodeException nse; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       RE((short)1, "re"),
-      ESE((short)2, "ese");
+      ESE((short)2, "ese"),
+      NSE((short)3, "nse");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -7511,6 +7626,8 @@ public class HopperService {
             return RE;
           case 2: // ESE
             return ESE;
+          case 3: // NSE
+            return NSE;
           default:
             return null;
         }
@@ -7558,6 +7675,8 @@ public class HopperService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       tmpMap.put(_Fields.ESE, new org.apache.thrift.meta_data.FieldMetaData("ese", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      tmpMap.put(_Fields.NSE, new org.apache.thrift.meta_data.FieldMetaData("nse", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(watch_result.class, metaDataMap);
     }
@@ -7567,11 +7686,13 @@ public class HopperService {
 
     public watch_result(
       RetryException re,
-      ExpectStatusException ese)
+      CASException ese,
+      NoStateNodeException nse)
     {
       this();
       this.re = re;
       this.ese = ese;
+      this.nse = nse;
     }
 
     /**
@@ -7582,7 +7703,10 @@ public class HopperService {
         this.re = new RetryException(other.re);
       }
       if (other.isSetEse()) {
-        this.ese = new ExpectStatusException(other.ese);
+        this.ese = new CASException(other.ese);
+      }
+      if (other.isSetNse()) {
+        this.nse = new NoStateNodeException(other.nse);
       }
     }
 
@@ -7594,6 +7718,7 @@ public class HopperService {
     public void clear() {
       this.re = null;
       this.ese = null;
+      this.nse = null;
     }
 
     public RetryException getRe() {
@@ -7620,11 +7745,11 @@ public class HopperService {
       }
     }
 
-    public ExpectStatusException getEse() {
+    public CASException getEse() {
       return this.ese;
     }
 
-    public watch_result setEse(ExpectStatusException ese) {
+    public watch_result setEse(CASException ese) {
       this.ese = ese;
       return this;
     }
@@ -7644,6 +7769,30 @@ public class HopperService {
       }
     }
 
+    public NoStateNodeException getNse() {
+      return this.nse;
+    }
+
+    public watch_result setNse(NoStateNodeException nse) {
+      this.nse = nse;
+      return this;
+    }
+
+    public void unsetNse() {
+      this.nse = null;
+    }
+
+    /** Returns true if field nse is set (has been assigned a value) and false otherwise */
+    public boolean isSetNse() {
+      return this.nse != null;
+    }
+
+    public void setNseIsSet(boolean value) {
+      if (!value) {
+        this.nse = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case RE:
@@ -7658,7 +7807,15 @@ public class HopperService {
         if (value == null) {
           unsetEse();
         } else {
-          setEse((ExpectStatusException)value);
+          setEse((CASException)value);
+        }
+        break;
+
+      case NSE:
+        if (value == null) {
+          unsetNse();
+        } else {
+          setNse((NoStateNodeException)value);
         }
         break;
 
@@ -7672,6 +7829,9 @@ public class HopperService {
 
       case ESE:
         return getEse();
+
+      case NSE:
+        return getNse();
 
       }
       throw new IllegalStateException();
@@ -7688,6 +7848,8 @@ public class HopperService {
         return isSetRe();
       case ESE:
         return isSetEse();
+      case NSE:
+        return isSetNse();
       }
       throw new IllegalStateException();
     }
@@ -7720,6 +7882,15 @@ public class HopperService {
         if (!(this_present_ese && that_present_ese))
           return false;
         if (!this.ese.equals(that.ese))
+          return false;
+      }
+
+      boolean this_present_nse = true && this.isSetNse();
+      boolean that_present_nse = true && that.isSetNse();
+      if (this_present_nse || that_present_nse) {
+        if (!(this_present_nse && that_present_nse))
+          return false;
+        if (!this.nse.equals(that.nse))
           return false;
       }
 
@@ -7759,6 +7930,16 @@ public class HopperService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetNse()).compareTo(typedOther.isSetNse());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNse()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.nse, typedOther.nse);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -7792,6 +7973,14 @@ public class HopperService {
         sb.append("null");
       } else {
         sb.append(this.ese);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("nse:");
+      if (this.nse == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.nse);
       }
       first = false;
       sb.append(")");
@@ -7847,9 +8036,18 @@ public class HopperService {
               break;
             case 2: // ESE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.ese = new ExpectStatusException();
+                struct.ese = new CASException();
                 struct.ese.read(iprot);
                 struct.setEseIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // NSE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.nse = new NoStateNodeException();
+                struct.nse.read(iprot);
+                struct.setNseIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -7879,6 +8077,11 @@ public class HopperService {
           struct.ese.write(oprot);
           oprot.writeFieldEnd();
         }
+        if (struct.nse != null) {
+          oprot.writeFieldBegin(NSE_FIELD_DESC);
+          struct.nse.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -7903,28 +8106,39 @@ public class HopperService {
         if (struct.isSetEse()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetNse()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
         if (struct.isSetRe()) {
           struct.re.write(oprot);
         }
         if (struct.isSetEse()) {
           struct.ese.write(oprot);
         }
+        if (struct.isSetNse()) {
+          struct.nse.write(oprot);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, watch_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
           struct.re = new RetryException();
           struct.re.read(iprot);
           struct.setReIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.ese = new ExpectStatusException();
+          struct.ese = new CASException();
           struct.ese.read(iprot);
           struct.setEseIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.nse = new NoStateNodeException();
+          struct.nse.read(iprot);
+          struct.setNseIsSet(true);
         }
       }
     }

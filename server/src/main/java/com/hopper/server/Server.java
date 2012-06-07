@@ -152,5 +152,5 @@ public interface Server extends Lifecycle {
     /**
      * Check if the server can service normally,if not throws  ServiceUnavailableException
      */
-    void checkServiceState() throws ServiceUnavailableException;
+    void assertServiceAvailable() throws ServiceUnavailableException;
 }

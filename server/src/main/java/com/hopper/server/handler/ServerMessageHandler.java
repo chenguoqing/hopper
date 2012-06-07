@@ -79,7 +79,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             if (e.getMessage() instanceof Message) {
                 Message messge = (Message) e.getMessage();
 
-                // execute the command
+                // mutation the command
                 processReceivedMessage(messge, e.getChannel());
 
             } else {

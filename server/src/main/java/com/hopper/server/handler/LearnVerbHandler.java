@@ -97,7 +97,7 @@ public class LearnVerbHandler implements VerbHandler {
         int repliesNum = replies.size();
 
         // No majority response, starts a new election
-        // Subsequently, the ElectionMonitor will execute the new election
+        // Subsequently, the ElectionMonitor will mutation the new election
         if (repliesNum < config.getQuorumSize() - 1) {
             config.getDefaultServer().setElectionState(Server.ElectionState.SYNC_FAILED);
             return;
@@ -204,7 +204,7 @@ public class LearnVerbHandler implements VerbHandler {
     }
 
     /**
-     * Start to execute some asynchronous works for leader session (starting for heart beat)
+     * Start to mutation some asynchronous works for leader session (starting for heart beat)
      */
     private void activeNewLeader(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);

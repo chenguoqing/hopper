@@ -41,6 +41,12 @@ public class MutationVerbHandler implements VerbHandler {
         } else if (mutation.getOp() == Mutation.OP.UPDATE_STATUS) {
             Mutation.UpdateStatus us = (Mutation.UpdateStatus) mutation.getEntity();
             updateStatus(us);
+        } else if (mutation.getOp() == Mutation.OP.UPDATE_LEASE) {
+            Mutation.UpdateLease ul = (Mutation.UpdateLease) mutation.getEntity();
+            updateLease(ul);
+        } else if (mutation.getOp() == Mutation.OP.WATCH) {
+            Mutation.Watch watch = (Mutation.Watch) mutation.getEntity();
+            watch(watch);
         }
     }
 
@@ -63,7 +69,7 @@ public class MutationVerbHandler implements VerbHandler {
     public void create(String key, String owner, int initStatus, int invalidateStatus) throws
             ServiceUnavailableException, NoQuorumException {
         // check server state
-        server.checkServiceState();
+        server.assertServiceAvailable();
 
         // Local modification first
         StateNode node = new StateNode(key, StateNode.TYPE_TEMP, StateNode.DEFAULT_STATUS,
@@ -98,10 +104,11 @@ public class MutationVerbHandler implements VerbHandler {
      * Update the status bound with key with CAS condition
      */
     public void updateStatus(String key, int expectStatus, int newStatus, String owner,
-                             int lease) throws ServiceUnavailableException, StatusNoMatchException, OwnerNoMatchException {
+                             int lease) throws ServiceUnavailableException, StatusNoMatchException,
+            OwnerNoMatchException {
 
         // check server state
-        server.checkServiceState();
+        server.assertServiceAvailable();
 
         StateNode node = getAndCreateNode(key);
         node.setStatus(expectStatus, newStatus, owner, lease);
@@ -115,15 +122,44 @@ public class MutationVerbHandler implements VerbHandler {
         }
     }
 
+    private void updateLease(Mutation.UpdateLease ul) {
+
+        try {
+            updateLease(ul.key, ul.expectStatus, ul.owner, ul.lease);
+            replyMutation(MutationReply.SUCCESS);
+        } catch (ServiceUnavailableException e) {
+            logger.warn("No quorum nodes are alive, drops the updateLease request.");
+        } catch (NoQuorumException e) {
+            logger.warn("The server is unavailable, drops the updateLease request.");
+        } catch (StatusNoMatchException e) {
+            replyMutation(MutationReply.STATUS_CAS);
+        } catch (OwnerNoMatchException e) {
+            replyMutation(MutationReply.OWNER_CAS);
+        }
+    }
+
     /**
      * Update the lease property bound with key with CAS condition
-     *
-     * @param key
-     * @param expectStatus
-     * @param owner
-     * @param lease
      */
-    public void updateLease(String key, int expectStatus, String owner, int lease) {
+    public void updateLease(String key, int expectStatus, String owner,
+                            int lease) throws ServiceUnavailableException, StatusNoMatchException,
+            OwnerNoMatchException {
+        // check server state
+        server.assertServiceAvailable();
+
+        StateNode node = getAndCreateNode(key);
+        node.expandLease(expectStatus, owner, lease);
+
+        // Synchronizes the modification to majority nodes
+        if (config.getDefaultServer().isLeader()) {
+            Mutation mutation = new Mutation();
+            mutation.addUpdateLease(key, expectStatus, owner, lease);
+
+            synchronizeMutationToQuorum(mutation);
+        }
+    }
+
+    private void watch(Mutation.Watch watch) {
 
     }
 
@@ -134,6 +170,9 @@ public class MutationVerbHandler implements VerbHandler {
      * @param expectStatus
      */
     public void watch(String key, int expectStatus) {
+        // check server state
+        server.assertServiceAvailable();
+
 
     }
 

@@ -50,7 +50,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     @Override
     public String login(String userName, String password) throws RetryException, AuthenticationException, TException {
 
-        checkServiceState();
+        assertServiceRunning();
 
         ClientSession session = config.getSessionManager().getClientSession(ChannelBound.get());
 
@@ -72,7 +72,7 @@ public class HopperServiceImpl implements HopperService.Iface {
 
     @Override
     public void reLogin(String sessionId) throws RetryException, TException {
-        checkServiceState();
+        assertServiceRunning();
 
         // Register a client session with a existed session id
         registerClientSession(sessionId);
@@ -139,113 +139,108 @@ public class HopperServiceImpl implements HopperService.Iface {
     }
 
     @Override
-    public void create(String key, String owner, int initStatus, int invalidateStatus) throws RetryException,
-            TException {
+    public void create(final String key, final String owner, final int initStatus, final int invalidateStatus) throws
+            RetryException, TException {
 
-        checkServiceState();
+        assertServiceRunning();
+        try {
+            executeMutation(new MutationTask() {
+                @Override
+                public void mutation() {
+                    MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb
+                            .MUTATION);
+                    mutationVerbHandler.create(key, owner, initStatus, invalidateStatus);
+                }
 
-        Object[] logArgs = new Object[]{key, owner, initStatus, invalidateStatus, null};
-
-        // Leader should process the request directly
-        if (server.isLeader()) {
-
-            MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb.MUTATION);
-
-            try {
-                // delegate the operation to verb handler
-                mutationVerbHandler.create(key, owner, initStatus, invalidateStatus);
-            } catch (NoQuorumException e) {
-                logger.error("Failed to create node[key:{0},owner:{1},initStatus:{2}," +
-                        "invalidateStatus:{3}" + "] without enough nodes are live.", logArgs);
-
-                throw new RetryException(config.getRetryPeriod());
-            } catch (ServiceUnavailableException e) {
-                logger.error("Failed to create node[key:{0},owner:{1},initStatus:{2}," +
-                        "invalidateStatus:{3}" + "] because of current server is not in working status.", logArgs);
-                throw new RetryException(config.getRetryPeriod());
-            }
-        } else {
-            Mutation mutation = new Mutation();
-            mutation.addCreate(key, owner, initStatus, invalidateStatus);
-
-            Message message = makeMutationRequest(mutation);
-
-            try {
-                // If current node is follower, transfers the request to leader
-                Future<Message> reply = MessageService.send(message, server.getLeader());
-                reply.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                logArgs[4] = e;
-                logger.error("Failed to create node[key:{0},owner:{1},initStatus:{2}," +
-                        "invalidateStatus:{3}" + "] without enough nodes are live.", logArgs);
-
-                throw new RetryException(config.getRetryPeriod());
-            }
+                @Override
+                public Mutation getMutation() {
+                    Mutation mutation = new Mutation();
+                    mutation.addCreate(key, owner, initStatus, invalidateStatus);
+                    return mutation;
+                }
+            });
+        } catch (CASException e) {
+            // nothing
         }
     }
 
     @Override
-    public void updateStatus(String key, int expectStatus, int newStatus, String owner,
-                             int lease) throws RetryException, CASException, TException {
-        checkServiceState();
+    public void updateStatus(final String key, final int expectStatus, final int newStatus, final String owner,
+                             final int lease) throws RetryException, CASException, TException {
+        assertServiceRunning();
 
-        Object[] logArgs = new Object[]{key, expectStatus, newStatus, owner, lease, null};
-
-        if (server.isLeader()) {
-            MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb.MUTATION);
-            try {
+        executeMutation(new MutationTask() {
+            @Override
+            public void mutation() {
+                MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb
+                        .MUTATION);
                 mutationVerbHandler.updateStatus(key, expectStatus, newStatus, owner, lease);
-            } catch (NoQuorumException e) {
-                logger.warn("Failed to update status[key:{0},expectStatus:{1},newStatus:{2},owner{3}," +
-                        "" + "lease:{4}] without enough nodes are live.", logArgs);
-                throw new RetryException(config.getRetryPeriod());
-            } catch (ServiceUnavailableException e) {
-                logger.warn("Failed to update status[key:{0},expectStatus:{1},newStatus:{2},owner{3}," +
-                        "" + "lease:{4}] because of current server is not in working status", logArgs);
-                throw new RetryException(config.getRetryPeriod());
-            } catch (StatusNoMatchException e) {
-                throw new CASException(1);
-            } catch (OwnerNoMatchException e) {
-                throw new CASException(2);
-            }
-        } else {
-            Mutation mutation = new Mutation();
-            mutation.addUpdateStatus(key, expectStatus, newStatus, owner, lease);
-
-            Message message = makeMutationRequest(mutation);
-            MutationReply mutationReply = null;
-            try {
-                // If current node is follower, transfers the request to leader
-                Future<Message> future = MessageService.send(message, server.getLeader());
-                Message reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
-                mutationReply = (MutationReply)reply.getBody();
-            } catch (Exception e) {
-                logArgs[4] = e;
-                logger.error("Failed to create node[key:{0},owner:{1},initStatus:{2}," +
-                        "invalidateStatus:{3}" + "] without enough nodes are live.", logArgs);
-
-                throw new RetryException(config.getRetryPeriod());
             }
 
-            if(mutationReply.getStatus() == MutationReply.STATUS_CAS){
-                throw new CASException(1);
+            @Override
+            public Mutation getMutation() {
+                Mutation mutation = new Mutation();
+                mutation.addUpdateStatus(key, expectStatus, newStatus, owner, lease);
+                return mutation;
             }
+        });
+    }
 
-            if(mutationReply.getStatus()==MutationReply.OWNER_CAS){
-                throw new CASException(2);
-            }
+    @Override
+    public void expandLease(final String key, final int expectStatus, final String owner,
+                            final int lease) throws RetryException, CASException, NoStateNodeException, TException {
+
+        assertServiceRunning();
+
+        if (server.getStorage().get(key) == null) {
+            throw new NoStateNodeException(key);
         }
+
+        final Mutation mutation = new Mutation();
+        mutation.addUpdateLease(key, expectStatus, owner, lease);
+
+        executeMutation(new MutationTask() {
+            @Override
+            public void mutation() {
+                MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb
+                        .MUTATION);
+                mutationVerbHandler.updateLease(key, expectStatus, owner, lease);
+            }
+
+            @Override
+            public Mutation getMutation() {
+                Mutation mutation = new Mutation();
+                mutation.addUpdateLease(key, expectStatus, owner, lease);
+                return mutation;
+            }
+        });
     }
 
     @Override
-    public void updateLease(String key, int expectStatus, String owner, int lease) throws RetryException,
-            CASException, TException {
-        checkServiceState();
-    }
+    public void watch(final String key, final int expectStatus) throws RetryException, CASException,
+            NoStateNodeException, TException {
+        assertServiceRunning();
 
-    @Override
-    public void watch(String key, int expectStatus) throws RetryException, ExpectStatusException, TException {
-        checkServiceState();
+        if (server.getStorage().get(key) == null) {
+            throw new NoStateNodeException(key);
+        }
+
+        executeMutation(new MutationTask() {
+            @Override
+            public void mutation() {
+                MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb
+                        .MUTATION);
+                mutationVerbHandler.watch(key, expectStatus);
+            }
+
+            @Override
+            public Mutation getMutation() {
+                Mutation mutation = new Mutation();
+                mutation.addWatch(key, expectStatus);
+                return mutation;
+            }
+        });
+
     }
 
     @Override
@@ -256,9 +251,9 @@ public class HopperServiceImpl implements HopperService.Iface {
     /**
      * Check server running state
      */
-    private void checkServiceState() throws RetryException {
+    private void assertServiceRunning() throws RetryException {
         try {
-            server.checkServiceState();
+            server.assertServiceAvailable();
         } catch (ServiceUnavailableException e) {
             throw new RetryException(config.getRetryPeriod());
         }
@@ -270,5 +265,60 @@ public class HopperServiceImpl implements HopperService.Iface {
         message.setId(Message.nextId());
         message.setBody(mutation);
         return message;
+    }
+
+    /**
+     * This method is a template method for executing all mutations, the concrete mutation execution will be delegate
+     * to {@link MutationTask}, other common processing will be done on there.
+     */
+    private void executeMutation(MutationTask task) throws RetryException, CASException {
+        if (server.isLeader()) {
+            MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb.MUTATION);
+            try {
+                task.mutation();
+            } catch (NoQuorumException e) {
+                throw new RetryException(config.getRetryPeriod());
+            } catch (StatusNoMatchException e) {
+                throw new CASException(1);
+            } catch (OwnerNoMatchException e) {
+                throw new CASException(2);
+            }
+        } else {
+            Mutation mutation = task.getMutation();
+
+            Message message = makeMutationRequest(mutation);
+            MutationReply mutationReply = null;
+            try {
+                // If current node is follower, transfers the request to leader
+                Future<Message> future = MessageService.send(message, server.getLeader());
+                Message reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
+                mutationReply = (MutationReply) reply.getBody();
+            } catch (Exception e) {
+                throw new RetryException(config.getRetryPeriod());
+            }
+
+            if (mutationReply.getStatus() == MutationReply.STATUS_CAS) {
+                throw new CASException(1);
+            }
+
+            if (mutationReply.getStatus() == MutationReply.OWNER_CAS) {
+                throw new CASException(2);
+            }
+        }
+    }
+
+    /**
+     * MutationTask supports a abstract for all mutation executions.
+     */
+    private interface MutationTask {
+        /**
+         * Execute the concrete mutation
+         */
+        void mutation();
+
+        /**
+         * Retrieve the bound Mutation instance
+         */
+        Mutation getMutation();
     }
 }

@@ -6,30 +6,43 @@
  */
 package com.hopper.server.thrift;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
+
 import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+public class NoStateNodeException extends Exception implements org.apache.thrift.TBase<NoStateNodeException, NoStateNodeException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("NoStateNodeException");
 
-public class ExpectStatusException extends Exception implements org.apache.thrift.TBase<ExpectStatusException, ExpectStatusException._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ExpectStatusException");
-
-  private static final org.apache.thrift.protocol.TField ACTUAL_STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("actualStatus", org.apache.thrift.protocol.TType.I32, (short)1);
+  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new ExpectStatusExceptionStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new ExpectStatusExceptionTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new NoStateNodeExceptionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new NoStateNodeExceptionTupleSchemeFactory());
   }
 
-  public int actualStatus; // required
+  public String key; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    ACTUAL_STATUS((short)1, "actualStatus");
+    KEY((short)1, "key");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -44,8 +57,8 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // ACTUAL_STATUS
-          return ACTUAL_STATUS;
+        case 1: // KEY
+          return KEY;
         default:
           return null;
       }
@@ -86,77 +99,74 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
   }
 
   // isset id assignments
-  private static final int __ACTUALSTATUS_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ACTUAL_STATUS, new org.apache.thrift.meta_data.FieldMetaData("actualStatus", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ExpectStatusException.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(NoStateNodeException.class, metaDataMap);
   }
 
-  public ExpectStatusException() {
+  public NoStateNodeException() {
   }
 
-  public ExpectStatusException(
-    int actualStatus)
+  public NoStateNodeException(
+    String key)
   {
     this();
-    this.actualStatus = actualStatus;
-    setActualStatusIsSet(true);
+    this.key = key;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public ExpectStatusException(ExpectStatusException other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
-    this.actualStatus = other.actualStatus;
+  public NoStateNodeException(NoStateNodeException other) {
+    if (other.isSetKey()) {
+      this.key = other.key;
+    }
   }
 
-  public ExpectStatusException deepCopy() {
-    return new ExpectStatusException(this);
+  public NoStateNodeException deepCopy() {
+    return new NoStateNodeException(this);
   }
 
   @Override
   public void clear() {
-    setActualStatusIsSet(false);
-    this.actualStatus = 0;
+    this.key = null;
   }
 
-  public int getActualStatus() {
-    return this.actualStatus;
+  public String getKey() {
+    return this.key;
   }
 
-  public ExpectStatusException setActualStatus(int actualStatus) {
-    this.actualStatus = actualStatus;
-    setActualStatusIsSet(true);
+  public NoStateNodeException setKey(String key) {
+    this.key = key;
     return this;
   }
 
-  public void unsetActualStatus() {
-    __isset_bit_vector.clear(__ACTUALSTATUS_ISSET_ID);
+  public void unsetKey() {
+    this.key = null;
   }
 
-  /** Returns true if field actualStatus is set (has been assigned a value) and false otherwise */
-  public boolean isSetActualStatus() {
-    return __isset_bit_vector.get(__ACTUALSTATUS_ISSET_ID);
+  /** Returns true if field key is set (has been assigned a value) and false otherwise */
+  public boolean isSetKey() {
+    return this.key != null;
   }
 
-  public void setActualStatusIsSet(boolean value) {
-    __isset_bit_vector.set(__ACTUALSTATUS_ISSET_ID, value);
+  public void setKeyIsSet(boolean value) {
+    if (!value) {
+      this.key = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case ACTUAL_STATUS:
+    case KEY:
       if (value == null) {
-        unsetActualStatus();
+        unsetKey();
       } else {
-        setActualStatus((Integer)value);
+        setKey((String)value);
       }
       break;
 
@@ -165,8 +175,8 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case ACTUAL_STATUS:
-      return Integer.valueOf(getActualStatus());
+    case KEY:
+      return getKey();
 
     }
     throw new IllegalStateException();
@@ -179,8 +189,8 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
     }
 
     switch (field) {
-    case ACTUAL_STATUS:
-      return isSetActualStatus();
+    case KEY:
+      return isSetKey();
     }
     throw new IllegalStateException();
   }
@@ -189,21 +199,21 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof ExpectStatusException)
-      return this.equals((ExpectStatusException)that);
+    if (that instanceof NoStateNodeException)
+      return this.equals((NoStateNodeException)that);
     return false;
   }
 
-  public boolean equals(ExpectStatusException that) {
+  public boolean equals(NoStateNodeException that) {
     if (that == null)
       return false;
 
-    boolean this_present_actualStatus = true;
-    boolean that_present_actualStatus = true;
-    if (this_present_actualStatus || that_present_actualStatus) {
-      if (!(this_present_actualStatus && that_present_actualStatus))
+    boolean this_present_key = true && this.isSetKey();
+    boolean that_present_key = true && that.isSetKey();
+    if (this_present_key || that_present_key) {
+      if (!(this_present_key && that_present_key))
         return false;
-      if (this.actualStatus != that.actualStatus)
+      if (!this.key.equals(that.key))
         return false;
     }
 
@@ -215,20 +225,20 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
     return 0;
   }
 
-  public int compareTo(ExpectStatusException other) {
+  public int compareTo(NoStateNodeException other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    ExpectStatusException typedOther = (ExpectStatusException)other;
+    NoStateNodeException typedOther = (NoStateNodeException)other;
 
-    lastComparison = Boolean.valueOf(isSetActualStatus()).compareTo(typedOther.isSetActualStatus());
+    lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetActualStatus()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.actualStatus, typedOther.actualStatus);
+    if (isSetKey()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -250,11 +260,15 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("ExpectStatusException(");
+    StringBuilder sb = new StringBuilder("NoStateNodeException(");
     boolean first = true;
 
-    sb.append("actualStatus:");
-    sb.append(this.actualStatus);
+    sb.append("key:");
+    if (this.key == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.key);
+    }
     first = false;
     sb.append(")");
     return sb.toString();
@@ -274,23 +288,21 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
     }
   }
 
-  private static class ExpectStatusExceptionStandardSchemeFactory implements SchemeFactory {
-    public ExpectStatusExceptionStandardScheme getScheme() {
-      return new ExpectStatusExceptionStandardScheme();
+  private static class NoStateNodeExceptionStandardSchemeFactory implements SchemeFactory {
+    public NoStateNodeExceptionStandardScheme getScheme() {
+      return new NoStateNodeExceptionStandardScheme();
     }
   }
 
-  private static class ExpectStatusExceptionStandardScheme extends StandardScheme<ExpectStatusException> {
+  private static class NoStateNodeExceptionStandardScheme extends StandardScheme<NoStateNodeException> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, ExpectStatusException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, NoStateNodeException struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -300,10 +312,10 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
           break;
         }
         switch (schemeField.id) {
-          case 1: // ACTUAL_STATUS
-            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-              struct.actualStatus = iprot.readI32();
-              struct.setActualStatusIsSet(true);
+          case 1: // KEY
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.key = iprot.readString();
+              struct.setKeyIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -319,47 +331,49 @@ public class ExpectStatusException extends Exception implements org.apache.thrif
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, ExpectStatusException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, NoStateNodeException struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      oprot.writeFieldBegin(ACTUAL_STATUS_FIELD_DESC);
-      oprot.writeI32(struct.actualStatus);
-      oprot.writeFieldEnd();
+      if (struct.key != null) {
+        oprot.writeFieldBegin(KEY_FIELD_DESC);
+        oprot.writeString(struct.key);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
   }
 
-  private static class ExpectStatusExceptionTupleSchemeFactory implements SchemeFactory {
-    public ExpectStatusExceptionTupleScheme getScheme() {
-      return new ExpectStatusExceptionTupleScheme();
+  private static class NoStateNodeExceptionTupleSchemeFactory implements SchemeFactory {
+    public NoStateNodeExceptionTupleScheme getScheme() {
+      return new NoStateNodeExceptionTupleScheme();
     }
   }
 
-  private static class ExpectStatusExceptionTupleScheme extends TupleScheme<ExpectStatusException> {
+  private static class NoStateNodeExceptionTupleScheme extends TupleScheme<NoStateNodeException> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, ExpectStatusException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, NoStateNodeException struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetActualStatus()) {
+      if (struct.isSetKey()) {
         optionals.set(0);
       }
       oprot.writeBitSet(optionals, 1);
-      if (struct.isSetActualStatus()) {
-        oprot.writeI32(struct.actualStatus);
+      if (struct.isSetKey()) {
+        oprot.writeString(struct.key);
       }
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, ExpectStatusException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, NoStateNodeException struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {
-        struct.actualStatus = iprot.readI32();
-        struct.setActualStatusIsSet(true);
+        struct.key = iprot.readString();
+        struct.setKeyIsSet(true);
       }
     }
   }

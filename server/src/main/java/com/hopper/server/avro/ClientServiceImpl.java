@@ -109,8 +109,8 @@ public class ClientServiceImpl implements ClientService {
         String sKey = key.toString().intern();
         StateNode node = getAndCreate(key.toString());
 
-//        boolean r = node.setStatus(expectStatus, newStatus, owner == null ? null : owner.toString(), lease);
-//        return r ? 0 : 1;
+        //        boolean r = node.setStatus(expectStatus, newStatus, owner == null ? null : owner.toString(), lease);
+        //        return r ? 0 : 1;
         return 0;
     }
 
@@ -122,8 +122,8 @@ public class ClientServiceImpl implements ClientService {
                            int lease) throws AvroRemoteException {
         StateNode node = getAndCreate(key.toString());
 
-        boolean r = node.expandLease(expectStatus, owner == null ? null : owner.toString(), lease);
-        return r ? 0 : 1;
+        node.expandLease(expectStatus, owner == null ? null : owner.toString(), lease);
+        return 1;
     }
 
     /**

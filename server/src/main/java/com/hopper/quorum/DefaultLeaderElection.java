@@ -183,7 +183,7 @@ public class DefaultLeaderElection implements LeaderElection {
     }
 
     /**
-     * Start to execute some asynchronous works for leader session (starting for heart beat)
+     * Start to mutation some asynchronous works for leader session (starting for heart beat)
      */
     private void activeLeaderSession(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);

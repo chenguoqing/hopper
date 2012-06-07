@@ -222,7 +222,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * If the server is participating in election or not on running state, it will be unavailable
      */
     @Override
-    public void checkServiceState() throws ServiceUnavailableException {
+    public void assertServiceAvailable() throws ServiceUnavailableException {
         ElectionState state = getElectionState();
 
         if (state == Server.ElectionState.LOOKING || state == Server.ElectionState.SYNC || getState() != Lifecycle

@@ -166,7 +166,7 @@ public class StateNode {
         }
     }
 
-    public boolean expandLease(int expectStatus, String owner, int lease) {
+    public void expandLease(int expectStatus, String owner, int lease) {
         nodeLock.writeLock().lock();
         try {
 
@@ -175,12 +175,12 @@ public class StateNode {
             }
 
             if (expectStatus != this.status) {
-                return false;
+                throw new StatusNoMatchException(expectStatus, this.status);
             }
 
             // Invalidate owner
             if (this.owner != null && !this.owner.equals(owner)) {
-                return false;
+                throw new OwnerNoMatchException(owner, this.owner);
             }
 
             // Remove the old task
@@ -195,7 +195,6 @@ public class StateNode {
         } finally {
             nodeLock.writeLock().unlock();
         }
-        return true;
     }
 
     public void watch(int expectStatus) {
