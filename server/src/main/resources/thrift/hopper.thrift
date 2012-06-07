@@ -21,8 +21,8 @@ exception CASException {
 	1:i32 type
 }
 
-exception ExpectStatusException {
-	1:i32 actualStatus
+exception NoStateNodeException {
+    1:string key
 }
 
 /**
@@ -58,19 +58,19 @@ service HopperService{
      * Update the status bound with key with CAS condition
      */
     void updateStatus(1:string key, 2:i32 expectStatus, 3:i32 newStatus, 4:string owner,
-    5:i32 lease) throws(1:RetryException re,2:StateCASException se),
+    5:i32 lease) throws(1:RetryException re,2:CASException se),
 
     /**
      * Update the lease property bound with key with CAS condition
      */
-    void updateLease(1:string key, 2:i32 expectStatus, 3:string owner, 4:i32 lease) throws(1:RetryException re,
-    2:StateCASException se),
+    void expandLease(1:string key, 2:i32 expectStatus, 3:string owner, 4:i32 lease) throws(1:RetryException re,
+    2:CASException se,3:NoStateNodeException nse),
 
     /**
      * Watch the special status(add a listener)
      */
     void watch(1:string key, 2:i32 expectStatus) throws(1:RetryException re,
-    2:ExpectStatusException ese) ,
+    2:CASException ese,3:NoStateNodeException nse) ,
 
     /**
      * Callback method by server for notifying the status change
