@@ -6,10 +6,10 @@ import com.hopper.quorum.NoQuorumException;
 import com.hopper.server.*;
 import com.hopper.server.thrift.ChannelBound;
 import com.hopper.session.Message;
-import com.hopper.storage.OwnerCASException;
+import com.hopper.storage.OwnerNoMatchException;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
-import com.hopper.storage.StatusCASException;
+import com.hopper.storage.StatusNoMatchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class MutationVerbHandler implements VerbHandler {
      * Create a state with initial value, if the key is existed, return with success
      */
     public void create(String key, String owner, int initStatus, int invalidateStatus) throws
-            ServiceUnavailableException {
+            ServiceUnavailableException, NoQuorumException {
         // check server state
         server.checkServiceState();
 
@@ -87,9 +87,9 @@ public class MutationVerbHandler implements VerbHandler {
             logger.warn("No quorum nodes are alive, drops the create request.");
         } catch (ServiceUnavailableException e) {
             logger.warn("The server is unavailable, drops the create request.");
-        } catch (StatusCASException e) {
+        } catch (StatusNoMatchException e) {
             replyMutation(MutationReply.STATUS_CAS);
-        } catch (OwnerCASException e) {
+        } catch (OwnerNoMatchException e) {
             replyMutation(MutationReply.OWNER_CAS);
         }
     }
@@ -98,7 +98,7 @@ public class MutationVerbHandler implements VerbHandler {
      * Update the status bound with key with CAS condition
      */
     public void updateStatus(String key, int expectStatus, int newStatus, String owner,
-                             int lease) throws ServiceUnavailableException {
+                             int lease) throws ServiceUnavailableException, StatusNoMatchException, OwnerNoMatchException {
 
         // check server state
         server.checkServiceState();

@@ -17,7 +17,7 @@ exception AuthenticationException {
 /**
  * State CAS exception
  */
-exception StateCASException {
+exception CASException {
 	1:i32 type
 }
 

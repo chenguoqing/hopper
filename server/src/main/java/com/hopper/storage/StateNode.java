@@ -110,12 +110,12 @@ public class StateNode {
         nodeLock.writeLock().lock();
         try {
             if (expectStatus != this.status) {
-                throw new StatusCASException(expectStatus, status);
+                throw new StatusNoMatchException(expectStatus, status);
             }
 
             // Invalidate owner
             if (this.owner != null && owner != null && !this.owner.equals(owner)) {
-                throw new OwnerCASException(this.owner, owner);
+                throw new OwnerNoMatchException(this.owner, owner);
             }
 
             this.status = newStatus;
@@ -202,7 +202,7 @@ public class StateNode {
         nodeLock.writeLock().lock();
         try {
             if (this.status != expectStatus) {
-                throw new StatusCASException(expectStatus, status);
+                throw new StatusNoMatchException(expectStatus, status);
             }
         } finally {
             nodeLock.writeLock().unlock();

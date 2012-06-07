@@ -8,7 +8,7 @@ import com.hopper.session.ClientSession;
 import com.hopper.session.SessionIdGenerator;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
-import com.hopper.storage.StatusCASException;
+import com.hopper.storage.StatusNoMatchException;
 import org.apache.avro.AvroRemoteException;
 
 /**
@@ -134,7 +134,7 @@ public class ClientServiceImpl implements ClientService {
         StateNode node = getAndCreate(key.toString());
         try {
             node.watch(expectStatus);
-        } catch (StatusCASException e) {
+        } catch (StatusNoMatchException e) {
             return 1;
         }
         return 0;

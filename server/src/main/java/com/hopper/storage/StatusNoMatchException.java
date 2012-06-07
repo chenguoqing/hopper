@@ -4,7 +4,7 @@ package com.hopper.storage;
  * Created with IntelliJ IDEA. User: chenguoqing Date: 12-5-24 Time: 下午5:20 To
  * change this template use File | Settings | File Templates.
  */
-public class StatusCASException extends RuntimeException {
+public class StatusNoMatchException extends RuntimeException {
 
     /**
      * Serial Version UID
@@ -14,7 +14,7 @@ public class StatusCASException extends RuntimeException {
     public final int expectStatus;
     public final int actualStatus;
 
-    public StatusCASException(int expectStatus, int actualStatus) {
+    public StatusNoMatchException(int expectStatus, int actualStatus) {
         this.expectStatus = expectStatus;
         this.actualStatus = actualStatus;
     }

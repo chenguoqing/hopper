@@ -7,15 +7,16 @@ import com.hopper.server.Server;
 import com.hopper.server.ServiceUnavailableException;
 import com.hopper.server.Verb;
 import com.hopper.server.handler.Mutation;
+import com.hopper.server.handler.MutationReply;
 import com.hopper.server.handler.MutationVerbHandler;
 import com.hopper.server.handler.VerbMappings;
 import com.hopper.session.ClientConnection;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
 import com.hopper.session.SessionIdGenerator;
-import com.hopper.storage.OwnerCASException;
+import com.hopper.storage.OwnerNoMatchException;
 import com.hopper.storage.StateStorage;
-import com.hopper.storage.StatusCASException;
+import com.hopper.storage.StatusNoMatchException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-5-30
- * Time: 下午4:00
- * To change this template use File | Settings | File Templates.
+ * The implementation of HopperService.Iface,HopperService.Iface is a facade of client interface.
  */
 public class HopperServiceImpl implements HopperService.Iface {
     /**
@@ -167,7 +164,6 @@ public class HopperServiceImpl implements HopperService.Iface {
                         "invalidateStatus:{3}" + "] because of current server is not in working status.", logArgs);
                 throw new RetryException(config.getRetryPeriod());
             }
-            // Follower node should transfer the request to leader
         } else {
             Mutation mutation = new Mutation();
             mutation.addCreate(key, owner, initStatus, invalidateStatus);
@@ -175,6 +171,7 @@ public class HopperServiceImpl implements HopperService.Iface {
             Message message = makeMutationRequest(mutation);
 
             try {
+                // If current node is follower, transfers the request to leader
                 Future<Message> reply = MessageService.send(message, server.getLeader());
                 reply.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
             } catch (Exception e) {
@@ -189,7 +186,7 @@ public class HopperServiceImpl implements HopperService.Iface {
 
     @Override
     public void updateStatus(String key, int expectStatus, int newStatus, String owner,
-                             int lease) throws RetryException, StateCASException, TException {
+                             int lease) throws RetryException, CASException, TException {
         checkServiceState();
 
         Object[] logArgs = new Object[]{key, expectStatus, newStatus, owner, lease, null};
@@ -201,21 +198,48 @@ public class HopperServiceImpl implements HopperService.Iface {
             } catch (NoQuorumException e) {
                 logger.warn("Failed to update status[key:{0},expectStatus:{1},newStatus:{2},owner{3}," +
                         "" + "lease:{4}] without enough nodes are live.", logArgs);
+                throw new RetryException(config.getRetryPeriod());
             } catch (ServiceUnavailableException e) {
                 logger.warn("Failed to update status[key:{0},expectStatus:{1},newStatus:{2},owner{3}," +
                         "" + "lease:{4}] because of current server is not in working status", logArgs);
-            } catch (StatusCASException e) {
-
-            } catch (OwnerCASException e) {
+                throw new RetryException(config.getRetryPeriod());
+            } catch (StatusNoMatchException e) {
+                throw new CASException(1);
+            } catch (OwnerNoMatchException e) {
+                throw new CASException(2);
             }
         } else {
+            Mutation mutation = new Mutation();
+            mutation.addUpdateStatus(key, expectStatus, newStatus, owner, lease);
 
+            Message message = makeMutationRequest(mutation);
+            MutationReply mutationReply = null;
+            try {
+                // If current node is follower, transfers the request to leader
+                Future<Message> future = MessageService.send(message, server.getLeader());
+                Message reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
+                mutationReply = (MutationReply)reply.getBody();
+            } catch (Exception e) {
+                logArgs[4] = e;
+                logger.error("Failed to create node[key:{0},owner:{1},initStatus:{2}," +
+                        "invalidateStatus:{3}" + "] without enough nodes are live.", logArgs);
+
+                throw new RetryException(config.getRetryPeriod());
+            }
+
+            if(mutationReply.getStatus() == MutationReply.STATUS_CAS){
+                throw new CASException(1);
+            }
+
+            if(mutationReply.getStatus()==MutationReply.OWNER_CAS){
+                throw new CASException(2);
+            }
         }
     }
 
     @Override
     public void updateLease(String key, int expectStatus, String owner, int lease) throws RetryException,
-            StateCASException, TException {
+            CASException, TException {
         checkServiceState();
     }
 
