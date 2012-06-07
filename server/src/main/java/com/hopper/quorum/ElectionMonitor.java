@@ -1,11 +1,11 @@
 package com.hopper.quorum;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.common.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
 import com.hopper.server.Server.ElectionState;
-import com.hopper.session.IncomingServerSession;
+import com.hopper.session.IncomingSession;
 
 public class ElectionMonitor extends LifecycleProxy {
 
@@ -41,11 +41,11 @@ public class ElectionMonitor extends LifecycleProxy {
                 return;
             }
 
-            IncomingServerSession[] sessions = config.getSessionManager().getAllIncommingSessions();
+            IncomingSession[] sessions = config.getSessionManager().getAllIncomingSessions();
 
             int disConnectCounter = 0;
 
-            for (IncomingServerSession session : sessions) {
+            for (IncomingSession session : sessions) {
 
                 if (!session.isAlive()) {
                     Endpoint source = session.getConnection().getSourceEndpoint();

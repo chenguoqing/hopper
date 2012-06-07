@@ -1,13 +1,13 @@
 package com.hopper.quorum;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.MessageService;
+import com.hopper.session.MessageService;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server.ElectionState;
-import com.hopper.server.Verb;
-import com.hopper.server.handler.*;
+import com.hopper.verb.Verb;
+import com.hopper.verb.handler.*;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingServerSession;
+import com.hopper.session.OutgoingSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,11 +183,11 @@ public class DefaultLeaderElection implements LeaderElection {
     }
 
     /**
-     * Start to execute some asynchronous works for leader session (starting for heart beat)
+     * Start to mutation some asynchronous works for leader session (starting for heart beat)
      */
     private void activeLeaderSession(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
 
         // start heart beat
         session.background();
@@ -415,7 +415,7 @@ public class DefaultLeaderElection implements LeaderElection {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
 
         try {
-            OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
 
             Message request = new Message();
             request.setVerb(Verb.TEST_LEADER);

@@ -1,17 +1,17 @@
 package com.hopper.server;
 
-import com.hopper.GlobalConfiguration;
-import com.hopper.Stage;
-import com.hopper.StageThreadPools;
-import com.hopper.common.lifecycle.Lifecycle;
-import com.hopper.common.lifecycle.LifecycleProxy;
+import com.hopper.*;
+import com.hopper.lifecycle.Lifecycle;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
-import com.hopper.server.handler.ServerMessageDecoder;
-import com.hopper.server.handler.ServerMessageHandler;
-import com.hopper.server.thrift.HopperService;
-import com.hopper.server.thrift.HopperServiceImpl;
-import com.hopper.server.thrift.netty.ThriftPipelineFactory;
-import com.hopper.server.thrift.netty.ThriftServerHandler;
+import com.hopper.stage.StageManager;
+import com.hopper.verb.handler.ServerMessageDecoder;
+import com.hopper.verb.handler.ServerMessageHandler;
+import com.hopper.stage.Stage;
+import com.hopper.thrift.HopperService;
+import com.hopper.thrift.HopperServiceImpl;
+import com.hopper.thrift.netty.ThriftPipelineFactory;
+import com.hopper.thrift.netty.ThriftServerHandler;
 import com.hopper.storage.StateStorage;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -74,8 +74,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     private void startServerSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(StageThreadPools
-                .getThreadPool(Stage.SERVER_BOSS), StageThreadPools.getThreadPool(Stage.SERVER_WORKER)));
+        ServerBootstrap bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(StageManager
+                .getThreadPool(Stage.SERVER_BOSS), StageManager.getThreadPool(Stage.SERVER_WORKER)));
 
         // set customs pipeline factory
         bootstrap.setPipelineFactory(new ServerPiplelineFactory());
@@ -88,8 +88,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * Start client-server socket with avro, all client requests will be processed by avro.
      */
     private void startClientSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(StageThreadPools
-                .getThreadPool(Stage.CLIENT_BOSS), StageThreadPools.getThreadPool(Stage.CLIENT_WORKER)));
+        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(StageManager
+                .getThreadPool(Stage.CLIENT_BOSS), StageManager.getThreadPool(Stage.CLIENT_WORKER)));
 
         // set customs pipeline factory
         HopperService.Processor<HopperServiceImpl> processor = new HopperService.Processor<HopperServiceImpl>(new
@@ -222,7 +222,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * If the server is participating in election or not on running state, it will be unavailable
      */
     @Override
-    public void checkServiceState() throws ServiceUnavailableException {
+    public void assertServiceAvailable() throws ServiceUnavailableException {
         ElectionState state = getElectionState();
 
         if (state == Server.ElectionState.LOOKING || state == Server.ElectionState.SYNC || getState() != Lifecycle

@@ -1,7 +1,7 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.common.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.future.LatchFuture;
 import com.hopper.server.Endpoint;
 import org.jboss.netty.channel.Channel;
@@ -59,6 +59,7 @@ public class DummyConnection extends LifecycleProxy implements Connection {
     @Override
     public void close() {
         shutdown();
+        GlobalConfiguration.getInstance().getConnectionManager().removeIncomingConnection(channel);
     }
 
     @Override

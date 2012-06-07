@@ -1,7 +1,7 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.common.lifecycle.LifecycleListener;
+import com.hopper.lifecycle.LifecycleListener;
 import com.hopper.future.LatchFuture;
 
 public abstract class SessionProxy implements Session {

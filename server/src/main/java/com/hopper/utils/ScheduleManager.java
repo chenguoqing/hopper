@@ -1,6 +1,6 @@
 package com.hopper.utils;
 
-import com.hopper.common.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

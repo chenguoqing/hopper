@@ -1,7 +1,7 @@
 package com.hopper.cache;
 
-import com.hopper.common.lifecycle.Lifecycle;
-import com.hopper.common.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.Lifecycle;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.utils.ScheduleManager;
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
