@@ -6,11 +6,11 @@ import java.util.concurrent.*;
 
 /**
  * The {@link ThreadFactory} implementation for data synchronization.
- * {@link SyncThreadPoolExecutor} supports the new future {@link com.hopper.future.LatchFutureTask}.
+ * {@link DataSyncThreadPool} supports the new future {@link com.hopper.future.LatchFutureTask}.
  */
-public class SyncThreadPoolExecutor extends ThreadPoolExecutor {
+public class DataSyncThreadPool extends ThreadPoolExecutor {
 
-    public SyncThreadPoolExecutor(int corePoolSize, int maximumPoolSize, BlockingQueue<Runnable> workQueue) {
+    public DataSyncThreadPool(int corePoolSize, int maximumPoolSize, BlockingQueue<Runnable> workQueue) {
         super(corePoolSize, maximumPoolSize, 2 * 60 * 1000L, TimeUnit.MILLISECONDS, workQueue, new SyncThreadFactory());
     }
 

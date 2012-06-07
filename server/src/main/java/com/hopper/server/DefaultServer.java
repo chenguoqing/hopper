@@ -4,10 +4,10 @@ import com.hopper.*;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
+import com.hopper.stage.StageManager;
 import com.hopper.verb.handler.ServerMessageDecoder;
 import com.hopper.verb.handler.ServerMessageHandler;
 import com.hopper.stage.Stage;
-import com.hopper.stage.StageThreadPools;
 import com.hopper.thrift.HopperService;
 import com.hopper.thrift.HopperServiceImpl;
 import com.hopper.thrift.netty.ThriftPipelineFactory;
@@ -74,8 +74,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     private void startServerSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(StageThreadPools
-                .getThreadPool(Stage.SERVER_BOSS), StageThreadPools.getThreadPool(Stage.SERVER_WORKER)));
+        ServerBootstrap bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(StageManager
+                .getThreadPool(Stage.SERVER_BOSS), StageManager.getThreadPool(Stage.SERVER_WORKER)));
 
         // set customs pipeline factory
         bootstrap.setPipelineFactory(new ServerPiplelineFactory());
@@ -88,8 +88,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * Start client-server socket with avro, all client requests will be processed by avro.
      */
     private void startClientSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(StageThreadPools
-                .getThreadPool(Stage.CLIENT_BOSS), StageThreadPools.getThreadPool(Stage.CLIENT_WORKER)));
+        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(StageManager
+                .getThreadPool(Stage.CLIENT_BOSS), StageManager.getThreadPool(Stage.CLIENT_WORKER)));
 
         // set customs pipeline factory
         HopperService.Processor<HopperServiceImpl> processor = new HopperService.Processor<HopperServiceImpl>(new

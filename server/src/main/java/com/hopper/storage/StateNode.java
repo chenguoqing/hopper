@@ -3,7 +3,7 @@ package com.hopper.storage;
 import com.hopper.GlobalConfiguration;
 import com.hopper.session.MessageService;
 import com.hopper.stage.Stage;
-import com.hopper.stage.StageThreadPools;
+import com.hopper.stage.StageManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -356,7 +356,7 @@ public class StateNode {
      * Fire all state change listeners (asynchronous)
      */
     private void fireStateChangeListeners(int oldStatus, int newStatus) {
-        ThreadPoolExecutor threadPool = StageThreadPools.getThreadPool(Stage.STATE_CHANGE);
+        ThreadPoolExecutor threadPool = StageManager.getThreadPool(Stage.STATE_CHANGE);
 
         String sessionId = stateChangeListeners.poll();
 

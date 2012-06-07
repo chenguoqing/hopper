@@ -75,17 +75,16 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
 
         HeartBeat beat = (HeartBeat) message.getBody();
 
-        logger.debug("Receive the heart beat " + message + "---" + beat);
+        logger.debug("Receive the heart beat {0}", beat);
 
         // ignore the heart beat from follower
         if (beat.isLeader()) {
             // records the last heart beat time
             lastHeartBeat.set(System.currentTimeMillis());
 
-            // If the leader's transaction is maximum than self, starting data
-            // synchronous
+            // If the leader's fresh, starting data synchronous
             if (beat.getMaxXid() > config.getDefaultServer().getStorage().getMaxXid()) {
-                // TODO: data synchronous
+                config.getDataSyncService().syncDataFromRemote(config.getDefaultServer().getLeader());
             }
         }
     }

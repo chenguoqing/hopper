@@ -1,49 +1,54 @@
 package com.hopper.sync;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.Endpoint;
-import com.hopper.verb.Verb;
 import com.hopper.session.Message;
+import com.hopper.session.MessageService;
 import com.hopper.session.OutgoingSession;
+import com.hopper.stage.Stage;
+import com.hopper.stage.StageManager;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateNodeSnapshot;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.merkle.Difference;
 import com.hopper.storage.merkle.MerkleTree;
+import com.hopper.verb.Verb;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-5-3
- * Time: 下午2:51
- * To change this template use File | Settings | File Templates.
+ * {@link DataSyncService} provides supports for data synchronization between nodes.
  */
 public class DataSyncService extends LifecycleProxy {
     /**
      * Logger
      */
     private static final Logger logger = LoggerFactory.getLogger(DataSyncService.class);
-
+    /**
+     * Global configuration reference
+     */
     private final GlobalConfiguration config = GlobalConfiguration.getInstance();
-
+    /**
+     * Storage reference
+     */
     private final StateStorage storage = config.getDefaultServer().getStorage();
-
-    private final BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
-
+    /**
+     * Data synchronization thread pool
+     */
     private ThreadPoolExecutor threadPool;
 
     @Override
     protected void doInit() {
-        threadPool = new SyncThreadPoolExecutor(config.getSyncThreadPoolCoreSize(),
-                config.getSyncThreadPoolMaxSize(), workQueue);
+        threadPool = StageManager.getThreadPool(Stage.SYNC);
     }
 
     @Override
@@ -53,11 +58,17 @@ public class DataSyncService extends LifecycleProxy {
         }
     }
 
+    /**
+     * Compares the local merkle tree with remote(the remote is fresh) and return the comparison result.
+     */
     public LatchFuture<DiffResult> diff(int remoteServerId) {
         RequireRemoteDiffTask task = new RequireRemoteDiffTask(remoteServerId);
         return (LatchFuture<DiffResult>) threadPool.submit(task);
     }
 
+    /**
+     * Executes the comparison result on local storage
+     */
     public void applyDiff(DiffResult diff) {
 
         if (diff.getMaxXid() <= storage.getMaxXid()) {
@@ -93,6 +104,28 @@ public class DataSyncService extends LifecycleProxy {
         }
     }
 
+    /**
+     * Pull data from remote server(remote is fresh) with asynchronization
+     */
+    public void syncDataFromRemote(final int serverId) {
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    DiffResult diffResult = syncDiff(serverId);
+                    applyDiff(diffResult);
+                } catch (Exception e) {
+                    logger.error("Failed to pull data from remote[server:{0}]", new Object[]{serverId, e});
+                }
+            }
+        };
+
+        threadPool.execute(task);
+    }
+
+    /**
+     * Push the local data to remote servers(local data is fresh)
+     */
     public List<LatchFuture<Boolean>> syncDataToRemote(Integer[] remoteServers) {
         RequireRemoteSyncTask[] tasks = new RequireRemoteSyncTask[remoteServers.length];
         List<LatchFuture<Boolean>> futures = new ArrayList<LatchFuture<Boolean>>(remoteServers.length);
@@ -107,8 +140,7 @@ public class DataSyncService extends LifecycleProxy {
 
     /**
      * {@link com.hopper.sync.DataSyncService.RequireRemoteDiffTask} will send local data to remote
-     * server, and requires the remote server return
-     * the diff data.
+     * server, and requires the remote server to return the diff data.
      */
     private class RequireRemoteDiffTask implements Callable<DiffResult> {
         final GlobalConfiguration config = GlobalConfiguration.getInstance();
@@ -121,24 +153,25 @@ public class DataSyncService extends LifecycleProxy {
 
         @Override
         public DiffResult call() throws Exception {
-
-            Message message = new Message();
-            message.setVerb(Verb.DIFF_RESULT);
-            message.setId(Message.nextId());
-
-            RequireDiff diff = new RequireDiff();
-            diff.setMaxXid(storage.getMaxXid());
-            diff.setTree(storage.getHashTree());
-
-            message.setBody(diff);
-
-            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(config.getEndpoint
-                    (remoteServerId));
-            Future<Message> future = session.send(message);
-            Message reply = future.get(config.getSyncTimeout(), TimeUnit.MILLISECONDS);
-
-            return (DiffResult) reply.getBody();
+            return syncDiff(remoteServerId);
         }
+    }
+
+    private DiffResult syncDiff(int remoteServerId) throws Exception {
+        Message message = new Message();
+        message.setVerb(Verb.DIFF_RESULT);
+        message.setId(Message.nextId());
+
+        RequireDiff diff = new RequireDiff();
+        diff.setMaxXid(storage.getMaxXid());
+        diff.setTree(storage.getHashTree());
+
+        message.setBody(diff);
+
+        Future<Message> future = MessageService.send(message, remoteServerId);
+        Message reply = future.get(config.getSyncTimeout(), TimeUnit.MILLISECONDS);
+
+        return (DiffResult) reply.getBody();
     }
 
     private class RequireRemoteSyncTask implements Callable<Boolean> {

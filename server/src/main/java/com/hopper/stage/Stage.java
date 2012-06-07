@@ -13,5 +13,6 @@ public enum Stage {
     CLIENT_BOSS,
     CLIENT_WORKER,
     SCHEDULE,
-    STATE_CHANGE
+    STATE_CHANGE,
+    SYNC
 }
