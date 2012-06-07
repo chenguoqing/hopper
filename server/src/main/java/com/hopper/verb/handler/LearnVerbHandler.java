@@ -238,8 +238,8 @@ public class LearnVerbHandler implements VerbHandler {
 
             message.setBody(batchCreator);
 
-            OutgoingSession serverSession = config.getSessionManager().getLocalOutgoingServerSession(config
-                    .getEndpoint(newLeader));
+            OutgoingSession serverSession = config.getSessionManager().getOutgoingSession(config.getEndpoint
+                    (newLeader));
             if (serverSession != null) {
                 serverSession.sendOneway(message);
             }

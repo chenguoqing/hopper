@@ -9,6 +9,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * {@link SessionManager} packages all session operation
+ *
+ * @author chenguoqing
+ */
 public class SessionManager {
     /**
      * Logger
@@ -18,8 +23,18 @@ public class SessionManager {
      * {@link com.hopper.GlobalConfiguration} instance
      */
     private static final GlobalConfiguration config = GlobalConfiguration.getInstance();
-
-    private final Map<Channel, IncomingSession> channelBoundIncomingSessions = new ConcurrentHashMap<Channel, IncomingSession>();
+    /**
+     * The mapping between channel and incoming session
+     */
+    private final Map<Channel, IncomingSession> incomingSessions = new ConcurrentHashMap<Channel, IncomingSession>();
+    /**
+     * Out going sessions
+     */
+    private final Map<Endpoint, OutgoingSession> outgoingSessions = new ConcurrentHashMap<Endpoint, OutgoingSession>();
+    /**
+     * Client sessions
+     */
+    private final Map<String, ClientSession> clientSessions = new ConcurrentHashMap<String, ClientSession>();
 
     /**
      * Create a {@link IncomingSession} implementation
@@ -32,72 +47,72 @@ public class SessionManager {
 
         final Endpoint endpoint = config.getEndpoint(channel.getRemoteAddress());
 
-        IncomingSession incommingSession = config.getSessionManager().getLocalIncomingSession(endpoint);
+        IncomingSession incomingSession = config.getSessionManager().getIncomingSession(endpoint);
 
-        if (incommingSession != null) {
-            return incommingSession;
+        if (incomingSession != null) {
+            return incomingSession;
         }
 
         synchronized (endpoint) {
 
-            incommingSession = config.getSessionManager().getLocalIncomingSession(endpoint);
+            incomingSession = config.getSessionManager().getIncomingSession(endpoint);
 
-            // dobule check
-            if (incommingSession != null) {
-                return incommingSession;
+            // double check
+            if (incomingSession != null) {
+                return incomingSession;
             }
 
             // Generate new session id
             String sessionId = SessionIdGenerator.generateSessionId();
 
-            incommingSession = new LocalIncomingSession();
-            ((LocalIncomingSession) incommingSession).setId(sessionId);
-            incommingSession.setSessionManager(this);
+            incomingSession = new LocalIncomingSession();
+            ((LocalIncomingSession) incomingSession).setId(sessionId);
+            incomingSession.setSessionManager(this);
 
-            Connection conn = config.getConnectionManager().getConnection(channel);
+            Connection conn = config.getConnectionManager().getIncomingConnection(channel);
 
             if (conn == null) {
                 conn = new DummyConnection();
                 ((DummyConnection) conn).setChannel(channel);
-                conn.setSession(incommingSession);
+                conn.setSession(incomingSession);
 
                 // Register the connection and channel to ConnectionManager
-                config.getConnectionManager().addConnection(channel, conn);
+                config.getConnectionManager().addIncomingConnection(channel, conn);
             }
 
-            ((LocalIncomingSession) incommingSession).setConnection(conn);
+            ((LocalIncomingSession) incomingSession).setConnection(conn);
 
             // register session
-            boundChannelToIncomingSession(channel, incommingSession);
+            incomingSessions.put(channel, incomingSession);
         }
 
-        return incommingSession;
+        return incomingSession;
     }
 
     /**
      * Create a {@link OutgoingSession} with endpoint
      */
-    public LocalOutgoingSession createLocalOutgoingSession(Endpoint endpoint) throws Exception {
+    public OutgoingSession createLocalOutgoingSession(Endpoint endpoint) throws Exception {
 
-        LocalOutgoingSession session = config.getSessionManager().getLocalOutgoingServerSession(endpoint);
+        OutgoingSession session = config.getSessionManager().getOutgoingSession(endpoint);
 
         if (session != null) {
             return session;
         }
 
         synchronized (endpoint) {
-            session = config.getSessionManager().getLocalOutgoingServerSession(endpoint);
+            session = config.getSessionManager().getOutgoingSession(endpoint);
             if (session == null) {
                 session = new LocalOutgoingSession();
 
                 // local session id
-                session.setId(SessionIdGenerator.generateSessionId());
+                ((LocalIncomingSession) session).setId(SessionIdGenerator.generateSessionId());
 
                 // create connection
                 Connection connection = config.getConnectionManager().createOutgoingServerConnection(session, endpoint);
 
                 // bound the session to connection
-                session.setConnection(connection);
+                ((LocalIncomingSession) session).setConnection(connection);
 
                 // register session to SessionManager
                 addOutgoingServerSession(session);
@@ -107,72 +122,76 @@ public class SessionManager {
     }
 
     /**
-     * Add incomming session
+     * Remove the incoming session
      */
-    public void addIncommingSession(IncomingSession session) {
-    }
+    public void removeIncomingSession(IncomingSession session) {
+        Channel boundChannel = null;
 
-    private void boundChannelToIncomingSession(Channel channel, IncomingSession session) {
-        channelBoundIncomingSessions.put(channel, session);
+        for (Channel channel : incomingSessions.keySet()) {
+            IncomingSession session1 = incomingSessions.get(channel);
+            if (session == session1) {
+                boundChannel = channel;
+                break;
+            }
+        }
+
+        if (boundChannel != null) {
+            incomingSessions.remove(boundChannel);
+        }
     }
 
     /**
-     * Remove the incomming session
+     * Retrieve all incoming sessions
      */
-    public void removeIncommingSession(IncomingSession session) {
-    }
-
-    /**
-     * Retrieve {@link IncomingSession} instance by session id
-     */
-    public IncomingSession getIncommingSession(String sessionid) {
-        return null;
-    }
-
-    /**
-     * Retrieve all incomming sessions
-     */
-    public IncomingSession[] getAllIncommingSessions() {
-        return null;
-    }
-
-    public OutgoingSession[] getAllOutgoingSessions() {
-        return null;
+    public IncomingSession[] getAllIncomingSessions() {
+        return incomingSessions.keySet().toArray(new IncomingSession[]{});
     }
 
     /**
      * Retrieve the master {@link IncomingSession} by the associated
      * {@link Channel}
      */
-    public IncomingSession getLocalIncomingSession(Channel channel) {
-        return null;
+    public IncomingSession getIncomingSession(Channel channel) {
+        return incomingSessions.get(channel);
     }
 
-    public IncomingSession getLocalIncomingSession(Endpoint endpoint) {
+    /**
+     * Retrieve the IncomingSession bound with <code>endpoint</code>
+     */
+    public IncomingSession getIncomingSession(Endpoint endpoint) {
+        for (IncomingSession session : getAllIncomingSessions()) {
+            if (session.getConnection().getSourceEndpoint() == endpoint) {
+                return session;
+            }
+        }
         return null;
     }
 
     /**
-     * Retrieve all master incomming sessions
+     * Add client session
      */
-    public IncomingSession[] getAllLocalIncommingSessions() {
-        return null;
-    }
-
-    public void addClientSession(ClientSession session) {
-
+    public void addClientSession(ClientSession clientSession) {
+        clientSessions.put(clientSession.getId(), clientSession);
     }
 
     public ClientSession getClientSession(String sessionId) {
-        return null;
+        return clientSessions.get(sessionId);
     }
 
     public ClientSession getClientSession(Channel channel) {
+        for (ClientSession session : clientSessions.values()) {
+            if (session.getConnection().getChannel() == channel) {
+                return session;
+            }
+        }
         return null;
     }
 
+    /**
+     * Retrieve the {@link OutgoingSession} by multiplexer session id
+     */
     public OutgoingSession getOutgoingSessionByMultiplexerSessionId(String multiplexerSessionId) {
-        for (IncomingSession session : getAllIncommingSessions()) {
+        for (IncomingSession session : getAllIncomingSessions()) {
             if (session.containsMultiplexerSession(multiplexerSessionId)) {
                 return getOutgoingSession(session);
             }
@@ -180,30 +199,33 @@ public class SessionManager {
         return null;
     }
 
+    private OutgoingSession getOutgoingSession(IncomingSession incomingSession) {
+        Endpoint endpoint = incomingSession.getConnection().getSourceEndpoint();
+        return getOutgoingSession(endpoint);
+    }
+
     public ClientSession[] getAllClientSessions() {
-        return null;
+        return clientSessions.values().toArray(new ClientSession[]{});
     }
 
     public void removeClientSession(String sessionId) {
-
+        clientSessions.remove(sessionId);
     }
 
     public void addOutgoingServerSession(OutgoingSession session) {
+        outgoingSessions.put(session.getConnection().getDestEndpoint(), session);
     }
 
     public void removeOutgoingServerSession(OutgoingSession session) {
+        outgoingSessions.remove(session.getConnection().getDestEndpoint());
     }
 
-    public OutgoingSession getOutgoingServerSession(String sessionId) {
+    public OutgoingSession getOutgoingSession(String sessionId) {
         return null;
     }
 
-    public LocalOutgoingSession getLocalOutgoingServerSession(Endpoint endpoint) {
-        return null;
-    }
-
-    public OutgoingSession getOutgoingSession(IncomingSession incommingSession) {
-        return null;
+    public OutgoingSession getOutgoingSession(Endpoint endpoint) {
+        return outgoingSessions.get(endpoint);
     }
 
     /**
@@ -211,6 +233,14 @@ public class SessionManager {
      * associated with <tt>endpoint</tt>.
      */
     public void closeServerSession(Endpoint endpoint) {
+        IncomingSession incomingSession = getIncomingSession(endpoint);
+        if (incomingSession != null) {
+            incomingSession.close();
+        }
 
+        OutgoingSession outgoingSession = getOutgoingSession(endpoint);
+        if (outgoingSession != null) {
+            outgoingSession.close();
+        }
     }
 }

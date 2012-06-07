@@ -17,6 +17,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * The default implementation of IncomingSession
+ */
 public class LocalIncomingSession extends SessionProxy implements IncomingSession, LifecycleListener {
     /**
      * Logger
@@ -118,7 +121,7 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
     @Override
     public void lifecycle(LifecycleEvent event) {
         // remove self from session manager
-        sessionManager.removeIncommingSession(this);
+        sessionManager.removeIncomingSession(this);
         multiplexerSessions.clear();
     }
 

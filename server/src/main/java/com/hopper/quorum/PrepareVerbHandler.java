@@ -62,7 +62,7 @@ public class PrepareVerbHandler implements VerbHandler {
 		reply.setBody(promise);
 
 		// Retrieve the OutgoingSession
-		OutgoingSession session = config.getSessionManager().getOutgoingServerSession(sessionId);
+		OutgoingSession session = config.getSessionManager().getOutgoingSession(sessionId);
 
 		if (session != null) {
 			session.sendOneway(reply);

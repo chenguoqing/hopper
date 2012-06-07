@@ -27,7 +27,7 @@ public class RequireTreeVerbhandler implements VerbHandler {
 
         reply.setBody(storage.getHashTree());
 
-        OutgoingSession session = config.getSessionManager().getOutgoingServerSession(message.getSessionId());
+        OutgoingSession session = config.getSessionManager().getOutgoingSession(message.getSessionId());
         if (session != null) {
             session.sendOneway(reply);
         }

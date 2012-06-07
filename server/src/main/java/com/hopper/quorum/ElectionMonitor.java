@@ -41,7 +41,7 @@ public class ElectionMonitor extends LifecycleProxy {
                 return;
             }
 
-            IncomingSession[] sessions = config.getSessionManager().getAllIncommingSessions();
+            IncomingSession[] sessions = config.getSessionManager().getAllIncomingSessions();
 
             int disConnectCounter = 0;
 

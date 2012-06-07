@@ -59,6 +59,7 @@ public class DummyConnection extends LifecycleProxy implements Connection {
     @Override
     public void close() {
         shutdown();
+        GlobalConfiguration.getInstance().getConnectionManager().removeIncomingConnection(channel);
     }
 
     @Override

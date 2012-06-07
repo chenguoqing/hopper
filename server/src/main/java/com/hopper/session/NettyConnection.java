@@ -113,7 +113,8 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     public void connect() {
         // Configure the client.
-        ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(bossExecutor, workerExecutor));
+        ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(bossExecutor,
+                workerExecutor));
 
         // set customs pipeline factory
         bootstrap.setPipelineFactory(new ServerPiplelineFactory());
@@ -161,6 +162,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     public void close() {
         shutdown();
+        config.getConnectionManager().removeOutgoingConnection(dest);
     }
 
     @Override

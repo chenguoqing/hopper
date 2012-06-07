@@ -2,9 +2,9 @@ package com.hopper.verb.handler;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.server.Endpoint;
-import com.hopper.verb.Verb;
-import com.hopper.thrift.ChannelBound;
 import com.hopper.session.*;
+import com.hopper.thrift.ChannelBound;
+import com.hopper.verb.Verb;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             return;
         }
 
-        IncomingSession incomingSession = config.getSessionManager().getLocalIncomingSession(endpoint);
+        IncomingSession incomingSession = config.getSessionManager().getIncomingSession(endpoint);
 
         if (incomingSession == null) {
             incomingSession = config.getSessionManager().createIncomingSession(channel);
@@ -60,17 +60,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
     public void childChannelClosed(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
         final Channel channel = ctx.getChannel();
         Endpoint endpoint = config.getEndpoint(channel.getRemoteAddress());
-        IncomingSession incommingSession = config.getSessionManager().getLocalIncomingSession(endpoint);
-
-        if (incommingSession != null) {
-            incommingSession.close();
-        }
-
-        OutgoingSession outgoingSession = config.getSessionManager().getOutgoingSession(incommingSession);
-        if (outgoingSession != null) {
-            outgoingSession.close();
-        }
-
+        config.getSessionManager().closeServerSession(endpoint);
         super.childChannelClosed(ctx, e);
     }
 
@@ -81,10 +71,10 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             ChannelBound.bound(ctx.getChannel());
 
             if (e.getMessage() instanceof Message) {
-                Message messge = (Message) e.getMessage();
+                Message message = (Message) e.getMessage();
 
                 // mutation the command
-                processReceivedMessage(messge, e.getChannel());
+                processReceivedMessage(message, e.getChannel());
 
             } else {
                 ctx.sendUpstream(e);
@@ -100,7 +90,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // register multiplexer session
         if (verb == Verb.BOUND_MULTIPLEXER_SESSION) {
-            IncomingSession session = config.getSessionManager().getLocalIncomingSession(channel);
+            IncomingSession session = config.getSessionManager().getIncomingSession(channel);
 
             BatchSessionCreator batchCreator = (BatchSessionCreator) message.getBody();
 
@@ -116,7 +106,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             // send reply
             session.sendOneway(reply);
         } else {
-            IncomingSession session = config.getSessionManager().getLocalIncomingSession(ChannelBound.get());
+            IncomingSession session = config.getSessionManager().getIncomingSession(ChannelBound.get());
             // delegates the message processing to bound IncomingSession
             session.receive(message);
         }
@@ -124,11 +114,11 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
     private boolean checkSession(Message message, Channel channel) {
 
-        IncomingSession incomingServersession = config.getSessionManager().getLocalIncomingSession(channel);
+        IncomingSession incomingSession = config.getSessionManager().getIncomingSession(channel);
 
         // validate whether the channel has been bound with one
         // IncomingSession
-        if (incomingServersession == null) {
+        if (incomingSession == null) {
             throw new NotAuthException();
         }
 
@@ -136,13 +126,13 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // if session id is null, it indicates that the message target is the
         // master session
-        if (sessionId == null || sessionId.equals(incomingServersession.getId())) {
+        if (sessionId == null || sessionId.equals(incomingSession.getId())) {
             return true;
         }
 
         // otherwise, the session may be a multiplexer session, it must be bound
         // on the outgoing channel,and, must have a connected ClientSession
-        OutgoingSession outgoingServerSession = config.getSessionManager().getOutgoingServerSession(sessionId);
+        OutgoingSession outgoingServerSession = config.getSessionManager().getOutgoingSession(sessionId);
         if (outgoingServerSession == null) {
             throw new NotBoundSessionException(sessionId, GlobalConfiguration.getInstance().getEndpoint(channel
                     .getRemoteAddress()));

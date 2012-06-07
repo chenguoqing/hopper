@@ -32,7 +32,7 @@ public class ApplyDiffVerbHandler implements VerbHandler {
         reply.setId(message.getId());
         reply.setBody(new byte[]{0});
 
-        OutgoingSession session = config.getSessionManager().getOutgoingServerSession(message.getSessionId());
+        OutgoingSession session = config.getSessionManager().getOutgoingSession(message.getSessionId());
         if (session != null) {
             session.sendOneway(reply);
         }

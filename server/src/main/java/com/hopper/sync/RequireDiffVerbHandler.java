@@ -35,7 +35,7 @@ public class RequireDiffVerbHandler implements VerbHandler {
         reply.setId(message.getId());
         reply.setBody(result);
 
-        OutgoingSession session = config.getSessionManager().getOutgoingServerSession(message.getSessionId());
+        OutgoingSession session = config.getSessionManager().getOutgoingSession(message.getSessionId());
         if (session != null) {
             session.sendOneway(reply);
         }
