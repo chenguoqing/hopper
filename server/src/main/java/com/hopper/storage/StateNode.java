@@ -1,8 +1,10 @@
 package com.hopper.storage;
 
 import com.hopper.GlobalConfiguration;
+import com.hopper.MessageService;
 import com.hopper.Stage;
 import com.hopper.StageThreadPools;
+import com.hopper.session.ClientSession;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -117,7 +119,7 @@ public class StateNode {
             if (this.owner != null && owner != null && !this.owner.equals(owner)) {
                 throw new OwnerNoMatchException(this.owner, owner);
             }
-
+            final int oldStatus = this.status;
             this.status = newStatus;
             this.owner = owner;
             this.version++;
@@ -134,7 +136,7 @@ public class StateNode {
             }
 
             // fire state change
-            fireStateChangeListeners(newStatus);
+            fireStateChangeListeners(oldStatus, newStatus);
 
         } finally {
             nodeLock.writeLock().unlock();
@@ -275,9 +277,10 @@ public class StateNode {
         nodeLock.writeLock().lock();
         this.lease = -1;
         this.owner = null;
+        final int oldStatus = this.status;
         this.status = invalidateStatus;
         nodeLock.writeLock().unlock();
-        fireStateChangeListeners(invalidateStatus);
+        fireStateChangeListeners(oldStatus, invalidateStatus);
     }
 
     /**
@@ -353,31 +356,32 @@ public class StateNode {
     /**
      * Fire all state change listeners (asynchronous)
      */
-    private void fireStateChangeListeners(int newStatus) {
+    private void fireStateChangeListeners(int oldStatus, int newStatus) {
         ThreadPoolExecutor threadPool = StageThreadPools.getThreadPool(Stage.STATE_CHANGE);
 
         String sessionId = stateChangeListeners.poll();
 
         while (sessionId != null) {
-            Runnable task = new StateChangeNotifyTask(newStatus, sessionId);
+            Runnable task = new StateChangeNotifyTask(oldStatus, newStatus, sessionId);
             threadPool.execute(task);
             sessionId = stateChangeListeners.poll();
         }
     }
 
-    private static class StateChangeNotifyTask implements Runnable {
+    private class StateChangeNotifyTask implements Runnable {
+        final int oldStatus;
         final int newStatus;
         final String sessionId;
 
-        StateChangeNotifyTask(int newStatus, String sessionId) {
+        StateChangeNotifyTask(int oldStatus, int newStatus, String sessionId) {
+            this.oldStatus = oldStatus;
             this.newStatus = newStatus;
             this.sessionId = sessionId;
         }
 
         @Override
         public void run() {
-            //TODO:
-
+            MessageService.notifyStatusChange(sessionId, oldStatus, newStatus);
         }
     }
 

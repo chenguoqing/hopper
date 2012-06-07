@@ -3,7 +3,7 @@ package com.hopper.server.handler;
 import com.hopper.GlobalConfiguration;
 import com.hopper.server.Endpoint;
 import com.hopper.session.Connection;
-import com.hopper.session.LocalOutgoingServerSession;
+import com.hopper.session.LocalOutgoingSession;
 import com.hopper.session.NettyConnection;
 import org.jboss.netty.channel.Channel;
 
@@ -34,7 +34,7 @@ public class ConnectionManager {
      * @param session
      * @return
      */
-    public Connection createOutgoingServerConnection(LocalOutgoingServerSession session,
+    public Connection createOutgoingServerConnection(LocalOutgoingSession session,
                                                      Endpoint endpoint) throws Exception {
         NettyConnection connection = (NettyConnection) config.getConnectionManager().getConnection(endpoint);
 

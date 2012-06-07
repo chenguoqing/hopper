@@ -93,7 +93,7 @@ public enum Verb {
     /**
      * Expand lease
      */
-    EXPAND_LEASE(104);
+    NOTIFY_STATUS_CHANGE(104);
 
     public final int type;
 

@@ -4,7 +4,7 @@ import com.hopper.GlobalConfiguration;
 import com.hopper.server.Verb;
 import com.hopper.server.VerbHandler;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingServerSession;
+import com.hopper.session.OutgoingSession;
 import com.hopper.storage.merkle.Difference;
 
 /**
@@ -32,7 +32,7 @@ public class ApplyDiffVerbHandler implements VerbHandler {
         reply.setId(message.getId());
         reply.setBody(new byte[]{0});
 
-        OutgoingServerSession session = config.getSessionManager().getOutgoingServerSession(message.getSessionId());
+        OutgoingSession session = config.getSessionManager().getOutgoingServerSession(message.getSessionId());
         if (session != null) {
             session.sendOneway(reply);
         }

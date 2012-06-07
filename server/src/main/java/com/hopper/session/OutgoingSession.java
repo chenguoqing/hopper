@@ -1,12 +1,12 @@
 package com.hopper.session;
 
 /**
- * {@link OutgoingServerSession} representing a outer connection
+ * {@link OutgoingSession} representing a outer connection
  * 
  * @author chenguoqing
  * 
  */
-public interface OutgoingServerSession extends ServerSession {
+public interface OutgoingSession extends Session {
 	/**
 	 * Starting the background processing
 	 */

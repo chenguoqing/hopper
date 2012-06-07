@@ -6,7 +6,7 @@ import com.hopper.future.LatchFuture;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Verb;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingServerSession;
+import com.hopper.session.OutgoingSession;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateNodeSnapshot;
 import com.hopper.storage.StateStorage;
@@ -132,7 +132,7 @@ public class DataSyncService extends LifecycleProxy {
 
             message.setBody(diff);
 
-            OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(config.getEndpoint
+            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(config.getEndpoint
                     (remoteServerId));
             Future<Message> future = session.send(message);
             Message reply = future.get(config.getSyncTimeout(), TimeUnit.MILLISECONDS);
@@ -154,7 +154,7 @@ public class DataSyncService extends LifecycleProxy {
             request.setVerb(Verb.REQUIRE_TREE);
             request.setId(Message.nextId());
 
-            OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(remoteServer);
+            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(remoteServer);
 
             Future<Message> future = session.send(request);
 

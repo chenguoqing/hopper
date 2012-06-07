@@ -14,7 +14,7 @@ import com.hopper.server.sync.DiffResult;
 import com.hopper.server.sync.SyncException;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingServerSession;
+import com.hopper.session.OutgoingSession;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -208,7 +208,7 @@ public class LearnVerbHandler implements VerbHandler {
      */
     private void activeNewLeader(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
 
         // start heart beat
         session.background();
@@ -238,7 +238,7 @@ public class LearnVerbHandler implements VerbHandler {
 
             message.setBody(batchCreator);
 
-            OutgoingServerSession serverSession = config.getSessionManager().getLocalOutgoingServerSession(config
+            OutgoingSession serverSession = config.getSessionManager().getLocalOutgoingServerSession(config
                     .getEndpoint(newLeader));
             if (serverSession != null) {
                 serverSession.sendOneway(message);

@@ -17,11 +17,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class LocalIncomingServerSession extends SessionProxy implements IncomingServerSession, LifecycleListener {
+public class LocalIncomingSession extends SessionProxy implements IncomingSession, LifecycleListener {
     /**
      * Logger
      */
-    private static final Logger logger = LoggerFactory.getLogger(LocalIncomingServerSession.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalIncomingSession.class);
 
     private final List<String> multiplexerSessions = Collections.synchronizedList(new ArrayList<String>());
 
@@ -109,7 +109,7 @@ public class LocalIncomingServerSession extends SessionProxy implements Incoming
     }
 
     /**
-     * When shutdowns the {@link IncomingServerSession}, will directly close the
+     * When shutdowns the {@link IncomingSession}, will directly close the
      * associated {@link Connection} without sending any close message.
      * <p/>
      * Generally, the {@link #close()} method will be triggered from remote

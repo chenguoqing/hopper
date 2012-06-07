@@ -8,7 +8,7 @@ import com.hopper.server.Verb;
 import com.hopper.server.handler.HeartBeat;
 import com.hopper.utils.ScheduleManager;
 
-public class LocalOutgoingServerSession extends SessionProxy implements OutgoingServerSession, LifecycleListener {
+public class LocalOutgoingSession extends SessionProxy implements OutgoingSession, LifecycleListener {
 
     /**
      * Schedule manager
@@ -36,7 +36,7 @@ public class LocalOutgoingServerSession extends SessionProxy implements Outgoing
     }
 
     /**
-     * When shutdowns {@link OutgoingServerSession}, should send close message
+     * When shutdowns {@link OutgoingSession}, should send close message
      * to remote server, then release local resources.
      */
     @Override

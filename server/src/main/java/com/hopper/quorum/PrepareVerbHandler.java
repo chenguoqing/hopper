@@ -6,7 +6,7 @@ import com.hopper.server.VerbHandler;
 import com.hopper.server.handler.Prepare;
 import com.hopper.server.handler.Promise;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingServerSession;
+import com.hopper.session.OutgoingSession;
 
 public class PrepareVerbHandler implements VerbHandler {
 	private GlobalConfiguration config = GlobalConfiguration.getInstance();
@@ -61,8 +61,8 @@ public class PrepareVerbHandler implements VerbHandler {
 
 		reply.setBody(promise);
 
-		// Retrieve the OutgoingServerSession
-		OutgoingServerSession session = config.getSessionManager().getOutgoingServerSession(sessionId);
+		// Retrieve the OutgoingSession
+		OutgoingSession session = config.getSessionManager().getOutgoingServerSession(sessionId);
 
 		if (session != null) {
 			session.sendOneway(reply);

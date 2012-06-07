@@ -15,14 +15,14 @@ import java.util.concurrent.Future;
  * used for sending messages; Outgoing connection only be used for receiving
  * messages. But we use the {@link Connection} interface representing the two
  * different connections, and the "incoming" and "outgoing" characteristics will
- * be implemented in {@link IncomingServerSession} and
- * {@link OutgoingServerSession}.
+ * be implemented in {@link IncomingSession} and
+ * {@link OutgoingSession}.
  * </p>
  * 
  * <p>
  * In order to check the target whether or not is alive, it must send some heart
  * beats to target,for simplifying the communication mechanism, it only hears
- * beat on Outgoing connection({@link OutgoingServerSession})
+ * beat on Outgoing connection({@link OutgoingSession})
  * </p>
  * 
  * @author chenguoqing

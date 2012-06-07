@@ -36,10 +36,14 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             return;
         }
 
-        IncomingServerSession incommingSession = config.getSessionManager().getLocalIncommingSession(endpoint);
+        IncomingSession incomingSession = config.getSessionManager().getLocalIncomingSession(endpoint);
+
+        if (incomingSession == null) {
+            incomingSession = config.getSessionManager().createIncomingSession(channel);
+        }
 
         // The session has created for other channel from endpoint
-        if (incommingSession.getConnection().getChannel() != channel) {
+        if (incomingSession.getConnection().getChannel() != channel) {
             logger.error("The session for {0} has created, only one connection can be allowed.", address);
             channel.close();
             return;
@@ -56,13 +60,13 @@ public class ServerMessageHandler extends SimpleChannelHandler {
     public void childChannelClosed(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
         final Channel channel = ctx.getChannel();
         Endpoint endpoint = config.getEndpoint(channel.getRemoteAddress());
-        IncomingServerSession incommingSession = config.getSessionManager().getLocalIncommingSession(endpoint);
+        IncomingSession incommingSession = config.getSessionManager().getLocalIncomingSession(endpoint);
 
         if (incommingSession != null) {
             incommingSession.close();
         }
 
-        OutgoingServerSession outgoingSession = config.getSessionManager().getOutgoingSession(incommingSession);
+        OutgoingSession outgoingSession = config.getSessionManager().getOutgoingSession(incommingSession);
         if (outgoingSession != null) {
             outgoingSession.close();
         }
@@ -96,7 +100,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // register multiplexer session
         if (verb == Verb.BOUND_MULTIPLEXER_SESSION) {
-            IncomingServerSession session = config.getSessionManager().getLocalIncommingSession(channel);
+            IncomingSession session = config.getSessionManager().getLocalIncomingSession(channel);
 
             BatchSessionCreator batchCreator = (BatchSessionCreator) message.getBody();
 
@@ -112,18 +116,18 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             // send reply
             session.sendOneway(reply);
         } else {
-            IncomingServerSession session = config.getSessionManager().getLocalIncommingSession(ChannelBound.get());
-            // delegates the message processing to bound IncomingServerSession
+            IncomingSession session = config.getSessionManager().getLocalIncomingSession(ChannelBound.get());
+            // delegates the message processing to bound IncomingSession
             session.receive(message);
         }
     }
 
     private boolean checkSession(Message message, Channel channel) {
 
-        IncomingServerSession incomingServersession = config.getSessionManager().getLocalIncommingSession(channel);
+        IncomingSession incomingServersession = config.getSessionManager().getLocalIncomingSession(channel);
 
         // validate whether the channel has been bound with one
-        // IncomingServerSession
+        // IncomingSession
         if (incomingServersession == null) {
             throw new NotAuthException();
         }
@@ -138,7 +142,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // otherwise, the session may be a multiplexer session, it must be bound
         // on the outgoing channel,and, must have a connected ClientSession
-        OutgoingServerSession outgoingServerSession = config.getSessionManager().getOutgoingServerSession(sessionId);
+        OutgoingSession outgoingServerSession = config.getSessionManager().getOutgoingServerSession(sessionId);
         if (outgoingServerSession == null) {
             throw new NotBoundSessionException(sessionId, GlobalConfiguration.getInstance().getEndpoint(channel
                     .getRemoteAddress()));

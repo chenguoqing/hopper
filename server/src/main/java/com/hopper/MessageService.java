@@ -5,8 +5,9 @@ import com.hopper.future.LatchFutureListener;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Verb;
 import com.hopper.server.handler.VerbMappings;
+import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingServerSession;
+import com.hopper.session.OutgoingSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class MessageService {
             }
 
             try {
-                OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+                OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
                 session.sendOneway(message);
             } catch (Exception e) {
                 logger.error("Failed to connect to " + endpoint, e);
@@ -100,7 +101,7 @@ public class MessageService {
     public static void sendOneway(Message message, int destServerId) {
         Endpoint endpoint = config.getEndpoint(destServerId);
         try {
-            OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
             logger.error("Failed to send message.", e);
@@ -112,7 +113,7 @@ public class MessageService {
      */
     public static void sendOnwayUntilComplete(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
-        OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
         session.sendOnwayUntilComplete(message);
     }
 
@@ -121,7 +122,30 @@ public class MessageService {
      */
     public static LatchFuture<Message> send(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
-        OutgoingServerSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
         return session.send(message);
+    }
+
+    public static void notifyStatusChange(String clientSessionId, int oldStatus, int newStatus) {
+        ClientSession clientSession = config.getSessionManager().getClientSession(clientSessionId);
+
+        if (clientSession != null) {
+            try {
+                clientSession.getNotify().statusChange(oldStatus, newStatus);
+            } catch (Exception e) {
+                //nothing
+            }
+        } else {
+            OutgoingSession outgoingSession = config.getSessionManager()
+                    .getOutgoingSessionByMultiplexerSessionId(clientSessionId);
+            if (outgoingSession != null) {
+                Message message = new Message();
+                message.setVerb(Verb.NOTIFY_STATUS_CHANGE);
+                message.setId(Message.nextId());
+                message.setSessionId(clientSessionId);
+
+                outgoingSession.sendOneway(message);
+            }
+        }
     }
 }

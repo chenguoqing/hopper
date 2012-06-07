@@ -2,7 +2,7 @@ package com.hopper.session;
 
 import java.util.List;
 
-public interface IncomingServerSession extends ServerSession {
+public interface IncomingSession extends Session {
 
     /**
      * Processing receiving message
