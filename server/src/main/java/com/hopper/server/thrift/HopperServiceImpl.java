@@ -240,7 +240,6 @@ public class HopperServiceImpl implements HopperService.Iface {
                 return mutation;
             }
         });
-
     }
 
     @Override

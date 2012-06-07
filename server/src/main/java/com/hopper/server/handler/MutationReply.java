@@ -12,7 +12,7 @@ import java.io.IOException;
 public class MutationReply implements Serializer {
 
     public static final int SUCCESS = 0;
-    public static final int WAITING = 1;
+    public static final int NODE_MISSING = 1;
     public static final int NO_QUORUM = 2;
     public static final int STATUS_CAS = 3;
     public static final int OWNER_CAS = 4;

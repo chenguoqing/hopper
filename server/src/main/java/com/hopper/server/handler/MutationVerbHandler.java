@@ -124,6 +124,11 @@ public class MutationVerbHandler implements VerbHandler {
 
     private void updateLease(Mutation.UpdateLease ul) {
 
+        if (storage.get(ul.key) == null) {
+            replyMutation(MutationReply.NODE_MISSING);
+            return;
+        }
+
         try {
             updateLease(ul.key, ul.expectStatus, ul.owner, ul.lease);
             replyMutation(MutationReply.SUCCESS);
@@ -160,20 +165,40 @@ public class MutationVerbHandler implements VerbHandler {
     }
 
     private void watch(Mutation.Watch watch) {
+        if (storage.get(watch.key) == null) {
+            replyMutation(MutationReply.NODE_MISSING);
+            return;
+        }
 
+        try {
+            watch(watch.key, watch.expectStatus);
+            replyMutation(MutationReply.SUCCESS);
+        } catch (ServiceUnavailableException e) {
+            logger.warn("No quorum nodes are alive, drops the updateLease request.");
+        } catch (NoQuorumException e) {
+            logger.warn("The server is unavailable, drops the updateLease request.");
+        } catch (StatusNoMatchException e) {
+            replyMutation(MutationReply.STATUS_CAS);
+        }
     }
 
     /**
      * Watch the special status(add a listener)
-     *
-     * @param key
-     * @param expectStatus
      */
     public void watch(String key, int expectStatus) {
         // check server state
         server.assertServiceAvailable();
 
+        StateNode node = getAndCreateNode(key);
+        node.watch(expectStatus);
 
+        // Synchronizes the modification to majority nodes
+        if (config.getDefaultServer().isLeader()) {
+            Mutation mutation = new Mutation();
+            mutation.addWatch(key, expectStatus);
+
+            synchronizeMutationToQuorum(mutation);
+        }
     }
 
     private StateNode getAndCreateNode(String key) {
