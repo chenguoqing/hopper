@@ -1,4 +1,4 @@
-package com.hopper.handler;
+package com.hopper.verb.handler;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.server.Endpoint;

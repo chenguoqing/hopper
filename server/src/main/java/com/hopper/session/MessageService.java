@@ -5,7 +5,7 @@ import com.hopper.future.LatchFuture;
 import com.hopper.future.LatchFutureListener;
 import com.hopper.server.Endpoint;
 import com.hopper.verb.Verb;
-import com.hopper.handler.VerbMappings;
+import com.hopper.verb.handler.VerbMappings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

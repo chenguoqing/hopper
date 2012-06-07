@@ -1,4 +1,4 @@
-package com.hopper.handler;
+package com.hopper.verb.handler;
 
 public class NotFoundClientSessionException extends RuntimeException {
 	/**

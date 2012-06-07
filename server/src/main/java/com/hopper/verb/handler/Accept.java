@@ -1,4 +1,4 @@
-package com.hopper.handler;
+package com.hopper.verb.handler;
 
 import com.hopper.session.Serializer;
 
@@ -6,30 +6,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**
- * The {@link Learn} representing a paxos "LEARN" message
- */
-public class Learn implements Serializer {
-    /**
-     * Proposer server id
-     */
-    private int proposer;
-    /**
-     * Election instance
-     */
+public class Accept implements Serializer {
+
     private int epoch;
-    /**
-     * The accepted value
-     */
+    private int ballot;
     private int vval;
-
-    public int getProposer() {
-        return proposer;
-    }
-
-    public void setProposer(int proposer) {
-        this.proposer = proposer;
-    }
 
     public int getEpoch() {
         return epoch;
@@ -37,6 +18,14 @@ public class Learn implements Serializer {
 
     public void setEpoch(int epoch) {
         this.epoch = epoch;
+    }
+
+    public int getBallot() {
+        return ballot;
+    }
+
+    public void setBallot(int ballot) {
+        this.ballot = ballot;
     }
 
     public int getVval() {
@@ -49,15 +38,13 @@ public class Learn implements Serializer {
 
     @Override
     public void serialize(DataOutput out) throws IOException {
-        out.writeInt(proposer);
-        out.writeInt(epoch);
+        out.writeInt(ballot);
         out.writeInt(vval);
     }
 
     @Override
     public void deserialize(DataInput in) throws IOException {
-        this.proposer = in.readInt();
-        this.epoch = in.readInt();
+        this.ballot = in.readInt();
         this.vval = in.readInt();
     }
 }

@@ -1,4 +1,4 @@
-package com.hopper.handler;
+package com.hopper.verb.handler;
 
 /**
  * The exception occurs when client trying to do some operations before creating

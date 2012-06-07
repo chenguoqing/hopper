@@ -1,4 +1,4 @@
-package com.hopper.handler;
+package com.hopper.verb.handler;
 
 import com.hopper.session.Message;
 import org.jboss.netty.buffer.ChannelBuffer;

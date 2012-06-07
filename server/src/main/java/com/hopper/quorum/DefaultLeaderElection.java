@@ -5,7 +5,7 @@ import com.hopper.session.MessageService;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server.ElectionState;
 import com.hopper.verb.Verb;
-import com.hopper.handler.*;
+import com.hopper.verb.handler.*;
 import com.hopper.session.Message;
 import com.hopper.session.OutgoingSession;
 import org.slf4j.Logger;

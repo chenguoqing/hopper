@@ -5,7 +5,7 @@ import com.hopper.quorum.LeaderElection;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
 import com.hopper.avro.ClientService;
-import com.hopper.handler.ConnectionManager;
+import com.hopper.verb.handler.ConnectionManager;
 import com.hopper.sync.DataSyncService;
 import com.hopper.thrift.HopperService;
 import com.hopper.session.SessionManager;

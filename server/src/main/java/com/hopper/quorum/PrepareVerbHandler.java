@@ -3,8 +3,8 @@ package com.hopper.quorum;
 import com.hopper.GlobalConfiguration;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
-import com.hopper.handler.Prepare;
-import com.hopper.handler.Promise;
+import com.hopper.verb.handler.Prepare;
+import com.hopper.verb.handler.Promise;
 import com.hopper.session.Message;
 import com.hopper.session.OutgoingSession;
 
