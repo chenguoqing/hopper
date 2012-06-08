@@ -1,12 +1,15 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import org.jboss.netty.channel.Channel;
 
 public class DummyConnection extends LifecycleProxy implements Connection {
+
+    private final GlobalConfiguration config = ComponentManagerFactory.getComponentManager().getGlobalConfiguration();
     /**
      * Associated {@link Channel}
      */
@@ -17,12 +20,12 @@ public class DummyConnection extends LifecycleProxy implements Connection {
     private Session session;
 
     private Endpoint sourceEndpoint;
-    private final Endpoint destEndpoint = GlobalConfiguration.getInstance().getLocalEndpoint();
+    private final Endpoint destEndpoint = config.getLocalServerEndpoint();
 
     public void setChannel(Channel channel) {
         if (channel != null) {
             this.channel = channel;
-            this.sourceEndpoint = GlobalConfiguration.getInstance().getEndpoint(channel.getRemoteAddress());
+            this.sourceEndpoint = config.getEndpoint(channel.getRemoteAddress());
         }
     }
 
@@ -59,7 +62,7 @@ public class DummyConnection extends LifecycleProxy implements Connection {
     @Override
     public void close() {
         shutdown();
-        GlobalConfiguration.getInstance().getConnectionManager().removeIncomingConnection(channel);
+        ComponentManagerFactory.getComponentManager().getConnectionManager().removeIncomingConnection(channel);
     }
 
     @Override

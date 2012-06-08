@@ -1,18 +1,14 @@
 package com.hopper.session;
 
-import com.hopper.GlobalConfiguration;
-import com.hopper.lifecycle.LifecycleListener;
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.LifecycleListener;
+import com.hopper.server.ComponentManagerFactory;
 
 public abstract class SessionProxy implements Session {
     /**
-     * {@link com.hopper.GlobalConfiguration} instance
-     */
-    protected static final GlobalConfiguration config = GlobalConfiguration.getInstance();
-    /**
      * Singleton SessionManager instance
      */
-    protected static SessionManager sessionManager = config.getSessionManager();
+    protected static SessionManager sessionManager = ComponentManagerFactory.getComponentManager().getSessionManager();
 
     /**
      * Associated connection

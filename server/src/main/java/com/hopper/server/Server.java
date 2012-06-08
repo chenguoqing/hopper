@@ -74,16 +74,6 @@ public interface Server extends Lifecycle {
     Paxos getPaxos();
 
     /**
-     * Set the {@link StateStorage} instance, it is unique on server lifecycle
-     */
-    void setStorage(StateStorage storage);
-
-    /**
-     * Retrieve the associated {@link StateStorage} instance
-     */
-    StateStorage getStorage();
-
-    /**
      * Set the leader server id
      */
     void setLeader(int serverId);
@@ -107,7 +97,7 @@ public interface Server extends Lifecycle {
     /**
      * Abandon the leader identity
      */
-    void anandonLeadeship();
+    void abandonLeadership();
 
     /**
      * Take over the leader identity

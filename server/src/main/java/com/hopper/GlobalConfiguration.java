@@ -1,16 +1,9 @@
 package com.hopper;
 
 import com.hopper.avro.ClientService;
-import com.hopper.cache.CacheManager;
 import com.hopper.lifecycle.LifecycleProxy;
-import com.hopper.quorum.LeaderElection;
 import com.hopper.server.Endpoint;
-import com.hopper.server.Server;
-import com.hopper.session.ConnectionManager;
-import com.hopper.session.SessionManager;
-import com.hopper.sync.DataSyncService;
 import com.hopper.thrift.HopperService;
-import com.hopper.utils.ScheduleManager;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
@@ -33,8 +26,12 @@ public class GlobalConfiguration extends LifecycleProxy {
     /**
      * Server mode(single node or multiple nodes)
      */
-    public static enum Mode {
+    public static enum ServerMode {
         SINGLE, MULTI
+    }
+
+    public static enum StorageMode {
+        HASH, TREE
     }
 
     /**
@@ -62,19 +59,6 @@ public class GlobalConfiguration extends LifecycleProxy {
      */
     private InnerConfig innerConfig;
 
-    /**
-     * Forbidden construct from outside
-     */
-    private GlobalConfiguration() {
-    }
-
-    /**
-     * Singleton
-     */
-    public static GlobalConfiguration getInstance() {
-        return instance;
-    }
-
     @Override
     protected void doInit() {
         // Get the configuration file path
@@ -90,12 +74,19 @@ public class GlobalConfiguration extends LifecycleProxy {
         }
     }
 
-    public Mode getMode() {
-        String mode = innerConfig.getString("mode", "SINGLE");
+    public ServerMode getServerMode() {
+        String mode = innerConfig.getString("server_mode", ServerMode.SINGLE.name());
 
-        Mode _mode = Mode.valueOf(mode.toUpperCase());
+        ServerMode _mode = ServerMode.valueOf(mode.toUpperCase());
 
-        return _mode == null ? Mode.SINGLE : _mode;
+        return _mode == null ? ServerMode.SINGLE : _mode;
+    }
+
+    public StorageMode getStorageMode() {
+        String mode = innerConfig.getString("storage_mode", StorageMode.HASH.name());
+        StorageMode _mode = StorageMode.valueOf(mode);
+
+        return _mode == null ? StorageMode.HASH : _mode;
     }
 
     /**
@@ -107,6 +98,10 @@ public class GlobalConfiguration extends LifecycleProxy {
 
     public long getPingPeriod() {
         return innerConfig.getLong("ping_period", 1000);
+    }
+
+    public long getCacheEvictPeriod() {
+        return innerConfig.getLong("cache_evict_period", 30000);
     }
 
     public Endpoint getEndpoint(SocketAddress address) {
@@ -123,7 +118,11 @@ public class GlobalConfiguration extends LifecycleProxy {
         return endpoint.serverId == innerConfig.localServerEndpoint.serverId;
     }
 
-    public Endpoint getLocalEndpoint() {
+    public Endpoint getLocalRpcEndpoint() {
+        return innerConfig.localRpcEndpoint;
+    }
+
+    public Endpoint getLocalServerEndpoint() {
         return innerConfig.localServerEndpoint;
     }
 
@@ -131,28 +130,8 @@ public class GlobalConfiguration extends LifecycleProxy {
         return innerConfig.endpointMap.get(serverId);
     }
 
-    public CacheManager getCacheManager() {
-        return null;
-    }
-
-    public ScheduleManager getScheduleManager() {
-        return null;
-    }
-
-    public SessionManager getSessionManager() {
-        return null;
-    }
-
-    public Server getDefaultServer() {
-        return null;
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return null;
-    }
-
-    public LeaderElection getLeaderElection() {
-        return null;
+    public int getScheduleThreadCount() {
+        return (int) innerConfig.getLong("schedule_thread_count", 3);
     }
 
     public Endpoint[] getConfigedEndpoints() {
@@ -188,10 +167,6 @@ public class GlobalConfiguration extends LifecycleProxy {
         return innerConfig.getLong("period_for_waiting_election_complete", 5000);
     }
 
-    public DataSyncService getDataSyncService() {
-        return null;
-    }
-
     public int getSyncThreadPoolCoreSize() {
         return innerConfig.getIntFromNestedMap("data_sync", "sync_threadpool_coresize", 0);
     }
@@ -211,10 +186,6 @@ public class GlobalConfiguration extends LifecycleProxy {
 
     public long getStateNodePurgeExpire() {
         return innerConfig.getLongFromNestedMap("data_sync", "state_node_purge_period", 30000);
-    }
-
-    public ClientService getStateService() {
-        return null;
     }
 
     public long getRetryPeriod() {

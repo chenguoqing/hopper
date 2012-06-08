@@ -1,14 +1,15 @@
 package com.hopper.avro;
 
-import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Server;
-import com.hopper.thrift.ChannelBound;
 import com.hopper.session.ClientConnection;
 import com.hopper.session.ClientSession;
 import com.hopper.session.SessionIdGenerator;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.StatusNoMatchException;
+import com.hopper.thrift.ChannelBound;
 import org.apache.avro.AvroRemoteException;
 
 /**
@@ -18,13 +19,13 @@ public class ClientServiceImpl implements ClientService {
     /**
      * Singleton
      */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-    private final Server server = config.getDefaultServer();
+    private final Server server = componentManager.getDefaultServer();
     /**
      * Singleton
      */
-    private final StateStorage storage = config.getDefaultServer().getStorage();
+    private final StateStorage storage = componentManager.getStateStorage();
 
     /**
      * Allocates the session id for connected client
@@ -32,7 +33,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public CharSequence connect() throws AvroRemoteException {
 
-        ClientSession session = config.getSessionManager().getClientSession(ChannelBound.get());
+        ClientSession session = componentManager.getSessionManager().getClientSession(ChannelBound.get());
 
         if (session != null) {
             return session.getId();
@@ -59,7 +60,7 @@ public class ClientServiceImpl implements ClientService {
             throw new AvroRemoteException("sessionId is null.");
         }
 
-        config.getSessionManager().removeClientSession(sessionId.toString());
+        componentManager.getSessionManager().removeClientSession(sessionId.toString());
         ClientConnection conn = new ClientConnection(ChannelBound.get());
         ClientSession session = new ClientSession();
         session.setId(sessionId.toString());
@@ -73,7 +74,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public void disconnect() {
-        ClientSession session = config.getSessionManager().getClientSession(ChannelBound.get());
+        ClientSession session = componentManager.getSessionManager().getClientSession(ChannelBound.get());
 
         if (session != null) {
             session.getSessionManager().removeClientSession(session.getId());
@@ -83,7 +84,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public CharSequence ping() throws AvroRemoteException {
-        ClientSession session = config.getSessionManager().getClientSession(ChannelBound.get());
+        ClientSession session = componentManager.getSessionManager().getClientSession(ChannelBound.get());
         session.heartBeat();
         return "0";
     }
@@ -95,7 +96,7 @@ public class ClientServiceImpl implements ClientService {
     public int create(CharSequence key, CharSequence owner, int initStatus,
                       int invalidateStatus) throws AvroRemoteException {
         StateNode node = new StateNode(key.toString(), StateNode.TYPE_TEMP, StateNode.DEFAULT_STATUS,
-                StateNode.DEFAULT_INVALIDATE_STATUS, config.getDefaultServer().getPaxos().getEpoch());
+                StateNode.DEFAULT_INVALIDATE_STATUS, server.getPaxos().getEpoch());
         storage.put(node);
         return 0;
     }
@@ -133,7 +134,7 @@ public class ClientServiceImpl implements ClientService {
     public int watch(CharSequence key, int expectStatus) throws AvroRemoteException {
         StateNode node = getAndCreate(key.toString());
         try {
-            node.watch(expectStatus);
+            node.watch(null, expectStatus);
         } catch (StatusNoMatchException e) {
             return 1;
         }
@@ -146,7 +147,7 @@ public class ClientServiceImpl implements ClientService {
         if (node == null) {
             synchronized (key) {
                 node = storage.get(key);
-                node = new StateNode(key, config.getDefaultServer().getPaxos().getEpoch());
+                node = new StateNode(key, server.getPaxos().getEpoch());
                 storage.put(node);
             }
         }

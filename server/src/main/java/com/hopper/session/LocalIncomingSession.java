@@ -1,10 +1,11 @@
 package com.hopper.session;
 
-import com.hopper.GlobalConfiguration;
+import com.hopper.future.LatchFuture;
 import com.hopper.lifecycle.LifecycleEvent;
 import com.hopper.lifecycle.LifecycleEvent.EventType;
 import com.hopper.lifecycle.LifecycleListener;
-import com.hopper.future.LatchFuture;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import com.hopper.verb.handler.HeartBeat;
@@ -26,6 +27,8 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
      */
     private static final Logger logger = LoggerFactory.getLogger(LocalIncomingSession.class);
 
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
     private final List<String> multiplexerSessions = Collections.synchronizedList(new ArrayList<String>());
 
     private final AtomicLong lastHeartBeat = new AtomicLong(-1L);
@@ -40,7 +43,8 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
             return getConnection().validate();
         }
 
-        return System.currentTimeMillis() - lastHeartBeat.get() < GlobalConfiguration.getInstance().getRpcTimeout();
+        return System.currentTimeMillis() - lastHeartBeat.get() < componentManager.getGlobalConfiguration()
+                .getRpcTimeout();
     }
 
     /**
@@ -83,8 +87,9 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
             lastHeartBeat.set(System.currentTimeMillis());
 
             // If the leader's fresh, starting data synchronous
-            if (beat.getMaxXid() > config.getDefaultServer().getStorage().getMaxXid()) {
-                config.getDataSyncService().syncDataFromRemote(config.getDefaultServer().getLeader());
+            if (beat.getMaxXid() > componentManager.getStateStorage().getMaxXid()) {
+                componentManager.getDataSyncService().syncDataFromRemote(componentManager.getDefaultServer()
+                        .getLeader());
             }
         }
     }

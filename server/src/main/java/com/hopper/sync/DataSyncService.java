@@ -3,12 +3,13 @@ package com.hopper.sync;
 import com.hopper.GlobalConfiguration;
 import com.hopper.future.LatchFuture;
 import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.session.Message;
 import com.hopper.session.MessageService;
 import com.hopper.session.OutgoingSession;
 import com.hopper.stage.Stage;
-import com.hopper.stage.StageManager;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateNodeSnapshot;
 import com.hopper.storage.StateStorage;
@@ -33,14 +34,17 @@ public class DataSyncService extends LifecycleProxy {
      * Logger
      */
     private static final Logger logger = LoggerFactory.getLogger(DataSyncService.class);
+
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
     /**
      * Global configuration reference
      */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
     /**
      * Storage reference
      */
-    private final StateStorage storage = config.getDefaultServer().getStorage();
+    private final StateStorage storage = componentManager.getStateStorage();
     /**
      * Data synchronization thread pool
      */
@@ -48,7 +52,7 @@ public class DataSyncService extends LifecycleProxy {
 
     @Override
     protected void doInit() {
-        threadPool = StageManager.getThreadPool(Stage.SYNC);
+        threadPool = componentManager.getStageManager().getThreadPool(Stage.SYNC);
     }
 
     @Override
@@ -143,8 +147,8 @@ public class DataSyncService extends LifecycleProxy {
      * server, and requires the remote server to return the diff data.
      */
     private class RequireRemoteDiffTask implements Callable<DiffResult> {
-        final GlobalConfiguration config = GlobalConfiguration.getInstance();
-        final StateStorage storage = config.getDefaultServer().getStorage();
+        final GlobalConfiguration config = ComponentManagerFactory.getComponentManager().getGlobalConfiguration();
+        final StateStorage storage = ComponentManagerFactory.getComponentManager().getStateStorage();
         final int remoteServerId;
 
         private RequireRemoteDiffTask(int remoteServerId) {
@@ -168,7 +172,7 @@ public class DataSyncService extends LifecycleProxy {
 
         message.setBody(diff);
 
-        Future<Message> future = MessageService.send(message, remoteServerId);
+        Future<Message> future = componentManager.getMessageService().send(message, remoteServerId);
         Message reply = future.get(config.getSyncTimeout(), TimeUnit.MILLISECONDS);
 
         return (DiffResult) reply.getBody();
@@ -187,7 +191,7 @@ public class DataSyncService extends LifecycleProxy {
             request.setVerb(Verb.REQUIRE_TREE);
             request.setId(Message.nextId());
 
-            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(remoteServer);
+            OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(remoteServer);
 
             Future<Message> future = session.send(request);
 

@@ -1,71 +1,74 @@
 package com.hopper.quorum;
 
-import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
+import com.hopper.session.Message;
+import com.hopper.session.OutgoingSession;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import com.hopper.verb.handler.Prepare;
 import com.hopper.verb.handler.Promise;
-import com.hopper.session.Message;
-import com.hopper.session.OutgoingSession;
 
 public class PrepareVerbHandler implements VerbHandler {
-	private GlobalConfiguration config = GlobalConfiguration.getInstance();
-	private Paxos paxos = config.getDefaultServer().getPaxos();
 
-	@Override
-	public void doVerb(Message message) {
-		Prepare prepare = (Prepare) message.getBody();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-		int localEpoch = paxos.getEpoch();
-		int localRnd = paxos.getRnd();
+    private Paxos paxos = componentManager.getDefaultServer().getPaxos();
 
-		// local epoch or ballot is greater, reject the prepare
-		if (localEpoch > prepare.getEpoch() || localRnd > prepare.getBallot()) {
+    @Override
+    public void doVerb(Message message) {
+        Prepare prepare = (Prepare) message.getBody();
 
-			int status = 0;
-			if (paxos.getEpoch() > prepare.getEpoch()) {
-				status = (Promise.REJECT_EPOCH);
-			} else {
-				status = (Promise.REJECT_BALLOT);
-			}
+        int localEpoch = paxos.getEpoch();
+        int localRnd = paxos.getRnd();
 
-			sendPromise(message.getId(), message.getSessionId(), status);
+        // local epoch or ballot is greater, reject the prepare
+        if (localEpoch > prepare.getEpoch() || localRnd > prepare.getBallot()) {
 
-		} else {
+            int status = 0;
+            if (paxos.getEpoch() > prepare.getEpoch()) {
+                status = (Promise.REJECT_EPOCH);
+            } else {
+                status = (Promise.REJECT_BALLOT);
+            }
 
-			// target's epoch is greaten than local
-			if (localEpoch < prepare.getEpoch()) {
-				paxos.closeInstance();
-			} else if (localRnd < prepare.getBallot()) {
-				paxos.setRnd(prepare.getBallot());
-			}
+            sendPromise(message.getId(), message.getSessionId(), status);
 
-			sendPromise(message.getId(), message.getSessionId(), Promise.PROMISE);
-		}
-	}
+        } else {
 
-	private void sendPromise(int messageId, String sessionId, int status) {
+            // target's epoch is greaten than local
+            if (localEpoch < prepare.getEpoch()) {
+                paxos.closeInstance();
+            } else if (localRnd < prepare.getBallot()) {
+                paxos.setRnd(prepare.getBallot());
+            }
 
-		Message reply = new Message();
-		reply.setId(messageId);
-		reply.setVerb(Verb.PAXOS_PROMISE);
+            sendPromise(message.getId(), message.getSessionId(), Promise.PROMISE);
+        }
+    }
 
-		Promise promise = new Promise();
+    private void sendPromise(int messageId, String sessionId, int status) {
 
-		promise.setStatus(status);
+        Message reply = new Message();
+        reply.setId(messageId);
+        reply.setVerb(Verb.PAXOS_PROMISE);
 
-		promise.setEpoch(paxos.getEpoch());
-		promise.setRnd(paxos.getRnd());
-		promise.setVrnd(paxos.getVrnd());
-		promise.setVval(paxos.getVval());
+        Promise promise = new Promise();
 
-		reply.setBody(promise);
+        promise.setStatus(status);
 
-		// Retrieve the OutgoingSession
-		OutgoingSession session = config.getSessionManager().getOutgoingSession(sessionId);
+        promise.setEpoch(paxos.getEpoch());
+        promise.setRnd(paxos.getRnd());
+        promise.setVrnd(paxos.getVrnd());
+        promise.setVval(paxos.getVval());
 
-		if (session != null) {
-			session.sendOneway(reply);
-		}
-	}
+        reply.setBody(promise);
+
+        // Retrieve the OutgoingSession
+        OutgoingSession session = componentManager.getSessionManager().getOutgoingSession(sessionId);
+
+        if (session != null) {
+            session.sendOneway(reply);
+        }
+    }
 }

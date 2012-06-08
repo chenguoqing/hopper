@@ -3,17 +3,20 @@ package com.hopper.session;
 import com.hopper.lifecycle.LifecycleEvent;
 import com.hopper.lifecycle.LifecycleEvent.EventType;
 import com.hopper.lifecycle.LifecycleListener;
-import com.hopper.server.ServerFactory;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
+import com.hopper.utils.ScheduleManager;
 import com.hopper.verb.Verb;
 import com.hopper.verb.handler.HeartBeat;
-import com.hopper.utils.ScheduleManager;
 
 public class LocalOutgoingSession extends SessionProxy implements OutgoingSession, LifecycleListener {
+
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
     /**
      * Schedule manager
      */
-    private static final ScheduleManager scheduleManager = config.getScheduleManager();
+    private final ScheduleManager scheduleManager = componentManager.getScheduleManager();
     /**
      * Heart beat task
      */
@@ -71,7 +74,8 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
 
         if (!isStartedBackground) {
             isStartedBackground = true;
-            scheduleManager.schedule(heartBeatTask, config.getPingPeriod(), config.getPingPeriod());
+            scheduleManager.schedule(heartBeatTask, componentManager.getGlobalConfiguration().getPingPeriod(),
+                    componentManager.getGlobalConfiguration().getPingPeriod());
             // start connection background tasks
             getConnection().background();
         }
@@ -86,8 +90,8 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
             message.setVerb(Verb.HEART_BEAT);
 
             HeartBeat beat = new HeartBeat();
-            beat.setLeader(ServerFactory.getDefaultServer().isLeader());
-            beat.setMaxXid(ServerFactory.getDefaultServer().getStorage().getMaxXid());
+            beat.setLeader(componentManager.getDefaultServer().isLeader());
+            beat.setMaxXid(componentManager.getStateStorage().getMaxXid());
 
             sendOneway(message);
         }

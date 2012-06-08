@@ -1,17 +1,14 @@
 package com.hopper.verb.handler;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.session.MessageService;
 import com.hopper.quorum.NoQuorumException;
-import com.hopper.server.Endpoint;
-import com.hopper.server.Server;
-import com.hopper.server.ServiceUnavailableException;
-import com.hopper.thrift.ChannelBound;
+import com.hopper.server.*;
 import com.hopper.session.Message;
 import com.hopper.storage.OwnerNoMatchException;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.StatusNoMatchException;
+import com.hopper.thrift.ChannelBound;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import org.slf4j.Logger;
@@ -28,11 +25,13 @@ public class MutationVerbHandler implements VerbHandler {
      */
     private static Logger logger = LoggerFactory.getLogger(MutationVerbHandler.class);
 
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-    private final Server server = config.getDefaultServer();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
 
-    private final StateStorage storage = config.getDefaultServer().getStorage();
+    private final Server server = componentManager.getDefaultServer();
+
+    private final StateStorage storage = componentManager.getStateStorage();
 
     @Override
     public void doVerb(Message message) {
@@ -77,10 +76,10 @@ public class MutationVerbHandler implements VerbHandler {
 
         // Local modification first
         StateNode node = new StateNode(key, StateNode.TYPE_TEMP, StateNode.DEFAULT_STATUS,
-                StateNode.DEFAULT_INVALIDATE_STATUS, config.getDefaultServer().getPaxos().getEpoch());
+                StateNode.DEFAULT_INVALIDATE_STATUS, server.getPaxos().getEpoch());
         storage.put(node);
 
-        if (config.getDefaultServer().isLeader()) {
+        if (server.isLeader()) {
             Mutation mutation = new Mutation();
             mutation.addCreate(key, owner, initStatus, invalidateStatus);
 
@@ -118,7 +117,7 @@ public class MutationVerbHandler implements VerbHandler {
         node.setStatus(expectStatus, newStatus, owner, lease);
 
         // Synchronizes the modification to majority nodes
-        if (config.getDefaultServer().isLeader()) {
+        if (server.isLeader()) {
             Mutation mutation = new Mutation();
             mutation.addUpdateStatus(key, expectStatus, newStatus, owner, lease);
 
@@ -160,7 +159,7 @@ public class MutationVerbHandler implements VerbHandler {
         node.expandLease(expectStatus, owner, lease);
 
         // Synchronizes the modification to majority nodes
-        if (config.getDefaultServer().isLeader()) {
+        if (server.isLeader()) {
             Mutation mutation = new Mutation();
             mutation.addUpdateLease(key, expectStatus, owner, lease);
 
@@ -175,7 +174,7 @@ public class MutationVerbHandler implements VerbHandler {
         }
 
         try {
-            watch(watch.key, watch.expectStatus);
+            watch(watch.sessionId, watch.key, watch.expectStatus);
             replyMutation(MutationReply.SUCCESS);
         } catch (ServiceUnavailableException e) {
             logger.warn("No quorum nodes are alive, drops the updateLease request.");
@@ -189,17 +188,17 @@ public class MutationVerbHandler implements VerbHandler {
     /**
      * Watch the special status(add a listener)
      */
-    public void watch(String key, int expectStatus) {
+    public void watch(String sessionId, String key, int expectStatus) {
         // check server state
         server.assertServiceAvailable();
 
         StateNode node = getAndCreateNode(key);
-        node.watch(expectStatus);
+        node.watch(sessionId, expectStatus);
 
         // Synchronizes the modification to majority nodes
-        if (config.getDefaultServer().isLeader()) {
+        if (server.isLeader()) {
             Mutation mutation = new Mutation();
-            mutation.addWatch(key, expectStatus);
+            mutation.addWatch(sessionId, key, expectStatus);
 
             synchronizeMutationToQuorum(mutation);
         }
@@ -211,7 +210,7 @@ public class MutationVerbHandler implements VerbHandler {
         if (node == null) {
             synchronized (key) {
                 node = storage.get(key);
-                node = new StateNode(key, config.getDefaultServer().getPaxos().getEpoch());
+                node = new StateNode(key, server.getPaxos().getEpoch());
                 storage.put(node);
             }
         }
@@ -225,7 +224,7 @@ public class MutationVerbHandler implements VerbHandler {
         message.setId(Message.nextId());
         message.setBody(mutation);
 
-        List<Message> replies = MessageService.sendMessageToQuorum(message, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 0);
 
         // Failed to synchronize the modification to quorum
         if (replies.size() < config.getQuorumSize() - 1) {
@@ -246,6 +245,6 @@ public class MutationVerbHandler implements VerbHandler {
 
         // send response
         Endpoint endpoint = config.getEndpoint(ChannelBound.get().getRemoteAddress());
-        MessageService.sendOneway(response, endpoint.serverId);
+        componentManager.getMessageService().sendOneway(response, endpoint.serverId);
     }
 }

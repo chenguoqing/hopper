@@ -3,7 +3,10 @@
 # mode
 # single --one node without election and synchronization
 # multi --- multiple nodes
-mode: single
+server_mode: single
+
+# storage mode(hash or tree)
+storage_mode: hash
 
 # rpc timeout(milliseconds)
 rpc_timeout: 2000
@@ -59,6 +62,12 @@ storage:
 
 # retry service period (milliseconds)
 service_retry_period: 1000
+
+# schedule thread count
+schedule_thread_count: 3
+
+# cache evict period
+cache_evict_period: 30000
 
 
 

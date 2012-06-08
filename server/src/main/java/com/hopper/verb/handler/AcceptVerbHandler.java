@@ -1,22 +1,23 @@
 package com.hopper.verb.handler;
 
-import com.hopper.GlobalConfiguration;
 import com.hopper.quorum.Paxos;
-import com.hopper.verb.VerbHandler;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
+import com.hopper.verb.VerbHandler;
 
 public class AcceptVerbHandler implements VerbHandler {
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-	private GlobalConfiguration config = GlobalConfiguration.getInstance();
-	private Paxos paxos = config.getDefaultServer().getPaxos();
+    private Paxos paxos = componentManager.getDefaultServer().getPaxos();
 
-	@Override
-	public void doVerb(Message message) {
+    @Override
+    public void doVerb(Message message) {
 
-		Accept accpet = (Accept) message.getBody();
+        Accept accpet = (Accept) message.getBody();
 
-		if (accpet.getBallot() < paxos.getRnd()) {
+        if (accpet.getBallot() < paxos.getRnd()) {
 
-		}
-	}
+        }
+    }
 }

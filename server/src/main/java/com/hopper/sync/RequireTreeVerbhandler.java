@@ -1,11 +1,12 @@
 package com.hopper.sync;
 
-import com.hopper.GlobalConfiguration;
-import com.hopper.verb.Verb;
-import com.hopper.verb.VerbHandler;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
 import com.hopper.session.OutgoingSession;
 import com.hopper.storage.StateStorage;
+import com.hopper.verb.Verb;
+import com.hopper.verb.VerbHandler;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,8 +16,9 @@ import com.hopper.storage.StateStorage;
  * To change this template use File | Settings | File Templates.
  */
 public class RequireTreeVerbhandler implements VerbHandler {
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
-    private final StateStorage storage = config.getDefaultServer().getStorage();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
+    private final StateStorage storage = componentManager.getStateStorage();
 
     @Override
     public void doVerb(Message message) {
@@ -27,7 +29,7 @@ public class RequireTreeVerbhandler implements VerbHandler {
 
         reply.setBody(storage.getHashTree());
 
-        OutgoingSession session = config.getSessionManager().getOutgoingSession(message.getSessionId());
+        OutgoingSession session = componentManager.getSessionManager().getOutgoingSession(message.getSessionId());
         if (session != null) {
             session.sendOneway(reply);
         }

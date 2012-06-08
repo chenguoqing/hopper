@@ -1,6 +1,9 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
+import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
@@ -14,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author chenguoqing
  */
-public class SessionManager {
+public class SessionManager extends LifecycleProxy {
     /**
      * Logger
      */
@@ -22,7 +25,8 @@ public class SessionManager {
     /**
      * {@link com.hopper.GlobalConfiguration} instance
      */
-    private static final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
     /**
      * The mapping between channel and incoming session
      */
@@ -47,7 +51,7 @@ public class SessionManager {
 
         final Endpoint endpoint = config.getEndpoint(channel.getRemoteAddress());
 
-        IncomingSession incomingSession = config.getSessionManager().getIncomingSession(endpoint);
+        IncomingSession incomingSession = componentManager.getSessionManager().getIncomingSession(endpoint);
 
         if (incomingSession != null) {
             return incomingSession;
@@ -55,7 +59,7 @@ public class SessionManager {
 
         synchronized (endpoint) {
 
-            incomingSession = config.getSessionManager().getIncomingSession(endpoint);
+            incomingSession = componentManager.getSessionManager().getIncomingSession(endpoint);
 
             // double check
             if (incomingSession != null) {
@@ -69,7 +73,7 @@ public class SessionManager {
             ((LocalIncomingSession) incomingSession).setId(sessionId);
             incomingSession.setSessionManager(this);
 
-            Connection conn = config.getConnectionManager().getIncomingConnection(channel);
+            Connection conn = componentManager.getConnectionManager().getIncomingConnection(channel);
 
             if (conn == null) {
                 conn = new DummyConnection();
@@ -77,7 +81,7 @@ public class SessionManager {
                 conn.setSession(incomingSession);
 
                 // Register the connection and channel to ConnectionManager
-                config.getConnectionManager().addIncomingConnection(channel, conn);
+                componentManager.getConnectionManager().addIncomingConnection(channel, conn);
             }
 
             ((LocalIncomingSession) incomingSession).setConnection(conn);
@@ -94,14 +98,14 @@ public class SessionManager {
      */
     public OutgoingSession createLocalOutgoingSession(Endpoint endpoint) throws Exception {
 
-        OutgoingSession session = config.getSessionManager().getOutgoingSession(endpoint);
+        OutgoingSession session = componentManager.getSessionManager().getOutgoingSession(endpoint);
 
         if (session != null) {
             return session;
         }
 
         synchronized (endpoint) {
-            session = config.getSessionManager().getOutgoingSession(endpoint);
+            session = componentManager.getSessionManager().getOutgoingSession(endpoint);
             if (session == null) {
                 session = new LocalOutgoingSession();
 
@@ -109,7 +113,7 @@ public class SessionManager {
                 ((LocalIncomingSession) session).setId(SessionIdGenerator.generateSessionId());
 
                 // create connection
-                Connection connection = config.getConnectionManager().createOutgoingServerConnection(session, endpoint);
+                Connection connection = componentManager.getConnectionManager().createOutgoingServerConnection(session, endpoint);
 
                 // bound the session to connection
                 ((LocalIncomingSession) session).setConnection(connection);
@@ -242,5 +246,24 @@ public class SessionManager {
         if (outgoingSession != null) {
             outgoingSession.close();
         }
+    }
+
+    @Override
+    protected void doShutdown() {
+        for (IncomingSession session : incomingSessions.values()) {
+            session.close();
+        }
+
+        for (OutgoingSession session : outgoingSessions.values()) {
+            session.close();
+        }
+
+        for (ClientSession session : clientSessions.values()) {
+            session.close();
+        }
+
+        incomingSessions.clear();
+        outgoingSessions.clear();
+        clientSessions.clear();
     }
 }

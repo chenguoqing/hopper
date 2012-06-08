@@ -1,8 +1,8 @@
 package com.hopper.session;
 
-import com.hopper.GlobalConfiguration;
-import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -12,10 +12,6 @@ import org.jboss.netty.channel.ChannelFutureListener;
  * Client connection
  */
 public class ClientConnection extends LifecycleProxy implements Connection {
-    /**
-     * Global configuration
-     */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
     /**
      * Client channel
      */
@@ -48,7 +44,7 @@ public class ClientConnection extends LifecycleProxy implements Connection {
 
     @Override
     public Endpoint getDestEndpoint() {
-        return config.getLocalEndpoint();
+        return ComponentManagerFactory.getComponentManager().getGlobalConfiguration().getLocalServerEndpoint();
     }
 
     @Override

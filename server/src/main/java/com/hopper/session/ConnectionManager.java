@@ -1,10 +1,8 @@
 package com.hopper.session;
 
-import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
-import com.hopper.session.Connection;
-import com.hopper.session.NettyConnection;
-import com.hopper.session.OutgoingSession;
 import org.jboss.netty.channel.Channel;
 
 import java.util.Map;
@@ -17,7 +15,7 @@ public class ConnectionManager {
     /**
      * Global configuration
      */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
     /**
      * Incoming connections
      */
@@ -56,14 +54,15 @@ public class ConnectionManager {
      * methods. The initial works will be delayed to caller.
      */
     public Connection createOutgoingServerConnection(OutgoingSession session, Endpoint endpoint) throws Exception {
-        NettyConnection connection = (NettyConnection) config.getConnectionManager().getOutgoingConnection(endpoint);
+        NettyConnection connection = (NettyConnection) componentManager.getConnectionManager().getOutgoingConnection
+                (endpoint);
 
         if (connection != null) {
             return connection;
         }
 
         connection = new NettyConnection();
-        connection.setSourceEndpoint(GlobalConfiguration.getInstance().getLocalEndpoint());
+        connection.setSourceEndpoint(componentManager.getGlobalConfiguration().getLocalServerEndpoint());
         connection.setDestEndpoint(endpoint);
         connection.setSession(session);
 
