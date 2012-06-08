@@ -17,6 +17,10 @@ import com.hopper.storage.merkle.MapStorage;
 import com.hopper.sync.DataSyncService;
 import com.hopper.utils.ScheduleManager;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,6 +95,9 @@ public class ComponentManager extends LifecycleProxy {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        // start shutdown socket
+        startShutdownSocket();
     }
 
     @Override
@@ -201,6 +208,53 @@ public class ComponentManager extends LifecycleProxy {
 
     private MessageService createMessageService() {
         return new MessageService();
+    }
+
+    /**
+     * Start a shutdown hook on special port
+     */
+    private void startShutdownSocket() {
+        final int shutdownPort = getGlobalConfiguration().getShutdownPort();
+        final String shutdownCommand = getGlobalConfiguration().getShutdownCommand();
+
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(shutdownPort);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Register hook
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                shutdown();
+            }
+        });
+
+        boolean isContinue = true;
+        while (isContinue) {
+            try {
+                Socket socket = serverSocket.accept();
+                socket.setTcpNoDelay(true);
+                socket.setSoTimeout(2000);
+
+                InputStream in = socket.getInputStream();
+
+                byte[] buf = new byte[shutdownCommand.getBytes().length];
+
+                int read = in.read(buf);
+
+                if (read == buf.length && shutdownCommand.equals(new String(buf))) {
+                    shutdown();
+                    isContinue = false;
+                }
+                socket.close();
+            } catch (IOException e) {
+                isContinue = false;
+                logger.error("Failed to process shutdown request.", e);
+            }
+        }
     }
 }
 

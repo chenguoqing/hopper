@@ -1,11 +1,9 @@
 package com.hopper.server;
 
-import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
 import com.hopper.stage.Stage;
-import com.hopper.stage.StageManager;
 import com.hopper.thrift.HopperService;
 import com.hopper.thrift.HopperServiceImpl;
 import com.hopper.thrift.netty.ThriftPipelineFactory;
@@ -18,11 +16,15 @@ import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeoutException;
 
 public class DefaultServer extends LifecycleProxy implements Server {
+
+    private static Logger logger = LoggerFactory.getLogger(DefaultServer.class);
 
     /**
      * Outer connection endpoint
@@ -149,11 +151,6 @@ public class DefaultServer extends LifecycleProxy implements Server {
     public int getLeaderWithLock(long timeout) throws TimeoutException {
         //TODO:
         return 0;
-    }
-
-    @Override
-    public Object getLeaderLock() {
-        return null;
     }
 
     @Override

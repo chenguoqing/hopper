@@ -87,8 +87,6 @@ public interface Server extends Lifecycle {
 
     int getLeaderWithLock(long timeout) throws TimeoutException;
 
-    Object getLeaderLock();
-
     /**
      * Clear the associated leader
      */

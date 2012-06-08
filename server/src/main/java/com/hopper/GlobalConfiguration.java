@@ -192,6 +192,14 @@ public class GlobalConfiguration extends LifecycleProxy {
         return innerConfig.getLong("service_retry_period", 3000);
     }
 
+    public int getShutdownPort() {
+        return innerConfig.getInt("shutdown_port", 7930);
+    }
+
+    public String getShutdownCommand() {
+        return innerConfig.getString("shutdown_command", "shutdown");
+    }
+
     public HopperService.Iface getHopperService() {
         return null;
     }
@@ -253,6 +261,16 @@ public class GlobalConfiguration extends LifecycleProxy {
             }
 
             return Long.getLong(v.toString());
+        }
+
+        int getInt(String key, int defaultValue) {
+            Object v = yamlMap.get(key);
+
+            if (v == null) {
+                return defaultValue;
+            }
+
+            return Integer.getInteger(v.toString());
         }
 
         long getLongFromNestedMap(String mapKey, String itemKey, long defaultValue) {

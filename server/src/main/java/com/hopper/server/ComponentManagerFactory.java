@@ -1,15 +1,22 @@
 package com.hopper.server;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-6-8
- * Time: 下午5:49
- * To change this template use File | Settings | File Templates.
+ * Component factory for singleton pattern.
  */
 public class ComponentManagerFactory {
 
+    private static ComponentManager componentManager;
+
     public static ComponentManager getComponentManager() {
-        return null;
+
+        if (componentManager == null) {
+            synchronized (ComponentManagerFactory.class) {
+                if (componentManager == null) {
+                    componentManager = new ComponentManager();
+                }
+            }
+        }
+
+        return componentManager;
     }
 }

@@ -29,6 +29,12 @@ s2s_port: 7920
 #server id
 serverId: 1
 
+# shutdown port
+shutdown_port: 7930
+
+# shutdown command
+shutdown_command: shutdown
+
 # configure all group nodes
 group_nodes:
     - {serverId: 1,address: 127.0.0.1,port: 7920}
