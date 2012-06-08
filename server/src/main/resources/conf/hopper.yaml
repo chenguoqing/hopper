@@ -1,0 +1,64 @@
+# Hopper global configuration information
+
+# mode
+# single --one node without election and synchronization
+# multi --- multiple nodes
+mode: single
+
+# rpc timeout(milliseconds)
+rpc_timeout: 2000
+
+# ping period(milliseconds)
+ping_period: 1000
+
+# The address for accepting client connection, leaving it blank to InetAddress.getLocalHost()
+rpc_address: localhost
+
+# port for listening client
+rpc_port: 7910
+
+# The address for server-to-server communication, leaving it blank to accept any addresses
+s2s_address: 127.0.0.1
+
+# Port for server-to-server communication
+s2s_port: 7920
+
+#server id
+serverId: 1
+
+# configure all group nodes
+group_nodes:
+    - {serverId: 1,address: 127.0.0.1,port: 7920}
+    - {serverId: 2,address: 127.0.0.1,port: 7921}
+    - {serverId: 3,address: 127.0.0.1,port: 7921}
+
+# The period for join waiting(milliseconds)
+period_for_waiting_join: 5000
+
+# minmum period for retry election(milliseconds)
+min_retry_election_period: 1000
+
+# maximum period for retry election(milliseconds)
+max_retry_election_period: 5000
+
+# the period for waiting election complete(milliseconds)
+period_for_waiting_election_complete: 5000
+
+# data synchronization
+data_sync:
+    sync_threadpool_coresize: 0
+    sync_threadpool_maxsize: 2
+    # synchronization timeout(milliseconds)
+    sync_timeout: 3000
+
+# storage configuration
+storage:
+    merkle_tree_depth: 15
+    # purge thread period(milliseconds)
+    state_node_purge_period: 30000
+
+# retry service period (milliseconds)
+service_retry_period: 1000
+
+
+
