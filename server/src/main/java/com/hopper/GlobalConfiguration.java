@@ -1,9 +1,7 @@
 package com.hopper;
 
-import com.hopper.avro.ClientService;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.Endpoint;
-import com.hopper.thrift.HopperService;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
@@ -50,10 +48,6 @@ public class GlobalConfiguration extends LifecycleProxy {
      * Default configuration path
      */
     private static final String defaultYAML = FILE_PREFIX + "/conf/hopper.conf";
-    /**
-     * Singleton
-     */
-    private static volatile GlobalConfiguration instance = new GlobalConfiguration();
     /**
      * Configuration root object
      */
@@ -134,16 +128,12 @@ public class GlobalConfiguration extends LifecycleProxy {
         return (int) innerConfig.getLong("schedule_thread_count", 3);
     }
 
-    public Endpoint[] getConfigedEndpoints() {
+    public Endpoint[] getGroupEndpoints() {
         return innerConfig.endpointMap.values().toArray(new Endpoint[]{});
     }
 
     public int getQuorumSize() {
-        return (getConfigedEndpoints().length / 2) + 1;
-    }
-
-    public int getLocalBallotServerId() {
-        return 0;
+        return (getGroupEndpoints().length / 2) + 1;
     }
 
     public long getPeriodForJoin() {
@@ -198,10 +188,6 @@ public class GlobalConfiguration extends LifecycleProxy {
 
     public String getShutdownCommand() {
         return innerConfig.getString("shutdown_command", "shutdown");
-    }
-
-    public HopperService.Iface getHopperService() {
-        return null;
     }
 
     /**

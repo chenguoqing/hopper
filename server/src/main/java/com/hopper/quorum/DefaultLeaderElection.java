@@ -310,8 +310,8 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Prepare prepare = new Prepare();
 
-        int ballot = BallotGenerator.generateBallot(config.getLocalBallotServerId(),
-                config.getConfigedEndpoints().length, paxos.getRnd());
+        int ballot = BallotGenerator.generateBallot(config.getLocalServerEndpoint().serverId,
+                config.getGroupEndpoints().length, paxos.getRnd());
 
         paxos.setRnd(ballot);
 

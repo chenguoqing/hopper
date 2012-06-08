@@ -31,7 +31,7 @@ public class MessageService {
      */
     public void sendLearnMessage(final Message message) {
 
-        for (Endpoint endpoint : config.getConfigedEndpoints()) {
+        for (Endpoint endpoint : config.getGroupEndpoints()) {
 
             // If the endpoint is local, executes the message directly
             if (config.isLocalEndpoint(endpoint)) {
@@ -57,13 +57,13 @@ public class MessageService {
 
         List<Future<Message>> futures = new ArrayList<Future<Message>>();
 
-        int waitCount = waitingMode == 0 ? config.getQuorumSize() : config.getConfigedEndpoints().length;
+        int waitCount = waitingMode == 0 ? config.getQuorumSize() : config.getGroupEndpoints().length;
 
         final CountDownLatch latch = new CountDownLatch(waitCount);
 
         final List<Message> replies = new ArrayList<Message>();
 
-        for (Endpoint endpoint : config.getConfigedEndpoints()) {
+        for (Endpoint endpoint : config.getGroupEndpoints()) {
 
             // ignoring the local endpoint
             if (config.isLocalEndpoint(endpoint)) {

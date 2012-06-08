@@ -1,5 +1,6 @@
 package com.hopper.server;
 
+import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
@@ -68,6 +69,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
         // start internal listen port
         startServerSocket();
 
+        // join group
+        joinGroup();
+
         // start client listen port
         startClientSocket();
     }
@@ -100,6 +104,21 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
         // Bind and start to accept incoming connections.
         bootstrap.bind(new InetSocketAddress(endpoint.address, endpoint.port));
+    }
+
+    /**
+     * Join group
+     */
+    private void joinGroup() {
+        GlobalConfiguration.ServerMode mode = componentManager.getGlobalConfiguration().getServerMode();
+        if (mode == GlobalConfiguration.ServerMode.MULTI) {
+            logger.info("Start server with multiple nodes mode...");
+            componentManager.getLeaderElection().startElecting();
+        } else {
+            logger.info("Start server with single nodes mode...");
+            componentManager.getDefaultServer().setLeader(componentManager.getGlobalConfiguration()
+                    .getLocalServerEndpoint().serverId);
+        }
     }
 
     @Override
