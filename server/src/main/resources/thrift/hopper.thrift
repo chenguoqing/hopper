@@ -4,7 +4,7 @@ namespace java com.hopper.thrift
  * RetryException indicates the client should retry after special period
  */
 exception RetryException{
-    1:i32 period
+    1:i64 period
 }
 
 /**

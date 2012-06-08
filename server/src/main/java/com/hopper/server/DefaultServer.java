@@ -102,12 +102,12 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     @Override
-    public void setEndpoint(Endpoint endpoint) {
+    public void setRpcEndpoint(Endpoint endpoint) {
         this.endpoint = endpoint;
     }
 
     @Override
-    public Endpoint getEndPoint() {
+    public Endpoint getRpcEndPoint() {
         return endpoint;
     }
 

@@ -108,7 +108,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
     @Override
     public void enablePurgeThread() {
         if (purgeRunning.compareAndSet(false, true)) {
-            config.getScheduleManager().schedule(purgeThread, config.getStateNodePurgeThreadPeriod());
+            config.getScheduleManager().schedule(purgeThread, config.getStateNodePurgeExpire());
         } else {
             throw new IllegalStateException("Purge has already running.");
         }

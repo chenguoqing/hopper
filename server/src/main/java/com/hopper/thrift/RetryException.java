@@ -6,13 +6,26 @@
  */
 package com.hopper.thrift;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-import org.apache.thrift.scheme.TupleScheme;
 
-import java.util.*;
+import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * RetryException indicates the client should retry after special period
@@ -20,7 +33,7 @@ import java.util.*;
 public class RetryException extends Exception implements org.apache.thrift.TBase<RetryException, RetryException._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("RetryException");
 
-  private static final org.apache.thrift.protocol.TField PERIOD_FIELD_DESC = new org.apache.thrift.protocol.TField("period", org.apache.thrift.protocol.TType.I32, (short)1);
+  private static final org.apache.thrift.protocol.TField PERIOD_FIELD_DESC = new org.apache.thrift.protocol.TField("period", org.apache.thrift.protocol.TType.I64, (short)1);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -28,7 +41,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
     schemes.put(TupleScheme.class, new RetryExceptionTupleSchemeFactory());
   }
 
-  public int period; // required
+  public long period; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -95,7 +108,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.PERIOD, new org.apache.thrift.meta_data.FieldMetaData("period", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(RetryException.class, metaDataMap);
   }
@@ -104,7 +117,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
   }
 
   public RetryException(
-    int period)
+    long period)
   {
     this();
     this.period = period;
@@ -130,11 +143,11 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
     this.period = 0;
   }
 
-  public int getPeriod() {
+  public long getPeriod() {
     return this.period;
   }
 
-  public RetryException setPeriod(int period) {
+  public RetryException setPeriod(long period) {
     this.period = period;
     setPeriodIsSet(true);
     return this;
@@ -159,7 +172,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
       if (value == null) {
         unsetPeriod();
       } else {
-        setPeriod((Integer)value);
+        setPeriod((Long)value);
       }
       break;
 
@@ -169,7 +182,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case PERIOD:
-      return Integer.valueOf(getPeriod());
+      return Long.valueOf(getPeriod());
 
     }
     throw new IllegalStateException();
@@ -302,8 +315,8 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
         }
         switch (schemeField.id) {
           case 1: // PERIOD
-            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-              struct.period = iprot.readI32();
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.period = iprot.readI64();
               struct.setPeriodIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -325,7 +338,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
 
       oprot.writeStructBegin(STRUCT_DESC);
       oprot.writeFieldBegin(PERIOD_FIELD_DESC);
-      oprot.writeI32(struct.period);
+      oprot.writeI64(struct.period);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -350,7 +363,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
       }
       oprot.writeBitSet(optionals, 1);
       if (struct.isSetPeriod()) {
-        oprot.writeI32(struct.period);
+        oprot.writeI64(struct.period);
       }
     }
 
@@ -359,7 +372,7 @@ public class RetryException extends Exception implements org.apache.thrift.TBase
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {
-        struct.period = iprot.readI32();
+        struct.period = iprot.readI64();
         struct.setPeriodIsSet(true);
       }
     }

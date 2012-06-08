@@ -46,12 +46,12 @@ public interface Server extends Lifecycle {
     /**
      * Set the address and port for accepting outer request
      */
-    void setEndpoint(Endpoint endpoint);
+    void setRpcEndpoint(Endpoint endpoint);
 
     /**
      * Retrieve the {@link Endpoint} of outer communication
      */
-    Endpoint getEndPoint();
+    Endpoint getRpcEndPoint();
 
     /**
      * Set the address and port for internal communication(server-to-server)

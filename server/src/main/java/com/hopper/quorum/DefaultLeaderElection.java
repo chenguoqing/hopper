@@ -81,7 +81,7 @@ public class DefaultLeaderElection implements LeaderElection {
                 // If ballot is lower, it indicates other nodes are in progress, so it must wait for a moment
                 if (e.reject == PaxosRejectedException.BALLOT_REJECT) {
                     logger.debug("Current ballot is lower, re-starts the paxos progress just a moment");
-                    retry = waitingNextElection(config.getPeriodForPaxosRejected());
+                    retry = waitingNextElection(config.getRetryElectionPeriod());
                     // If instance number is lower, it indicates other nodes had undergone some elections
                 } else {
                     logger.debug("Current instance is lower, re-starts the paxos immediately.");
@@ -398,7 +398,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Learn learn = new Learn();
         learn.setEpoch(paxos.getEpoch());
-        learn.setProposer(config.getDefaultServer().getEndPoint().serverId);
+        learn.setProposer(config.getDefaultServer().getRpcEndPoint().serverId);
         learn.setVval(paxos.getVval());
 
         return message;
@@ -459,7 +459,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
     private boolean waitingNodesJoining() {
         try {
-            Thread.sleep(config.getPeriodForRetryElection());
+            Thread.sleep(config.getRetryElectionPeriod());
         } catch (InterruptedException e) {
             return false;
         }

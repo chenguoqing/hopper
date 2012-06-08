@@ -71,7 +71,7 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
 
         if (!isStartedBackground) {
             isStartedBackground = true;
-            scheduleManager.schedule(heartBeatTask, config.getPingInterval(), config.getPingInterval());
+            scheduleManager.schedule(heartBeatTask, config.getPingPeriod(), config.getPingPeriod());
             // start connection background tasks
             getConnection().background();
         }
