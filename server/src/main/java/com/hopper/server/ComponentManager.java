@@ -102,7 +102,8 @@ public class ComponentManager extends LifecycleProxy {
 
     @Override
     protected void doShutdown() {
-        for (Lifecycle component : components) {
+        for (int i = components.size() - 1; i >= 0; i--) {
+            Lifecycle component = components.get(i);
             component.shutdown();
         }
         this.globalConfiguration.shutdown();

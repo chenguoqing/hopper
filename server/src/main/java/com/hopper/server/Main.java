@@ -3,6 +3,8 @@ package com.hopper.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.Socket;
+
 /**
  * Hopper server entrance
  */
@@ -17,10 +19,11 @@ public class Main {
             System.exit(-1);
         }
 
+        if (args.length > 1) {
+            System.setProperty("configFile", args[1]);
+        }
+
         if (args[0].equalsIgnoreCase("-start")) {
-            if (args.length > 1) {
-                System.setProperty("configFile", args[1]);
-            }
             start(args);
         } else if (args[0].equalsIgnoreCase("-shutdown")) {
             shutdown(args);
@@ -40,7 +43,17 @@ public class Main {
     }
 
     private static void shutdown(String[] args) {
+        ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+        try {
+            componentManager.getGlobalConfiguration().start();
 
+            Socket socket = new Socket("127.0.0.1", componentManager.getGlobalConfiguration().getShutdownPort());
+            socket.setSoLinger(true, 1000);
+            socket.getOutputStream().write(componentManager.getGlobalConfiguration().getShutdownCommand().getBytes());
+            socket.close();
+        } catch (Exception e) {
+            logger.error("Failed to shutdown hopper server", e);
+        }
     }
 
     private static void usage() {
