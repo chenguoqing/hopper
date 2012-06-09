@@ -19,14 +19,13 @@
         <SOURCE_VERSION>1.6</SOURCE_VERSION>
         <TARGET_VERSION>1.6</TARGET_VERSION>
         <encoding>UTF-8</encoding>
-        <hopper.version>${project.version}</hopper.version>
         <junit.version>4.8.1</junit.version>
         <slf4j.api.version>1.6.1</slf4j.api.version>
-        <logback.version>0.9.28</logback.version>
+        <logback.version>1.0.6</logback.version>
         <avro.version>1.6.3</avro.version>
     </properties>
 
-    <build>
+    <!--<build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -75,7 +74,7 @@
             </plugin>
         </plugins>
     </build>
-
+-->
     <dependencyManagement>
         <dependencies>
             <!-- logger -->
@@ -90,15 +89,11 @@
                 <version>${slf4j.api.version}</version>
                 <scope>compile</scope>
             </dependency>
-
-<<<<<<< HEAD
-=======
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
             </dependency>
->>>>>>> 235063d9c5a3d2578a1ccf60a682f35e5624c74b
 
             <!-- Avro -->
             <dependency>
@@ -152,11 +147,6 @@
         <repository>
             <id>microant</id>
             <url>http://microant.googlecode.com/svn/maven2</url>
-        </repository>
-        <repository>
-            <id>com.springsource.repository.bundles.release</id>
-            <name>SpringSource Enterprise Bundle Repository - SpringSource Bundle Releases</name>
-            <url>http://repository.springsource.com/maven/bundles/release</url>
         </repository>
         <repository>
             <id>maven2.java.net</id>
