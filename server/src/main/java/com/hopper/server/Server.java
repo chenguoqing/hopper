@@ -46,12 +46,12 @@ public interface Server extends Lifecycle {
     /**
      * Set the address and port for accepting outer request
      */
-    void setEndpoint(Endpoint endpoint);
+    void setRpcEndpoint(Endpoint endpoint);
 
     /**
      * Retrieve the {@link Endpoint} of outer communication
      */
-    Endpoint getEndPoint();
+    Endpoint getRpcEndPoint();
 
     /**
      * Set the address and port for internal communication(server-to-server)
@@ -74,16 +74,6 @@ public interface Server extends Lifecycle {
     Paxos getPaxos();
 
     /**
-     * Set the {@link StateStorage} instance, it is unique on server lifecycle
-     */
-    void setStorage(StateStorage storage);
-
-    /**
-     * Retrieve the associated {@link StateStorage} instance
-     */
-    StateStorage getStorage();
-
-    /**
      * Set the leader server id
      */
     void setLeader(int serverId);
@@ -97,8 +87,6 @@ public interface Server extends Lifecycle {
 
     int getLeaderWithLock(long timeout) throws TimeoutException;
 
-    Object getLeaderLock();
-
     /**
      * Clear the associated leader
      */
@@ -107,7 +95,7 @@ public interface Server extends Lifecycle {
     /**
      * Abandon the leader identity
      */
-    void anandonLeadeship();
+    void abandonLeadership();
 
     /**
      * Take over the leader identity

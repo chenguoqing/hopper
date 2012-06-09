@@ -3,6 +3,8 @@ package com.hopper.session;
 import com.hopper.GlobalConfiguration;
 import com.hopper.future.LatchFuture;
 import com.hopper.future.LatchFutureListener;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.verb.Verb;
 import com.hopper.verb.handler.VerbMappings;
@@ -20,14 +22,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class MessageService {
     public static final Logger logger = LoggerFactory.getLogger(MessageService.class);
-    private static final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
 
     /**
      * Send *LEARN* message to all endpoint asynchronously
      */
-    public static void sendLearnMessage(final Message message) {
+    public void sendLearnMessage(final Message message) {
 
-        for (Endpoint endpoint : config.getConfigedEndpoints()) {
+        for (Endpoint endpoint : config.getGroupEndpoints()) {
 
             // If the endpoint is local, executes the message directly
             if (config.isLocalEndpoint(endpoint)) {
@@ -35,7 +39,7 @@ public class MessageService {
             }
 
             try {
-                OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+                OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
                 session.sendOneway(message);
             } catch (Exception e) {
                 logger.error("Failed to connect to " + endpoint, e);
@@ -49,17 +53,17 @@ public class MessageService {
      * @param message     the message to send
      * @param waitingMode waiting mode 0 - waiting for quorum nodes replies, 1 -  for all nodes
      */
-    public static List<Message> sendMessageToQuorum(final Message message, int waitingMode) {
+    public List<Message> sendMessageToQuorum(final Message message, int waitingMode) {
 
         List<Future<Message>> futures = new ArrayList<Future<Message>>();
 
-        int waitCount = waitingMode == 0 ? config.getQuorumSize() : config.getConfigedEndpoints().length;
+        int waitCount = waitingMode == 0 ? config.getQuorumSize() : config.getGroupEndpoints().length;
 
         final CountDownLatch latch = new CountDownLatch(waitCount);
 
         final List<Message> replies = new ArrayList<Message>();
 
-        for (Endpoint endpoint : config.getConfigedEndpoints()) {
+        for (Endpoint endpoint : config.getGroupEndpoints()) {
 
             // ignoring the local endpoint
             if (config.isLocalEndpoint(endpoint)) {
@@ -96,10 +100,10 @@ public class MessageService {
      * Send message to <code>targetServerId</code> with ony-war mode
      */
 
-    public static void sendOneway(Message message, int destServerId) {
+    public void sendOneway(Message message, int destServerId) {
         Endpoint endpoint = config.getEndpoint(destServerId);
         try {
-            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+            OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
             logger.error("Failed to send message.", e);
@@ -109,23 +113,23 @@ public class MessageService {
     /**
      * Send message to  <code>targetServerId</code> waits until the operation complete.
      */
-    public static void sendOnwayUntilComplete(Message message, int destServerId) throws Exception {
+    public void sendOnwayUntilComplete(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
-        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
         session.sendOnwayUntilComplete(message);
     }
 
     /**
      * Send   message to  <code>targetServerId</code> and return the future instance
      */
-    public static LatchFuture<Message> send(Message message, int destServerId) throws Exception {
+    public LatchFuture<Message> send(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
-        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(endpoint);
+        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
         return session.send(message);
     }
 
-    public static void notifyStatusChange(String clientSessionId, int oldStatus, int newStatus) {
-        ClientSession clientSession = config.getSessionManager().getClientSession(clientSessionId);
+    public void notifyStatusChange(String clientSessionId, int oldStatus, int newStatus) {
+        ClientSession clientSession = componentManager.getSessionManager().getClientSession(clientSessionId);
 
         if (clientSession != null) {
             try {
@@ -134,7 +138,7 @@ public class MessageService {
                 //nothing
             }
         } else {
-            OutgoingSession outgoingSession = config.getSessionManager()
+            OutgoingSession outgoingSession = componentManager.getSessionManager()
                     .getOutgoingSessionByMultiplexerSessionId(clientSessionId);
             if (outgoingSession != null) {
                 Message message = new Message();

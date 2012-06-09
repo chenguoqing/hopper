@@ -1,6 +1,7 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.thrift.BidDirectNotify;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,7 +33,8 @@ public class ClientSession extends SessionProxy implements Session {
             return getConnection() != null ? getConnection().validate() : false;
         }
 
-        return System.currentTimeMillis() - lastHeartBeat.get() < GlobalConfiguration.getInstance().getRpcTimeout();
+        return System.currentTimeMillis() - lastHeartBeat.get() < ComponentManagerFactory.getComponentManager()
+                .getGlobalConfiguration().getRpcTimeout();
     }
 
     public void heartBeat() {

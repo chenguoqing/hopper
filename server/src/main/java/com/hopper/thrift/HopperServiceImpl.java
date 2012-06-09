@@ -1,15 +1,11 @@
 package com.hopper.thrift;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.session.MessageService;
 import com.hopper.quorum.NoQuorumException;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Server;
 import com.hopper.server.ServiceUnavailableException;
-import com.hopper.verb.Verb;
-import com.hopper.verb.handler.Mutation;
-import com.hopper.verb.handler.MutationReply;
-import com.hopper.verb.handler.MutationVerbHandler;
-import com.hopper.verb.handler.VerbMappings;
 import com.hopper.session.ClientConnection;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
@@ -17,7 +13,13 @@ import com.hopper.session.SessionIdGenerator;
 import com.hopper.storage.OwnerNoMatchException;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.StatusNoMatchException;
+import com.hopper.verb.Verb;
+import com.hopper.verb.handler.Mutation;
+import com.hopper.verb.handler.MutationReply;
+import com.hopper.verb.handler.MutationVerbHandler;
+import com.hopper.verb.handler.VerbMappings;
 import org.apache.thrift.TException;
+import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,27 +34,26 @@ public class HopperServiceImpl implements HopperService.Iface {
      * Logger
      */
     private static final Logger logger = LoggerFactory.getLogger(HopperServiceImpl.class);
-
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
     /**
      * Singleton
      */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
-
-    private final Server server = config.getDefaultServer();
+    private final Server server = componentManager.getDefaultServer();
 
     private int responseSize = 4096;
 
     /**
      * Singleton
      */
-    private final StateStorage storage = config.getDefaultServer().getStorage();
+    private final StateStorage storage = componentManager.getStateStorage();
 
     @Override
     public String login(String userName, String password) throws RetryException, AuthenticationException, TException {
 
         assertServiceRunning();
 
-        ClientSession session = config.getSessionManager().getClientSession(ChannelBound.get());
+        ClientSession session = componentManager.getSessionManager().getClientSession(ChannelBound.get());
 
         if (session != null) {
             return session.getId();
@@ -82,7 +83,7 @@ public class HopperServiceImpl implements HopperService.Iface {
      * Register a internal client session by id
      */
     private void registerClientSession(String sessionId) throws RetryException {
-        ClientSession session = config.getSessionManager().getClientSession(sessionId);
+        ClientSession session = componentManager.getSessionManager().getClientSession(sessionId);
 
         boolean isNew = session == null;
 
@@ -102,7 +103,7 @@ public class HopperServiceImpl implements HopperService.Iface {
             message.setBody(sessionId.getBytes());
 
             try {
-                MessageService.sendOnwayUntilComplete(message, server.getLeader());
+                componentManager.getMessageService().sendOnwayUntilComplete(message, server.getLeader());
             } catch (Exception e) {
                 throw new RetryException(config.getRetryPeriod());
             }
@@ -116,7 +117,7 @@ public class HopperServiceImpl implements HopperService.Iface {
 
     @Override
     public void logout(String sessionId) throws TException {
-        ClientSession session = config.getSessionManager().getClientSession(sessionId);
+        ClientSession session = componentManager.getSessionManager().getClientSession(sessionId);
 
         if (session != null) {
             session.close();
@@ -128,13 +129,13 @@ public class HopperServiceImpl implements HopperService.Iface {
             message.setId(Message.nextId());
             message.setSessionId(sessionId);
 
-            MessageService.sendOneway(message, server.getLeader());
+            componentManager.getMessageService().sendOneway(message, server.getLeader());
         }
     }
 
     @Override
     public void ping() throws TException {
-        ClientSession clientSession = config.getSessionManager().getClientSession(ChannelBound.get());
+        ClientSession clientSession = componentManager.getSessionManager().getClientSession(ChannelBound.get());
         clientSession.heartBeat();
     }
 
@@ -192,7 +193,7 @@ public class HopperServiceImpl implements HopperService.Iface {
 
         assertServiceRunning();
 
-        if (server.getStorage().get(key) == null) {
+        if (storage.get(key) == null) {
             throw new NoStateNodeException(key);
         }
 
@@ -221,22 +222,25 @@ public class HopperServiceImpl implements HopperService.Iface {
             NoStateNodeException, TException {
         assertServiceRunning();
 
-        if (server.getStorage().get(key) == null) {
+        if (storage.get(key) == null) {
             throw new NoStateNodeException(key);
         }
+
+        Channel channel = ChannelBound.get();
+        final ClientSession session = componentManager.getSessionManager().getClientSession(channel);
 
         executeMutation(new MutationTask() {
             @Override
             public void mutation() {
                 MutationVerbHandler mutationVerbHandler = (MutationVerbHandler) VerbMappings.getVerbHandler(Verb
                         .MUTATION);
-                mutationVerbHandler.watch(key, expectStatus);
+                mutationVerbHandler.watch(session.getId(), key, expectStatus);
             }
 
             @Override
             public Mutation getMutation() {
                 Mutation mutation = new Mutation();
-                mutation.addWatch(key, expectStatus);
+                mutation.addWatch(session.getId(), key, expectStatus);
                 return mutation;
             }
         });
@@ -289,7 +293,7 @@ public class HopperServiceImpl implements HopperService.Iface {
             MutationReply mutationReply = null;
             try {
                 // If current node is follower, transfers the request to leader
-                Future<Message> future = MessageService.send(message, server.getLeader());
+                Future<Message> future = componentManager.getMessageService().send(message, server.getLeader());
                 Message reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
                 mutationReply = (MutationReply) reply.getBody();
             } catch (Exception e) {

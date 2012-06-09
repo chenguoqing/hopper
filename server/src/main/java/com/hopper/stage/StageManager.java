@@ -1,6 +1,9 @@
 package com.hopper.stage;
 
 import com.hopper.GlobalConfiguration;
+import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.sync.DataSyncThreadPool;
 
 import java.util.EnumMap;
@@ -11,22 +14,25 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * Manages all stage and thread pools
  */
-public class StageManager {
+public class StageManager extends LifecycleProxy {
+
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
     /**
      * Global configuration
      */
-    private final static GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
 
     /**
      * Mappings between state and thread pool
      */
-    private static final EnumMap<Stage, ThreadPoolExecutor> states = new EnumMap<Stage,
-            ThreadPoolExecutor>(Stage.class);
+    private final EnumMap<Stage, ThreadPoolExecutor> states = new EnumMap<Stage, ThreadPoolExecutor>(Stage.class);
 
     /**
      * Register stage and pool
      */
-    static {
+    @Override
+    protected void doInit() {
         states.put(Stage.SERVER_BOSS, (ThreadPoolExecutor) Executors.newCachedThreadPool());
         states.put(Stage.SERVER_WORKER, (ThreadPoolExecutor) Executors.newCachedThreadPool());
         states.put(Stage.CLIENT_BOSS, (ThreadPoolExecutor) Executors.newCachedThreadPool());
@@ -34,14 +40,14 @@ public class StageManager {
         states.put(Stage.SYNC, newDataSyncThreadPool());
     }
 
-    public static ThreadPoolExecutor getThreadPool(Stage stage) {
+    public ThreadPoolExecutor getThreadPool(Stage stage) {
         return states.get(stage);
     }
 
     /**
      * Create thread pool for data synchronization
      */
-    private static ThreadPoolExecutor newDataSyncThreadPool() {
+    private ThreadPoolExecutor newDataSyncThreadPool() {
         ThreadPoolExecutor threadPool = new DataSyncThreadPool(config.getSyncThreadPoolCoreSize(),
                 config.getSyncThreadPoolMaxSize(), new LinkedBlockingQueue<Runnable>());
         return threadPool;

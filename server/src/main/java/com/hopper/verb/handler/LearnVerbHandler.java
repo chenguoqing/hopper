@@ -1,20 +1,21 @@
 package com.hopper.verb.handler;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.session.MessageService;
 import com.hopper.future.LatchFuture;
 import com.hopper.future.LatchFutureListener;
 import com.hopper.quorum.Paxos;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
-import com.hopper.verb.Verb;
-import com.hopper.verb.VerbHandler;
-import com.hopper.sync.DataSyncService;
-import com.hopper.sync.DiffResult;
-import com.hopper.sync.SyncException;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
 import com.hopper.session.OutgoingSession;
+import com.hopper.sync.DataSyncService;
+import com.hopper.sync.DiffResult;
+import com.hopper.sync.SyncException;
+import com.hopper.verb.Verb;
+import com.hopper.verb.VerbHandler;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -26,13 +27,15 @@ public class LearnVerbHandler implements VerbHandler {
     /**
      * Singleton instance
      */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-    private final Server server = config.getDefaultServer();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
+
+    private final Server server = componentManager.getDefaultServer();
     /**
      * Data synchronization service
      */
-    private final DataSyncService dataSyncService = config.getDataSyncService();
+    private final DataSyncService dataSyncService = componentManager.getDataSyncService();
     /**
      * Paxos instance
      */
@@ -72,7 +75,7 @@ public class LearnVerbHandler implements VerbHandler {
                 server.setElectionState(Server.ElectionState.FOLLOWING);
             }
         } catch (Exception e) {
-            config.getLeaderElection().startElecting();
+            componentManager.getLeaderElection().startElecting();
         }
     }
 
@@ -80,7 +83,7 @@ public class LearnVerbHandler implements VerbHandler {
      * Take over the leader ship
      */
     private void takeLeadership() {
-        config.getDefaultServer().takeLeadership();
+        componentManager.getDefaultServer().takeLeadership();
         startLeaderDataSync();
     }
 
@@ -92,14 +95,14 @@ public class LearnVerbHandler implements VerbHandler {
         message.setVerb(Verb.QUERY_MAX_XID);
         message.setId(Message.nextId());
 
-        List<Message> replies = MessageService.sendMessageToQuorum(message, 1);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 1);
 
         int repliesNum = replies.size();
 
         // No majority response, starts a new election
         // Subsequently, the ElectionMonitor will mutation the new election
         if (repliesNum < config.getQuorumSize() - 1) {
-            config.getDefaultServer().setElectionState(Server.ElectionState.SYNC_FAILED);
+            componentManager.getDefaultServer().setElectionState(Server.ElectionState.SYNC_FAILED);
             return;
         }
 
@@ -119,7 +122,7 @@ public class LearnVerbHandler implements VerbHandler {
         QueryMaxXid result = (QueryMaxXid) replies.get(0).getBody();
 
         // Local data is up-to-date
-        if (server.getStorage().getMaxXid() < result.getMaxXid()) {
+        if (componentManager.getStateStorage().getMaxXid() < result.getMaxXid()) {
             try {
                 // Retrieve the diff from remote server
                 LatchFuture<DiffResult> future = dataSyncService.diff(result.getServerId());
@@ -129,7 +132,7 @@ public class LearnVerbHandler implements VerbHandler {
                 dataSyncService.applyDiff(diff);
 
                 // Retrieve all stale servers(need synchronize to up-to-date)
-                Integer[] staleServers = getStaleServers(server.getStorage().getMaxXid(), maxXidResult);
+                Integer[] staleServers = getStaleServers(componentManager.getStateStorage().getMaxXid(), maxXidResult);
 
                 int upToDateNum = repliesNum - staleServers.length;
 
@@ -200,7 +203,7 @@ public class LearnVerbHandler implements VerbHandler {
         }
 
         // close all session
-        config.getSessionManager().closeServerSession(config.getEndpoint(oldLeader));
+        componentManager.getSessionManager().closeServerSession(config.getEndpoint(oldLeader));
     }
 
     /**
@@ -208,7 +211,7 @@ public class LearnVerbHandler implements VerbHandler {
      */
     private void activeNewLeader(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
 
         // start heart beat
         session.background();
@@ -221,7 +224,7 @@ public class LearnVerbHandler implements VerbHandler {
 
         BatchSessionCreator batchCreator = new BatchSessionCreator();
 
-        ClientSession[] clientSessions = config.getSessionManager().getAllClientSessions();
+        ClientSession[] clientSessions = componentManager.getSessionManager().getAllClientSessions();
 
         if (clientSessions != null) {
             for (ClientSession session : clientSessions) {
@@ -238,8 +241,8 @@ public class LearnVerbHandler implements VerbHandler {
 
             message.setBody(batchCreator);
 
-            OutgoingSession serverSession = config.getSessionManager().getOutgoingSession(config.getEndpoint
-                    (newLeader));
+            OutgoingSession serverSession = componentManager.getSessionManager().getOutgoingSession(config
+                    .getEndpoint(newLeader));
             if (serverSession != null) {
                 serverSession.sendOneway(message);
             }

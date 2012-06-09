@@ -1,7 +1,8 @@
 package com.hopper.storage;
 
-import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.storage.merkle.MerkleTree;
 
 import java.io.*;
@@ -13,10 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * AbstractStateStorage provides some common operations for all storage implementations.
  */
 public abstract class AbstractStateStorage extends LifecycleProxy implements StateStorage {
-    /**
-     * Singleton
-     */
-    protected final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
     /**
      * merkle tree reference
      */
@@ -36,7 +35,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
      * Constructor for initializing the merkle tree uniquely
      */
     public AbstractStateStorage() {
-        this.tree = new MerkleTree(config.getMerkleTreeDepth());
+        this.tree = new MerkleTree(componentManager.getGlobalConfiguration().getMerkleTreeDepth());
     }
 
     @Override
@@ -108,7 +107,8 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
     @Override
     public void enablePurgeThread() {
         if (purgeRunning.compareAndSet(false, true)) {
-            config.getScheduleManager().schedule(purgeThread, config.getStateNodePurgeThreadPeriod());
+            componentManager.getScheduleManager().schedule(purgeThread, componentManager.getGlobalConfiguration()
+                    .getStateNodePurgeExpire());
         } else {
             throw new IllegalStateException("Purge has already running.");
         }
@@ -117,7 +117,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
     @Override
     public void removePurgeThread() {
         if (purgeRunning.compareAndSet(true, false)) {
-            config.getScheduleManager().removeTask(purgeThread);
+            componentManager.getScheduleManager().removeTask(purgeThread);
         }
     }
 

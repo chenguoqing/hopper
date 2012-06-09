@@ -43,10 +43,6 @@ public class CacheManager extends LifecycleProxy implements Lifecycle {
 		this.scheduleManager = scheduleManager;
 	}
 
-	public long getEvictPeriod() {
-		return evictPeriod;
-	}
-
 	public void setEvictPeriod(long evictPeriod) {
 		this.evictPeriod = evictPeriod;
 	}

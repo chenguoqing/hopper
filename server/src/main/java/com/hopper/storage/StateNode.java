@@ -1,9 +1,9 @@
 package com.hopper.storage;
 
-import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.MessageService;
 import com.hopper.stage.Stage;
-import com.hopper.stage.StageManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -34,10 +34,9 @@ public class StateNode {
      * Default invalidate state
      */
     public static final int DEFAULT_INVALIDATE_STATUS = -1;
-    /**
-     * Singleton
-     */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
     /**
      * Invalidate task
      */
@@ -125,13 +124,13 @@ public class StateNode {
             this.lastModified = System.currentTimeMillis();
 
             // Remove the old task
-            config.getScheduleManager().removeTask(task);
+            componentManager.getScheduleManager().removeTask(task);
 
             if (lease > 0) {
                 this.lease = lease;
 
                 // add new task
-                config.getScheduleManager().schedule(task, lease);
+                componentManager.getScheduleManager().schedule(task, lease);
             }
 
             // fire state change
@@ -191,19 +190,20 @@ public class StateNode {
             this.lastModified = System.currentTimeMillis();
 
             // add new task
-            config.getScheduleManager().schedule(task, lease);
+            componentManager.getScheduleManager().schedule(task, lease);
 
         } finally {
             nodeLock.writeLock().unlock();
         }
     }
 
-    public void watch(int expectStatus) {
+    public void watch(String sessionId, int expectStatus) {
         nodeLock.writeLock().lock();
         try {
             if (this.status != expectStatus) {
                 throw new StatusNoMatchException(expectStatus, status);
             }
+            stateChangeListeners.add(sessionId);
         } finally {
             nodeLock.writeLock().unlock();
         }
@@ -282,27 +282,6 @@ public class StateNode {
         fireStateChangeListeners(oldStatus, invalidateStatus);
     }
 
-    /**
-     * Register a state change listener with expect state
-     *
-     * @param expectState expect state
-     * @param sessionId   listener session
-     * @throws StateRegisterException if the except state is invalidate
-     */
-    void registerStateListener(int expectState, String sessionId) {
-        nodeLock.writeLock().lock();
-
-        try {
-            if (status != expectState) {
-                throw new StateRegisterException(expectState, status);
-            }
-
-            stateChangeListeners.add(sessionId);
-        } finally {
-            nodeLock.writeLock().unlock();
-        }
-    }
-
     List<String> getStateChangeListeners() {
         return new ArrayList<String>(stateChangeListeners);
     }
@@ -336,7 +315,7 @@ public class StateNode {
 
             // start tasks with remaining times
         } else {
-            config.getScheduleManager().schedule(task, now - lastModified);
+            componentManager.getScheduleManager().schedule(task, now - lastModified);
         }
     }
 
@@ -344,19 +323,19 @@ public class StateNode {
      * Remove the invalidate task from schedule manager immediately.
      */
     void removeInvalidateTask() {
-        config.getScheduleManager().removeTask(task);
+        componentManager.getScheduleManager().removeTask(task);
     }
 
     boolean shouldPurge() {
-        return System.currentTimeMillis() - lastModified >= config.getStateNodePurgeExpire() && this
-                .stateChangeListeners.isEmpty();
+        return System.currentTimeMillis() - lastModified >= componentManager.getGlobalConfiguration()
+                .getStateNodePurgeExpire() && this.stateChangeListeners.isEmpty();
     }
 
     /**
      * Fire all state change listeners (asynchronous)
      */
     private void fireStateChangeListeners(int oldStatus, int newStatus) {
-        ThreadPoolExecutor threadPool = StageManager.getThreadPool(Stage.STATE_CHANGE);
+        ThreadPoolExecutor threadPool = componentManager.getStageManager().getThreadPool(Stage.STATE_CHANGE);
 
         String sessionId = stateChangeListeners.poll();
 
@@ -380,7 +359,7 @@ public class StateNode {
 
         @Override
         public void run() {
-            MessageService.notifyStatusChange(sessionId, oldStatus, newStatus);
+            componentManager.getMessageService().notifyStatusChange(sessionId, oldStatus, newStatus);
         }
     }
 

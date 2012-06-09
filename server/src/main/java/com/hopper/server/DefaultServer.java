@@ -1,31 +1,31 @@
 package com.hopper.server;
 
-import com.hopper.*;
+import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
-import com.hopper.stage.StageManager;
-import com.hopper.verb.handler.ServerMessageDecoder;
-import com.hopper.verb.handler.ServerMessageHandler;
 import com.hopper.stage.Stage;
 import com.hopper.thrift.HopperService;
 import com.hopper.thrift.HopperServiceImpl;
 import com.hopper.thrift.netty.ThriftPipelineFactory;
 import com.hopper.thrift.netty.ThriftServerHandler;
-import com.hopper.storage.StateStorage;
+import com.hopper.verb.handler.ServerMessageDecoder;
+import com.hopper.verb.handler.ServerMessageHandler;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeoutException;
 
 public class DefaultServer extends LifecycleProxy implements Server {
 
-    private static final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private static Logger logger = LoggerFactory.getLogger(DefaultServer.class);
 
     /**
      * Outer connection endpoint
@@ -39,10 +39,12 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * Paxos node for election
      */
     private Paxos paxosNode;
-    /**
-     * State storage
-     */
-    private StateStorage storage;
+
+    private int leader;
+
+    private ElectionState electionState;
+
+    private ComponentManager componentManager;
 
     @Override
     protected void doInit() {
@@ -58,9 +60,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
             throw new IllegalArgumentException("paxos node is null.");
         }
 
-        if (storage == null) {
-            throw new IllegalArgumentException("storage instance is null.");
-        }
+        componentManager = ComponentManagerFactory.getComponentManager();
     }
 
     @Override
@@ -69,13 +69,17 @@ public class DefaultServer extends LifecycleProxy implements Server {
         // start internal listen port
         startServerSocket();
 
+        // join group
+        joinGroup();
+
         // start client listen port
         startClientSocket();
     }
 
     private void startServerSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(StageManager
-                .getThreadPool(Stage.SERVER_BOSS), StageManager.getThreadPool(Stage.SERVER_WORKER)));
+        ServerBootstrap bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(componentManager
+                .getStageManager().getThreadPool(Stage.SERVER_BOSS), componentManager.getStageManager().getThreadPool
+                (Stage.SERVER_WORKER)));
 
         // set customs pipeline factory
         bootstrap.setPipelineFactory(new ServerPiplelineFactory());
@@ -88,8 +92,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * Start client-server socket with avro, all client requests will be processed by avro.
      */
     private void startClientSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(StageManager
-                .getThreadPool(Stage.CLIENT_BOSS), StageManager.getThreadPool(Stage.CLIENT_WORKER)));
+        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(componentManager
+                .getStageManager().getThreadPool(Stage.CLIENT_BOSS), componentManager.getStageManager().getThreadPool
+                (Stage.CLIENT_WORKER)));
 
         // set customs pipeline factory
         HopperService.Processor<HopperServiceImpl> processor = new HopperService.Processor<HopperServiceImpl>(new
@@ -101,13 +106,28 @@ public class DefaultServer extends LifecycleProxy implements Server {
         bootstrap.bind(new InetSocketAddress(endpoint.address, endpoint.port));
     }
 
+    /**
+     * Join group
+     */
+    private void joinGroup() {
+        GlobalConfiguration.ServerMode mode = componentManager.getGlobalConfiguration().getServerMode();
+        if (mode == GlobalConfiguration.ServerMode.MULTI) {
+            logger.info("Start server with multiple nodes mode...");
+            componentManager.getLeaderElection().startElecting();
+        } else {
+            logger.info("Start server with single nodes mode...");
+            componentManager.getDefaultServer().setLeader(componentManager.getGlobalConfiguration()
+                    .getLocalServerEndpoint().serverId);
+        }
+    }
+
     @Override
-    public void setEndpoint(Endpoint endpoint) {
+    public void setRpcEndpoint(Endpoint endpoint) {
         this.endpoint = endpoint;
     }
 
     @Override
-    public Endpoint getEndPoint() {
+    public Endpoint getRpcEndPoint() {
         return endpoint;
     }
 
@@ -132,90 +152,78 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     @Override
-    public void setStorage(StateStorage storage) {
-        this.storage = storage;
-    }
-
-    @Override
-    public StateStorage getStorage() {
-        return storage;
-    }
-
-    @Override
     public void setLeader(int serverId) {
-
+        this.leader = serverId;
     }
 
     @Override
     public int getLeader() {
-        return 0;
+        return leader;
     }
 
     @Override
     public boolean isKnownLeader() {
-        return false;
+        return leader != -1;
     }
 
     @Override
     public int getLeaderWithLock(long timeout) throws TimeoutException {
+        //TODO:
         return 0;
     }
 
     @Override
-    public Object getLeaderLock() {
-        return null;
-    }
-
-    @Override
     public void clearLeader() {
-
+        this.leader = -1;
     }
 
     @Override
-    public void anandonLeadeship() {
-        storage.removeInvalidateTask();
-        storage.removePurgeThread();
+    public void abandonLeadership() {
+        clearLeader();
+        componentManager.getStateStorage().removeInvalidateTask();
+        componentManager.getStateStorage().removePurgeThread();
     }
 
     @Override
     public void takeLeadership() {
-        storage.executeInvalidateTask();
-        storage.enablePurgeThread();
+        this.leader = serverEndpoint.serverId;
+        componentManager.getStateStorage().executeInvalidateTask();
+        componentManager.getStateStorage().enablePurgeThread();
     }
 
     @Override
     public boolean hasLeader() {
-        return false;
+        return leader != -1;
     }
 
     @Override
     public boolean isLeader() {
-        return false;
+        return leader != -1 && serverEndpoint.serverId == leader;
     }
 
     @Override
     public boolean isLeader(Endpoint endpoint) {
-        return false;
+        return leader != -1 && endpoint.serverId == leader;
     }
 
     @Override
     public boolean isFollower() {
-        return false;
+        return leader != -1 && serverEndpoint.serverId != -leader;
     }
 
     @Override
     public boolean isFollower(Endpoint endpoint) {
-        return false;
+        return leader != -1 && endpoint.serverId != -leader;
     }
 
     @Override
     public void setElectionState(ElectionState state) {
-
+        this.electionState = state;
     }
 
     @Override
     public ElectionState getElectionState() {
-        return null;
+        return electionState;
     }
 
     /**

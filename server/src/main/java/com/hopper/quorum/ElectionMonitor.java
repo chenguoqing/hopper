@@ -1,7 +1,8 @@
 package com.hopper.quorum;
 
-import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
 import com.hopper.server.Server.ElectionState;
@@ -9,9 +10,9 @@ import com.hopper.session.IncomingSession;
 
 public class ElectionMonitor extends LifecycleProxy {
 
-    private GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-    private Server server = config.getDefaultServer();
+    private Server server = componentManager.getDefaultServer();
 
     private ElectionMonitorTask monitorTask;
 
@@ -22,12 +23,13 @@ public class ElectionMonitor extends LifecycleProxy {
 
     @Override
     protected void doStart() {
-        config.getScheduleManager().schedule(monitorTask, config.getRpcTimeout(), config.getRpcTimeout());
+        componentManager.getScheduleManager().schedule(monitorTask, componentManager.getGlobalConfiguration()
+                .getRpcTimeout(), componentManager.getGlobalConfiguration().getRpcTimeout());
     }
 
     @Override
     protected void doShutdown() {
-        config.getScheduleManager().removeTask(monitorTask);
+        componentManager.getScheduleManager().removeTask(monitorTask);
     }
 
     class ElectionMonitorTask implements Runnable {
@@ -41,7 +43,7 @@ public class ElectionMonitor extends LifecycleProxy {
                 return;
             }
 
-            IncomingSession[] sessions = config.getSessionManager().getAllIncomingSessions();
+            IncomingSession[] sessions = componentManager.getSessionManager().getAllIncomingSessions();
 
             int disConnectCounter = 0;
 
@@ -59,10 +61,10 @@ public class ElectionMonitor extends LifecycleProxy {
                         server.clearLeader();
 
                         // close all session associated with source endpoint
-                        config.getSessionManager().closeServerSession(source);
+                        componentManager.getSessionManager().closeServerSession(source);
 
                         // starting leader electing
-                        config.getLeaderElection().startElecting();
+                        componentManager.getLeaderElection().startElecting();
 
                         // If local is follower and target is leader, it
                         // indicating that current is disconnecting from a
@@ -70,14 +72,14 @@ public class ElectionMonitor extends LifecycleProxy {
                     } else if (server.isFollower() && server.isFollower(source)) {
 
                         // close all session associated with source endpoint
-                        config.getSessionManager().closeServerSession(source);
+                        componentManager.getSessionManager().closeServerSession(source);
 
                         // Local is leader and remote server is follower, it
                         // indicating that leader is disconnecting from follower
                     } else if (server.isLeader() && server.isFollower(source)) {
 
                         // close all session associated with source endpoint
-                        config.getSessionManager().closeServerSession(source);
+                        componentManager.getSessionManager().closeServerSession(source);
 
                         disConnectCounter++;
 
@@ -85,7 +87,7 @@ public class ElectionMonitor extends LifecycleProxy {
                     } else {
 
                         // close all session associated with source endpoint
-                        config.getSessionManager().closeServerSession(source);
+                        componentManager.getSessionManager().closeServerSession(source);
                     }
                 }
             }
@@ -93,13 +95,13 @@ public class ElectionMonitor extends LifecycleProxy {
             if (server.isLeader()) {
 
                 // If leader is disconnecting from quorum follower
-                if (disConnectCounter > config.getQuorumSize()) {
+                if (disConnectCounter > componentManager.getGlobalConfiguration().getQuorumSize()) {
 
                     // unbound local leader
-                    server.anandonLeadeship();
+                    server.abandonLeadership();
 
                     // starting leader electing
-                    config.getLeaderElection().startElecting();
+                    componentManager.getLeaderElection().startElecting();
                 }
             } else {
 
@@ -107,7 +109,7 @@ public class ElectionMonitor extends LifecycleProxy {
                 // starting election
                 if (!server.hasLeader()) {
                     // starting leader electing
-                    config.getLeaderElection().startElecting();
+                    componentManager.getLeaderElection().startElecting();
                 }
             }
         }

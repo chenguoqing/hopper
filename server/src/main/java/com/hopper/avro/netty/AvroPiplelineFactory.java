@@ -2,6 +2,8 @@ package com.hopper.avro.netty;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.avro.ClientService;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import org.apache.avro.ipc.NettyTransportCodec;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.specific.SpecificResponder;
@@ -17,11 +19,11 @@ import org.jboss.netty.channel.Channels;
  * To change this template use File | Settings | File Templates.
  */
 public class AvroPiplelineFactory implements ChannelPipelineFactory {
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
     @Override
     public ChannelPipeline getPipeline() throws Exception {
-        Responder responder = new SpecificResponder(ClientService.class, config.getStateService());
+        Responder responder = new SpecificResponder(ClientService.class, null);
         ChannelPipeline p = Channels.pipeline();
         p.addLast("frameDecoder", new NettyTransportCodec.NettyFrameDecoder());
         p.addLast("frameEncoder", new NettyTransportCodec.NettyFrameEncoder());

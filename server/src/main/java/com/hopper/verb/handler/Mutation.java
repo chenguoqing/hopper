@@ -78,9 +78,10 @@ public class Mutation implements Serializer {
         this.entity = ul;
     }
 
-    public void addWatch(String key, int expectStatus) {
+    public void addWatch(String sessionId, String key, int expectStatus) {
         this.op = OP.WATCH;
         Watch w = new Watch();
+        w.sessionId = sessionId;
         w.key = key;
         w.expectStatus = expectStatus;
         this.entity = w;
@@ -210,17 +211,20 @@ public class Mutation implements Serializer {
     }
 
     public static class Watch implements Serializer {
+        String sessionId;
         String key;
         int expectStatus;
 
         @Override
         public void serialize(DataOutput out) throws IOException {
+            out.writeUTF(sessionId);
             out.writeUTF(key);
             out.writeInt(expectStatus);
         }
 
         @Override
         public void deserialize(DataInput in) throws IOException {
+            this.sessionId = in.readUTF();
             this.key = in.readUTF();
             this.expectStatus = in.readInt();
         }

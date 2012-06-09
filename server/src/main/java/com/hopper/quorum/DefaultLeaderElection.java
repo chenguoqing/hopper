@@ -1,13 +1,14 @@
 package com.hopper.quorum;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.session.MessageService;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server.ElectionState;
-import com.hopper.verb.Verb;
-import com.hopper.verb.handler.*;
 import com.hopper.session.Message;
 import com.hopper.session.OutgoingSession;
+import com.hopper.verb.Verb;
+import com.hopper.verb.handler.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,23 +25,22 @@ public class DefaultLeaderElection implements LeaderElection {
      * Logger
      */
     private static final Logger logger = LoggerFactory.getLogger(DefaultLeaderElection.class);
+
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
     /**
      * Singleton instance
      */
-    private GlobalConfiguration config = GlobalConfiguration.getInstance();
-    /**
-     * Singleton instance
-     */
-    private Paxos paxos = config.getDefaultServer().getPaxos();
+    private Paxos paxos = componentManager.getDefaultServer().getPaxos();
 
     @Override
     public void startElecting() {
 
-        if (config.getDefaultServer().getElectionState() == ElectionState.LOOKING) {
+        if (componentManager.getDefaultServer().getElectionState() == ElectionState.LOOKING) {
             return;
         }
 
-        config.getDefaultServer().setElectionState(ElectionState.LOOKING);
+        componentManager.getDefaultServer().setElectionState(ElectionState.LOOKING);
 
         int repeated = 0;
         boolean retry = false;
@@ -81,7 +81,7 @@ public class DefaultLeaderElection implements LeaderElection {
                 // If ballot is lower, it indicates other nodes are in progress, so it must wait for a moment
                 if (e.reject == PaxosRejectedException.BALLOT_REJECT) {
                     logger.debug("Current ballot is lower, re-starts the paxos progress just a moment");
-                    retry = waitingNextElection(config.getPeriodForPaxosRejected());
+                    retry = waitingNextElection(config.getRetryElectionPeriod());
                     // If instance number is lower, it indicates other nodes had undergone some elections
                 } else {
                     logger.debug("Current instance is lower, re-starts the paxos immediately.");
@@ -148,7 +148,7 @@ public class DefaultLeaderElection implements LeaderElection {
         message.setVerb(Verb.QUERY_LEADER);
         message.setId(Message.nextId());
 
-        List<Message> replies = MessageService.sendMessageToQuorum(message, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 0);
 
         List<QueryLeader> leaders = new ArrayList<QueryLeader>(replies.size());
 
@@ -173,13 +173,13 @@ public class DefaultLeaderElection implements LeaderElection {
         activeLeaderSession(candidateLeader);
 
         // set the new leader
-        config.getDefaultServer().setLeader(candidateLeader);
+        componentManager.getDefaultServer().setLeader(candidateLeader);
 
         // close current instance
         paxos.closeInstance();
 
         // unbound the election status
-        config.getDefaultServer().setElectionState(ElectionState.FOLLOWING);
+        componentManager.getDefaultServer().setElectionState(ElectionState.FOLLOWING);
     }
 
     /**
@@ -187,7 +187,7 @@ public class DefaultLeaderElection implements LeaderElection {
      */
     private void activeLeaderSession(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
 
         // start heart beat
         session.background();
@@ -203,9 +203,9 @@ public class DefaultLeaderElection implements LeaderElection {
         // electing complete.
         if (paxos.isVoted()) {
             // It indicating that election is running
-            if (!config.getDefaultServer().isKnownLeader()) {
+            if (!componentManager.getDefaultServer().isKnownLeader()) {
                 // Waiting for the election complete
-                config.getDefaultServer().getLeaderWithLock(config.getWaitingPeriodForElectionComplete());
+                componentManager.getDefaultServer().getLeaderWithLock(config.getWaitingPeriodForElectionComplete());
             }
         }
     }
@@ -221,7 +221,7 @@ public class DefaultLeaderElection implements LeaderElection {
         // there some contention and may be other servers have completed Phase1.
         // As optimization current server may abandon the subsequent election
         // steps.
-        if (leader != config.getDefaultServer().getServerEndpoint().serverId) {
+        if (leader != componentManager.getDefaultServer().getServerEndpoint().serverId) {
         }
 
         // starting phase2
@@ -266,7 +266,8 @@ public class DefaultLeaderElection implements LeaderElection {
             // Majority no chosen any value, we can decide any value, otherwise,
             // it must pick up the first value
             if (leader == -1) {
-                leader = paxos.getVval() > 0 ? paxos.getVval() : config.getDefaultServer().getServerEndpoint().serverId;
+                leader = paxos.getVval() > 0 ? paxos.getVval() : componentManager.getDefaultServer()
+                        .getServerEndpoint().serverId;
             }
 
             return leader;
@@ -298,7 +299,7 @@ public class DefaultLeaderElection implements LeaderElection {
      */
     private List<Message> prepare() throws NoQuorumException, ElectionTerminatedException {
 
-        if (config.getDefaultServer().getElectionState() != ElectionState.LOOKING) {
+        if (componentManager.getDefaultServer().getElectionState() != ElectionState.LOOKING) {
             throw new ElectionTerminatedException();
         }
 
@@ -309,8 +310,8 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Prepare prepare = new Prepare();
 
-        int ballot = BallotGenerator.generateBallot(config.getLocalBallotServerId(),
-                config.getConfigedEndpoints().length, paxos.getRnd());
+        int ballot = BallotGenerator.generateBallot(config.getLocalServerEndpoint().serverId,
+                config.getGroupEndpoints().length, paxos.getRnd());
 
         paxos.setRnd(ballot);
 
@@ -319,7 +320,7 @@ public class DefaultLeaderElection implements LeaderElection {
         phase1.setBody(prepare);
 
         // Receive the promise(Phase1b) message
-        List<Message> replies = MessageService.sendMessageToQuorum(phase1, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1, 0);
 
         // if no majority responses, it can't work
         if (replies.size() < config.getQuorumSize() - 1) {
@@ -331,7 +332,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
     private void phase2(int leader) {
 
-        if (config.getDefaultServer().getElectionState() != ElectionState.LOOKING) {
+        if (componentManager.getDefaultServer().getElectionState() != ElectionState.LOOKING) {
             throw new ElectionTerminatedException();
         }
 
@@ -346,7 +347,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
         message.setBody(accept);
 
-        List<Message> replies = MessageService.sendMessageToQuorum(message, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 0);
 
         // No majority are alive
         if (replies.size() < config.getQuorumSize()) {
@@ -374,7 +375,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
             Message learnMessage = makeLearnMessage();
             // Send Learn message to all nodes
-            MessageService.sendLearnMessage(learnMessage);
+            componentManager.getMessageService().sendLearnMessage(learnMessage);
             return;
         }
 
@@ -398,7 +399,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Learn learn = new Learn();
         learn.setEpoch(paxos.getEpoch());
-        learn.setProposer(config.getDefaultServer().getEndPoint().serverId);
+        learn.setProposer(componentManager.getDefaultServer().getRpcEndPoint().serverId);
         learn.setVval(paxos.getVval());
 
         return message;
@@ -415,7 +416,7 @@ public class DefaultLeaderElection implements LeaderElection {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
 
         try {
-            OutgoingSession session = config.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+            OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
 
             Message request = new Message();
             request.setVerb(Verb.TEST_LEADER);
@@ -459,7 +460,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
     private boolean waitingNodesJoining() {
         try {
-            Thread.sleep(config.getPeriodForRetryElection());
+            Thread.sleep(config.getRetryElectionPeriod());
         } catch (InterruptedException e) {
             return false;
         }

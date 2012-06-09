@@ -2,10 +2,12 @@ package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.cache.CacheManager;
-import com.hopper.lifecycle.LifecycleException;
-import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.future.DefaultLatchFuture;
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.LifecycleException;
+import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.DefaultServer.ServerPiplelineFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.utils.ScheduleManager;
@@ -40,18 +42,20 @@ public class NettyConnection extends LifecycleProxy implements Connection {
      */
     private static final Executor workerExecutor = Executors.newCachedThreadPool();
 
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
     /**
      * Inject the {@link com.hopper.GlobalConfiguration} instance
      */
-    private static final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
     /**
      * Singleton CacheManager instance
      */
-    private static final CacheManager cacheManager = config.getCacheManager();
+    private final CacheManager cacheManager = componentManager.getCacheManager();
     /**
      * Schedule manager
      */
-    private static final ScheduleManager scheduleManager = config.getScheduleManager();
+    private final ScheduleManager scheduleManager = componentManager.getScheduleManager();
     /**
      * Source endpoint
      */
@@ -162,7 +166,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     public void close() {
         shutdown();
-        config.getConnectionManager().removeOutgoingConnection(dest);
+        componentManager.getConnectionManager().removeOutgoingConnection(dest);
     }
 
     @Override

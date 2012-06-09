@@ -1,6 +1,6 @@
 package com.hopper.sync;
 
-import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Serializer;
 import com.hopper.storage.merkle.MerkleTree;
 
@@ -51,7 +51,8 @@ public class RequireDiff implements Serializer {
     @Override
     public void deserialize(DataInput in) throws IOException {
         this.maxXid = in.readLong();
-        this.tree = new MerkleTree(GlobalConfiguration.getInstance().getMerkleTreeDepth());
+        this.tree = new MerkleTree(ComponentManagerFactory.getComponentManager().getGlobalConfiguration()
+                .getMerkleTreeDepth());
         tree.deserialize(in);
         tree.loadHash();
     }

@@ -1,6 +1,8 @@
 package com.hopper.storage.merkle;
 
 import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Serializer;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
@@ -21,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * hash value belongs to this interval.
  */
 public class HashRange implements Serializer {
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
     /**
      * HashRange left position
      */
@@ -32,11 +35,11 @@ public class HashRange implements Serializer {
     /**
      * GlobalConfiguration instance
      */
-    private final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
     /**
      * StateNode will be delegate to StateStorage
      */
-    private final StateStorage storage = config.getDefaultServer().getStorage();
+    private final StateStorage storage = componentManager.getStateStorage();
     /**
      * All associated StateNode keys
      */

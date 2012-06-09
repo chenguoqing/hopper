@@ -1,6 +1,8 @@
 package com.hopper.verb.handler;
 
 import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.session.*;
 import com.hopper.thrift.ChannelBound;
@@ -18,10 +20,12 @@ public class ServerMessageHandler extends SimpleChannelHandler {
      */
     private static final Logger logger = LoggerFactory.getLogger(ServerMessageHandler.class);
 
+    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+
     /**
      * The unique {@link SessionManager} instance
      */
-    private static final GlobalConfiguration config = GlobalConfiguration.getInstance();
+    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
 
     @Override
     public void childChannelOpen(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
@@ -36,10 +40,10 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             return;
         }
 
-        IncomingSession incomingSession = config.getSessionManager().getIncomingSession(endpoint);
+        IncomingSession incomingSession = componentManager.getSessionManager().getIncomingSession(endpoint);
 
         if (incomingSession == null) {
-            incomingSession = config.getSessionManager().createIncomingSession(channel);
+            incomingSession = componentManager.getSessionManager().createIncomingSession(channel);
         }
 
         // The session has created for other channel from endpoint
@@ -50,7 +54,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
         }
 
         // create a outgoing session for the endpoint
-        config.getSessionManager().createLocalOutgoingSession(endpoint);
+        componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
 
         // forward to others handlers
         super.childChannelOpen(ctx, e);
@@ -60,7 +64,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
     public void childChannelClosed(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
         final Channel channel = ctx.getChannel();
         Endpoint endpoint = config.getEndpoint(channel.getRemoteAddress());
-        config.getSessionManager().closeServerSession(endpoint);
+        componentManager.getSessionManager().closeServerSession(endpoint);
         super.childChannelClosed(ctx, e);
     }
 
@@ -90,7 +94,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // register multiplexer session
         if (verb == Verb.BOUND_MULTIPLEXER_SESSION) {
-            IncomingSession session = config.getSessionManager().getIncomingSession(channel);
+            IncomingSession session = componentManager.getSessionManager().getIncomingSession(channel);
 
             BatchSessionCreator batchCreator = (BatchSessionCreator) message.getBody();
 
@@ -106,7 +110,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             // send reply
             session.sendOneway(reply);
         } else {
-            IncomingSession session = config.getSessionManager().getIncomingSession(ChannelBound.get());
+            IncomingSession session = componentManager.getSessionManager().getIncomingSession(ChannelBound.get());
             // delegates the message processing to bound IncomingSession
             session.receive(message);
         }
@@ -114,7 +118,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
     private boolean checkSession(Message message, Channel channel) {
 
-        IncomingSession incomingSession = config.getSessionManager().getIncomingSession(channel);
+        IncomingSession incomingSession = componentManager.getSessionManager().getIncomingSession(channel);
 
         // validate whether the channel has been bound with one
         // IncomingSession
@@ -132,13 +136,12 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // otherwise, the session may be a multiplexer session, it must be bound
         // on the outgoing channel,and, must have a connected ClientSession
-        OutgoingSession outgoingServerSession = config.getSessionManager().getOutgoingSession(sessionId);
+        OutgoingSession outgoingServerSession = componentManager.getSessionManager().getOutgoingSession(sessionId);
         if (outgoingServerSession == null) {
-            throw new NotBoundSessionException(sessionId, GlobalConfiguration.getInstance().getEndpoint(channel
-                    .getRemoteAddress()));
+            throw new NotBoundSessionException(sessionId, config.getEndpoint(channel.getRemoteAddress()));
         }
 
-        ClientSession clientSession = config.getSessionManager().getClientSession(sessionId);
+        ClientSession clientSession = componentManager.getSessionManager().getClientSession(sessionId);
         if (clientSession == null) {
             throw new NotFoundClientSessionException(sessionId);
         }

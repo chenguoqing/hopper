@@ -7,7 +7,7 @@
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>The parent project for hopper</name>
-    <url>https://www.sdp.com/</url>
+    <url>https://www.hopper.com/</url>
     <description>Define the common repositories</description>
 
     <modules>
@@ -91,6 +91,14 @@
                 <scope>compile</scope>
             </dependency>
 
+<<<<<<< HEAD
+=======
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+>>>>>>> 235063d9c5a3d2578a1ccf60a682f35e5624c74b
 
             <!-- Avro -->
             <dependency>
