@@ -4,6 +4,10 @@ import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
+import com.hopper.session.ClientSession;
+import com.hopper.session.IncomingSession;
+import com.hopper.session.OutgoingSession;
+import com.hopper.session.SessionManager;
 import com.hopper.stage.Stage;
 import com.hopper.thrift.HopperService;
 import com.hopper.thrift.HopperServiceImpl;
@@ -46,6 +50,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
     private ComponentManager componentManager;
 
+    private ServerBootstrap serverBootstrap;
+    private ServerBootstrap rpcBootstrap;
+
     @Override
     protected void doInit() {
         if (endpoint == null) {
@@ -77,22 +84,22 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     private void startServerSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(componentManager
+        this.serverBootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(componentManager
                 .getStageManager().getThreadPool(Stage.SERVER_BOSS), componentManager.getStageManager().getThreadPool
                 (Stage.SERVER_WORKER)));
 
         // set customs pipeline factory
-        bootstrap.setPipelineFactory(new ServerPiplelineFactory());
+        serverBootstrap.setPipelineFactory(new ServerPiplelineFactory());
 
         // Bind and start to accept incoming connections.
-        bootstrap.bind(new InetSocketAddress(serverEndpoint.address, serverEndpoint.port));
+        serverBootstrap.bind(new InetSocketAddress(serverEndpoint.address, serverEndpoint.port));
     }
 
     /**
      * Start client-server socket with avro, all client requests will be processed by avro.
      */
     private void startClientSocket() {
-        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(componentManager
+        this.rpcBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(componentManager
                 .getStageManager().getThreadPool(Stage.CLIENT_BOSS), componentManager.getStageManager().getThreadPool
                 (Stage.CLIENT_WORKER)));
 
@@ -100,10 +107,10 @@ public class DefaultServer extends LifecycleProxy implements Server {
         HopperService.Processor<HopperServiceImpl> processor = new HopperService.Processor<HopperServiceImpl>(new
                 HopperServiceImpl());
         ThriftServerHandler handler = new ThriftServerHandler(processor);
-        bootstrap.setPipelineFactory(new ThriftPipelineFactory(handler));
+        rpcBootstrap.setPipelineFactory(new ThriftPipelineFactory(handler));
 
         // Bind and start to accept incoming connections.
-        bootstrap.bind(new InetSocketAddress(endpoint.address, endpoint.port));
+        rpcBootstrap.bind(new InetSocketAddress(endpoint.address, endpoint.port));
     }
 
     /**
@@ -119,6 +126,36 @@ public class DefaultServer extends LifecycleProxy implements Server {
             componentManager.getDefaultServer().setLeader(componentManager.getGlobalConfiguration()
                     .getLocalServerEndpoint().serverId);
         }
+    }
+
+    @Override
+    protected void doShutdown() {
+        final SessionManager sessionManager = componentManager.getSessionManager();
+
+        // close rpc server
+        if (this.rpcBootstrap != null) {
+            rpcBootstrap.releaseExternalResources();
+
+        }
+
+        // close client sessions
+        ClientSession[] clientSessions = sessionManager.getAllClientSessions();
+        if (clientSessions != null) {
+            for (ClientSession clientSession : clientSessions) {
+                clientSession.close();
+            }
+        }
+
+        // close s2s server
+        if (this.serverBootstrap != null) {
+            serverBootstrap.releaseExternalResources();
+        }
+
+        // close incoming/outgoing sessions
+        for (Endpoint endpoint : componentManager.getGlobalConfiguration().getGroupEndpoints()) {
+            sessionManager.closeServerSession(endpoint);
+        }
+
     }
 
     @Override
