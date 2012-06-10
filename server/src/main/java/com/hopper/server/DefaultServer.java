@@ -91,6 +91,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
         // set customs pipeline factory
         serverBootstrap.setPipelineFactory(new ServerPiplelineFactory());
 
+        // configure tcp
+        serverBootstrap.setOptions(componentManager.getGlobalConfiguration().getS2STcpSettings());
+
         // Bind and start to accept incoming connections.
         serverBootstrap.bind(new InetSocketAddress(serverEndpoint.address, serverEndpoint.port));
     }
@@ -108,6 +111,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
                 HopperServiceImpl());
         ThriftServerHandler handler = new ThriftServerHandler(processor);
         rpcBootstrap.setPipelineFactory(new ThriftPipelineFactory(handler));
+
+        // configure tcp
+        rpcBootstrap.setOptions(componentManager.getGlobalConfiguration().getRpcTcpSettings());
 
         // Bind and start to accept incoming connections.
         rpcBootstrap.bind(new InetSocketAddress(endpoint.address, endpoint.port));

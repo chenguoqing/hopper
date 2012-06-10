@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,6 +28,7 @@ public class HopperYamlTest {
 
         Assert.assertNotNull(o);
 
+        Object v = ((Map<String,Object>)o).get("rpc_tcp");
         System.out.println(o);
     }
 }

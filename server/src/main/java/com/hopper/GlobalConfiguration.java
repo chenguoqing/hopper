@@ -20,6 +20,7 @@ import java.util.Random;
  * {@link GlobalConfiguration} maintains all configuration items for hopper that will be loaded from YAML
  * configuration file on startup.
  */
+@SuppressWarnings("unchecked")
 public class GlobalConfiguration extends LifecycleProxy {
     /**
      * Server mode(single node or multiple nodes)
@@ -129,7 +130,7 @@ public class GlobalConfiguration extends LifecycleProxy {
     }
 
     public Endpoint[] getGroupEndpoints() {
-        return innerConfig.endpointMap.values().toArray(new Endpoint[]{});
+        return innerConfig.endpointMap.values().toArray(new Endpoint[0]);
     }
 
     public int getQuorumSize() {
@@ -190,6 +191,38 @@ public class GlobalConfiguration extends LifecycleProxy {
         return innerConfig.getString("shutdown_command", "shutdown");
     }
 
+    public Map<String, Object> getRpcTcpSettings() {
+        return getTcpSettings("rpc_tcp");
+    }
+
+    public Map<String, Object> getS2STcpSettings() {
+        return getTcpSettings("s2s_tcp");
+    }
+
+    private Map<String, Object> getTcpSettings(String key) {
+        List<Object> list = innerConfig.getList(key);
+
+        Map<String, Object> tcpSettings = defaultTCPSettings();
+
+        if (list != null) {
+            for (Object o : list) {
+                Map<String, Object> map = (Map<String, Object>) o;
+                tcpSettings.putAll(map);
+            }
+        }
+
+        return tcpSettings;
+    }
+
+    private Map<String, Object> defaultTCPSettings() {
+        Map<String, Object> tcpSettings = new HashMap<String, Object>();
+        tcpSettings.put("child.tcpNoDelay", true);
+        tcpSettings.put("child.keepAlive", true);
+        tcpSettings.put("reuseAddress", true);
+
+        return tcpSettings;
+    }
+
     /**
      * Read stream from path
      */
@@ -228,6 +261,7 @@ public class GlobalConfiguration extends LifecycleProxy {
             loadLocalEndpoint();
             loadGroup();
         }
+
 
         String getString(String key, String defaultValue) {
             Object v = yamlMap.get(key);
@@ -322,8 +356,8 @@ public class GlobalConfiguration extends LifecycleProxy {
         private void loadLocalEndpoint() throws UnknownHostException {
             // Resolve rpc address
             String rpcAddress = (String) yamlMap.get("rpc_address");
-            InetAddress _rpcAddress = null;
-            if (rpcAddress == null || _rpcAddress.equals("")) {
+            InetAddress _rpcAddress;
+            if (rpcAddress == null || rpcAddress.equals("")) {
                 _rpcAddress = InetAddress.getLocalHost();
             } else {
                 _rpcAddress = InetAddress.getByName(rpcAddress);

@@ -35,6 +35,7 @@ shutdown_port: 7930
 # shutdown command
 shutdown_command: shutdown
 
+
 # configure all group nodes
 group_nodes:
     - {serverId: 1,address: 127.0.0.1,port: 7920}
@@ -75,5 +76,16 @@ schedule_thread_count: 3
 # cache evict period
 cache_evict_period: 30000
 
+################################TCP settings###########################################
 
+# tcp setting for rpc
+rpc_tcp:
+    - reuseAddress: true
+    - child.tcpNoDelay: true
+    - child.keepAlive: true
 
+# tcp setting for s2s
+s2s_tcp:
+    - reuseAddress: true
+    - child.tcpNoDelay: true
+    - child.keepAlive: true
