@@ -31,6 +31,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
     private static Logger logger = LoggerFactory.getLogger(DefaultServer.class);
 
+    private final Object leaderLock = new Object();
+
     /**
      * Outer connection endpoint
      */
