@@ -61,7 +61,9 @@ public class ComponentManager extends LifecycleProxy {
         this.globalConfiguration = createGlobalConfiguration();
         try {
             this.getGlobalConfiguration().initialize();
+            logger.info("Initialize " + globalConfiguration.getInfo() + "...");
             this.globalConfiguration.start();
+            logger.info("Starting " + globalConfiguration.getInfo() + "...");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -127,8 +129,12 @@ public class ComponentManager extends LifecycleProxy {
         for (int i = components.size() - 1; i >= 0; i--) {
             Lifecycle component = components.get(i);
             component.shutdown();
+            logger.debug("Shutdown the component:{} ", component.getInfo());
         }
         this.globalConfiguration.shutdown();
+        logger.debug("Shutdown the component:{} ", globalConfiguration.getInfo());
+
+        logger.info("Hopper has shutdown.");
     }
 
     @Override

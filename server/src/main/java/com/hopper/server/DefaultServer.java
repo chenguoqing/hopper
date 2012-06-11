@@ -13,9 +13,7 @@ import com.hopper.thrift.netty.ThriftServerHandler;
 import com.hopper.verb.handler.ServerMessageDecoder;
 import com.hopper.verb.handler.ServerMessageHandler;
 import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
 import org.slf4j.Logger;
@@ -58,9 +56,17 @@ public class DefaultServer extends LifecycleProxy implements Server {
      */
     private ServerBootstrap serverBootstrap;
     /**
+     * Server channel
+     */
+    private Channel serverChannel;
+    /**
      * Client-to-server bootstrap( for shutdown)
      */
     private ServerBootstrap rpcBootstrap;
+    /**
+     * RPC channel
+     */
+    private Channel rpcChannel;
 
     @Override
     protected void doInit() {
@@ -100,7 +106,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
         serverBootstrap.setOptions(componentManager.getGlobalConfiguration().getS2STcpSettings());
 
         // Bind and start to accept incoming connections.
-        serverBootstrap.bind(new InetSocketAddress(serverEndpoint.address, serverEndpoint.port));
+        this.serverChannel = serverBootstrap.bind(new InetSocketAddress(serverEndpoint.address, serverEndpoint.port));
     }
 
     /**
@@ -121,7 +127,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
         rpcBootstrap.setOptions(componentManager.getGlobalConfiguration().getRpcTcpSettings());
 
         // Bind and start to accept incoming connections.
-        rpcBootstrap.bind(new InetSocketAddress(rpcEndpoint.address, rpcEndpoint.port));
+        this.rpcChannel = rpcBootstrap.bind(new InetSocketAddress(rpcEndpoint.address, rpcEndpoint.port));
     }
 
     /**
@@ -145,8 +151,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
         // close rpc server
         if (this.rpcBootstrap != null) {
+            ChannelFuture future = this.rpcChannel.close();
+            future.awaitUninterruptibly();
             rpcBootstrap.releaseExternalResources();
-
         }
 
         // close client sessions
@@ -159,6 +166,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
         // close s2s server
         if (this.serverBootstrap != null) {
+            ChannelFuture future = this.serverChannel.close();
+            future.awaitUninterruptibly();
             serverBootstrap.releaseExternalResources();
         }
 

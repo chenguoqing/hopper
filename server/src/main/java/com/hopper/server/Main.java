@@ -46,7 +46,7 @@ public class Main {
     private static void shutdown(String[] args) {
         ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
         try {
-            componentManager.getGlobalConfiguration().start();
+            componentManager.initialize();
 
             Socket socket = new Socket("127.0.0.1", componentManager.getGlobalConfiguration().getShutdownPort());
             socket.setSoLinger(true, 1000);
