@@ -62,6 +62,11 @@ public class DataSyncService extends LifecycleProxy {
         }
     }
 
+    @Override
+    public String getInfo() {
+        return "Data synchronization service";
+    }
+
     /**
      * Compares the local merkle tree with remote(the remote is fresh) and return the comparison result.
      */
@@ -76,7 +81,7 @@ public class DataSyncService extends LifecycleProxy {
     public void applyDiff(DiffResult diff) {
 
         if (diff.getMaxXid() <= storage.getMaxXid()) {
-            logger.info("Ignoring the diff result, because oft he target xid {0} is smaller than local {1}",
+            logger.info("Ignoring the diff result, because oft he target xid {} is smaller than local {}",
                     new Object[]{diff.getMaxXid(), storage.getMaxXid()});
             return;
         }
@@ -119,7 +124,7 @@ public class DataSyncService extends LifecycleProxy {
                     DiffResult diffResult = syncDiff(serverId);
                     applyDiff(diffResult);
                 } catch (Exception e) {
-                    logger.error("Failed to pull data from remote[server:{0}]", new Object[]{serverId, e});
+                    logger.error("Failed to pull data from remote[server:{}]", new Object[]{serverId, e});
                 }
             }
         };

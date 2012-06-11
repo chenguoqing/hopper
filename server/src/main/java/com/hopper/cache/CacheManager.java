@@ -73,6 +73,11 @@ public class CacheManager extends LifecycleProxy implements Lifecycle {
 		caches.clear();
 	}
 
+    @Override
+    public String getInfo() {
+        return "Cache Manager";
+    }
+
 	/**
 	 * Put the entry with timeout
 	 * 

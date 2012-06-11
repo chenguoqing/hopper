@@ -2,6 +2,8 @@ package com.hopper;
 
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.Endpoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
@@ -32,6 +34,8 @@ public class GlobalConfiguration extends LifecycleProxy {
     public static enum StorageMode {
         HASH, TREE
     }
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalConfiguration.class);
 
     /**
      * Default system property
@@ -64,6 +68,8 @@ public class GlobalConfiguration extends LifecycleProxy {
             Yaml yaml = new Yaml();
             Map<String, Object> yamlMap = (Map<String, Object>) yaml.load(in);
             this.innerConfig = new InnerConfig(yamlMap);
+
+            logger.info("Used the configuration file:{}", configPath);
         } catch (Exception e) {
             throw new RuntimeException("Failed to load yaml configuration file:" + configPath, e);
         }
@@ -391,5 +397,10 @@ public class GlobalConfiguration extends LifecycleProxy {
             this.localRpcEndpoint = new Endpoint(localServerId, _rpcAddress, rpcPort);
             this.localServerEndpoint = new Endpoint(localServerId, _s2sAddress, s2sPort);
         }
+    }
+
+    @Override
+    public String getInfo() {
+        return "Global Configuration";
     }
 }

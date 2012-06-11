@@ -40,6 +40,11 @@ public class StageManager extends LifecycleProxy {
         states.put(Stage.SYNC, newDataSyncThreadPool());
     }
 
+    @Override
+    public String getInfo() {
+        return "Stage manager";
+    }
+
     public ThreadPoolExecutor getThreadPool(Stage stage) {
         return states.get(stage);
     }

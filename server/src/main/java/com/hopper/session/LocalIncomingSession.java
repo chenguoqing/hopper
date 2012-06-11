@@ -79,7 +79,7 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
 
         HeartBeat beat = (HeartBeat) message.getBody();
 
-        logger.debug("Receive the heart beat {0}", beat);
+        logger.debug("Receive the heart beat {}", beat);
 
         // ignore the heart beat from follower
         if (beat.isLeader()) {

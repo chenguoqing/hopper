@@ -45,4 +45,9 @@ public class TreeStorage extends AbstractStateStorage {
             return null;
         }
     }
+
+    @Override
+    public String getInfo() {
+        return "Tree storage";
+    }
 }

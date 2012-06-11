@@ -49,4 +49,9 @@ public class MapStorage extends AbstractStateStorage {
         snapshot.map.putAll(map);
         return snapshot;
     }
+
+    @Override
+    public String getInfo() {
+        return "Hash storage";
+    }
 }

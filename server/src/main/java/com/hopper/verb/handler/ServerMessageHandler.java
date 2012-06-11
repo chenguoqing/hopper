@@ -48,7 +48,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // The session has created for other channel from endpoint
         if (incomingSession.getConnection().getChannel() != channel) {
-            logger.error("The session for {0} has created, only one connection can be allowed.", address);
+            logger.error("The session for {} has created, only one connection can be allowed.", address);
             channel.close();
             return;
         }

@@ -60,6 +60,11 @@ public class DummyConnection extends LifecycleProxy implements Connection {
     }
 
     @Override
+    public String getInfo() {
+        return "Incoming connection";
+    }
+
+    @Override
     public void close() {
         shutdown();
         ComponentManagerFactory.getComponentManager().getConnectionManager().removeIncomingConnection(channel);

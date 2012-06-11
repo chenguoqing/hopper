@@ -48,6 +48,11 @@ public class ClientConnection extends LifecycleProxy implements Connection {
     }
 
     @Override
+    public String getInfo() {
+        return "Client connection";
+    }
+
+    @Override
     public void connect() {
     }
 

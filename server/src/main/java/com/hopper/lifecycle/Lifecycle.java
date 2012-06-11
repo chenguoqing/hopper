@@ -50,6 +50,11 @@ public interface Lifecycle {
 	 */
 	void removeListener(LifecycleListener listener);
 
+    /**
+     * Return the description of current component
+     */
+    String getInfo();
+
 	/**
 	 * Life cycle status
 	 * 

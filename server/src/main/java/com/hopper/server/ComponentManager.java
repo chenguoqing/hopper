@@ -5,6 +5,7 @@ import com.hopper.cache.CacheManager;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.DefaultLeaderElection;
+import com.hopper.quorum.ElectionMonitor;
 import com.hopper.quorum.LeaderElection;
 import com.hopper.session.ConnectionManager;
 import com.hopper.session.MessageService;
@@ -15,6 +16,8 @@ import com.hopper.storage.TreeStorage;
 import com.hopper.storage.merkle.MapStorage;
 import com.hopper.sync.DataSyncService;
 import com.hopper.utils.ScheduleManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +30,10 @@ import java.util.List;
  * {@link ComponentManager} manages all life cycle components
  */
 public class ComponentManager extends LifecycleProxy {
-
+    /**
+     * LOGGER
+     */
+    private final static Logger logger = LoggerFactory.getLogger(ComponentManager.class);
     /**
      * All components
      */
@@ -44,6 +50,7 @@ public class ComponentManager extends LifecycleProxy {
     private LeaderElection leaderElection;
     private ConnectionManager connectionManager;
     private MessageService messageService;
+    private ElectionMonitor electionMonitor;
 
     public void registerComponent(Lifecycle component) {
         components.add(component);
@@ -84,21 +91,35 @@ public class ComponentManager extends LifecycleProxy {
 
         this.server = createServer();
         registerComponent(server);
+
+        this.electionMonitor = createElectionMonitor();
+        registerComponent(electionMonitor);
     }
 
     @Override
     protected void doStart() {
         try {
             for (Lifecycle component : components) {
+                logger.info("Initialize " + component.getInfo() + "...");
                 component.initialize();
+                logger.info("Starting " + component.getInfo() + "...");
                 component.start();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+        logger.info("Hopper started.");
+
         // start shutdown socket
-        startShutdownSocket();
+        Thread shutdownThread = new Thread() {
+            @Override
+            public void run() {
+                startShutdownSocket();
+            }
+        };
+
+        shutdownThread.start();
     }
 
     @Override
@@ -108,6 +129,11 @@ public class ComponentManager extends LifecycleProxy {
             component.shutdown();
         }
         this.globalConfiguration.shutdown();
+    }
+
+    @Override
+    public String getInfo() {
+        return "Component Manager";
     }
 
     public Server getDefaultServer() {
@@ -209,6 +235,14 @@ public class ComponentManager extends LifecycleProxy {
         return new MessageService();
     }
 
+    public ElectionMonitor getElectionMonitor() {
+        return electionMonitor;
+    }
+
+    private ElectionMonitor createElectionMonitor() {
+        return new ElectionMonitor();
+    }
+
     /**
      * Start a shutdown hook on special port
      */
@@ -216,12 +250,14 @@ public class ComponentManager extends LifecycleProxy {
         final int shutdownPort = getGlobalConfiguration().getShutdownPort();
         final String shutdownCommand = getGlobalConfiguration().getShutdownCommand();
 
-        ServerSocket serverSocket = null;
+        ServerSocket serverSocket;
         try {
             serverSocket = new ServerSocket(shutdownPort);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        logger.info("Shutdown thread has stared on port:{}", shutdownPort);
 
         // Register hook
         Runtime.getRuntime().addShutdownHook(new Thread() {

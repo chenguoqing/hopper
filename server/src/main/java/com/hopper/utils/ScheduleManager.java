@@ -60,6 +60,11 @@ public class ScheduleManager extends LifecycleProxy {
 		this.scheduleExecutor.shutdown();
 	}
 
+    @Override
+    public String getInfo() {
+        return "Schedule Manager";
+    }
+
 	/**
 	 * Execute the {@link Runnable} on-shot
 	 * 

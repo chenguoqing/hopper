@@ -266,4 +266,9 @@ public class SessionManager extends LifecycleProxy {
         outgoingSessions.clear();
         clientSessions.clear();
     }
+
+    @Override
+    public String getInfo() {
+        return "Session Manager";
+    }
 }

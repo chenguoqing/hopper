@@ -87,6 +87,11 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     }
 
     @Override
+    public String getInfo() {
+        return "Server-to-server outgoing connection";
+    }
+
+    @Override
     public void setSession(Session session) {
         this.session = session;
     }

@@ -169,6 +169,11 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     @Override
+    public String getInfo() {
+        return "Hopper server";
+    }
+
+    @Override
     public void setRpcEndpoint(Endpoint endpoint) {
         this.rpcEndpoint = endpoint;
     }
@@ -194,9 +199,11 @@ public class DefaultServer extends LifecycleProxy implements Server {
             throw new IllegalArgumentException("leader id must be greater than 0.");
         }
 
-        this.leader = serverId;
+        synchronized (leaderLock) {
+            this.leader = serverId;
 
-        leaderLock.notifyAll();
+            leaderLock.notifyAll();
+        }
     }
 
     @Override

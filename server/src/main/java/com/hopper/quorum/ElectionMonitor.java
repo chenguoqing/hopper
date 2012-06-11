@@ -32,6 +32,11 @@ public class ElectionMonitor extends LifecycleProxy {
         componentManager.getScheduleManager().removeTask(monitorTask);
     }
 
+    @Override
+    public String getInfo() {
+        return "Election monitor";
+    }
+
     class ElectionMonitorTask implements Runnable {
 
         @Override
