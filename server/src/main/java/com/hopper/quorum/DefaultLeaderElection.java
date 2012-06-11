@@ -31,7 +31,11 @@ public class DefaultLeaderElection implements LeaderElection {
     /**
      * Singleton instance
      */
-    private final Paxos paxos = componentManager.getDefaultServer().getPaxos();
+    private final Paxos paxos = new Paxos();
+
+    public Paxos getPaxos() {
+        return paxos;
+    }
 
     @Override
     public void startElecting() {

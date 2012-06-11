@@ -1,8 +1,6 @@
 package com.hopper.server;
 
 import com.hopper.lifecycle.Lifecycle;
-import com.hopper.quorum.Paxos;
-import com.hopper.storage.StateStorage;
 
 import java.util.concurrent.TimeoutException;
 
@@ -62,16 +60,6 @@ public interface Server extends Lifecycle {
      * Retrieve the {@link Endpoint} for internal communication
      */
     Endpoint getServerEndpoint();
-
-    /**
-     * Set {@link Paxos} for election
-     */
-    void setPaxos(Paxos paxos);
-
-    /**
-     * Retrieve the associated {@link Paxos}
-     */
-    Paxos getPaxos();
 
     /**
      * Set the leader server id

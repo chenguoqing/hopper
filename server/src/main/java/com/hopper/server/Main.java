@@ -36,6 +36,7 @@ public class Main {
     private static void start(String[] args) {
         ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
         try {
+            componentManager.initialize();
             componentManager.start();
         } catch (Exception e) {
             logger.error("Failed to start hopper server", e);

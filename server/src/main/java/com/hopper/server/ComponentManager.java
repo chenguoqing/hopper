@@ -6,7 +6,6 @@ import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.DefaultLeaderElection;
 import com.hopper.quorum.LeaderElection;
-import com.hopper.quorum.Paxos;
 import com.hopper.session.ConnectionManager;
 import com.hopper.session.MessageService;
 import com.hopper.session.SessionManager;
@@ -54,22 +53,20 @@ public class ComponentManager extends LifecycleProxy {
     protected void doInit() {
         this.globalConfiguration = createGlobalConfiguration();
         try {
+            this.getGlobalConfiguration().initialize();
             this.globalConfiguration.start();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        this.scheduleManager = createScheduleManager();
+        registerComponent(scheduleManager);
 
         this.cacheManager = createCacheManager();
         registerComponent(cacheManager);
 
         this.stateStorage = createStateStorage();
         registerComponent(stateStorage);
-
-        this.server = createServer();
-        registerComponent(server);
-
-        this.scheduleManager = createScheduleManager();
-        registerComponent(scheduleManager);
 
         this.sessionManager = createSessionManager();
         registerComponent(sessionManager);
@@ -84,12 +81,16 @@ public class ComponentManager extends LifecycleProxy {
         this.connectionManager = createConnectionManager();
 
         this.messageService = createMessageService();
+
+        this.server = createServer();
+        registerComponent(server);
     }
 
     @Override
     protected void doStart() {
         try {
             for (Lifecycle component : components) {
+                component.initialize();
                 component.start();
             }
         } catch (Exception e) {
@@ -117,9 +118,6 @@ public class ComponentManager extends LifecycleProxy {
         DefaultServer server = new DefaultServer();
         server.setRpcEndpoint(globalConfiguration.getLocalRpcEndpoint());
         server.setServerEndpoint(globalConfiguration.getLocalServerEndpoint());
-
-        Paxos paxos = new Paxos();
-        server.setPaxos(paxos);
         return server;
     }
 

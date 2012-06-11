@@ -39,7 +39,7 @@ public class LearnVerbHandler implements VerbHandler {
     /**
      * Paxos instance
      */
-    private final Paxos paxos = server.getPaxos();
+    private final Paxos paxos = componentManager.getLeaderElection().getPaxos();
 
     private final Set<Integer> learnedInstances = new HashSet<Integer>();
 

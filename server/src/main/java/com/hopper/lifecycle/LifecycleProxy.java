@@ -63,7 +63,7 @@ public abstract class LifecycleProxy implements Lifecycle {
 	public void start() throws LifecycleException {
 
 		if (this.state != LifecycleState.INITIALIZED && this.state != LifecycleState.SHUTDOWN) {
-			throw new LifecycleException("Please initailize or shutdown first.");
+			throw new LifecycleException("Please initialize or shutdown first.");
 		}
 
 		this.state = LifecycleState.STARTING;

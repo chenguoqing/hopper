@@ -1,6 +1,7 @@
 package yaml;
 
 import junit.framework.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -28,7 +29,7 @@ public class HopperYamlTest {
 
         Assert.assertNotNull(o);
 
-        Object v = ((Map<String,Object>)o).get("rpc_tcp");
+        Object v = ((Map<String, Object>) o).get("rpc_tcp");
         System.out.println(o);
     }
 }

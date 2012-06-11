@@ -9,7 +9,7 @@ import com.hopper.verb.VerbHandler;
 public class AcceptVerbHandler implements VerbHandler {
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-    private Paxos paxos = componentManager.getDefaultServer().getPaxos();
+    private Paxos paxos = componentManager.getLeaderElection().getPaxos();
 
     @Override
     public void doVerb(Message message) {
@@ -17,7 +17,7 @@ public class AcceptVerbHandler implements VerbHandler {
         Accept accpet = (Accept) message.getBody();
 
         if (accpet.getBallot() < paxos.getRnd()) {
-
+           //TODO:
         }
     }
 }

@@ -76,7 +76,7 @@ public class MutationVerbHandler implements VerbHandler {
 
         // Local modification first
         StateNode node = new StateNode(key, StateNode.TYPE_TEMP, StateNode.DEFAULT_STATUS,
-                StateNode.DEFAULT_INVALIDATE_STATUS, server.getPaxos().getEpoch());
+                StateNode.DEFAULT_INVALIDATE_STATUS, componentManager.getLeaderElection().getPaxos().getEpoch());
         storage.put(node);
 
         if (server.isLeader()) {
@@ -210,7 +210,7 @@ public class MutationVerbHandler implements VerbHandler {
         if (node == null) {
             synchronized (key) {
                 node = storage.get(key);
-                node = new StateNode(key, server.getPaxos().getEpoch());
+                node = new StateNode(key, componentManager.getLeaderElection().getPaxos().getEpoch());
                 storage.put(node);
             }
         }

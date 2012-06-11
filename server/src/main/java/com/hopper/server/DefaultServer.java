@@ -3,7 +3,6 @@ package com.hopper.server;
 import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
-import com.hopper.quorum.Paxos;
 import com.hopper.session.ClientSession;
 import com.hopper.session.SessionManager;
 import com.hopper.stage.Stage;
@@ -45,10 +44,6 @@ public class DefaultServer extends LifecycleProxy implements Server {
      */
     private Endpoint serverEndpoint;
     /**
-     * Paxos node for election
-     */
-    private Paxos paxosNode;
-    /**
      * Current leader,-1 indicates there is no leader
      */
     private volatile int leader = -1;
@@ -75,10 +70,6 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
         if (serverEndpoint == null) {
             throw new IllegalArgumentException("server rpcEndpoint is null.");
-        }
-
-        if (paxosNode == null) {
-            throw new IllegalArgumentException("paxos node is null.");
         }
 
         componentManager = ComponentManagerFactory.getComponentManager();
@@ -195,16 +186,6 @@ public class DefaultServer extends LifecycleProxy implements Server {
     @Override
     public Endpoint getServerEndpoint() {
         return serverEndpoint;
-    }
-
-    @Override
-    public void setPaxos(Paxos paxos) {
-        this.paxosNode = paxos;
-    }
-
-    @Override
-    public Paxos getPaxos() {
-        return paxosNode;
     }
 
     @Override

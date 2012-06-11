@@ -13,7 +13,7 @@ public class PrepareVerbHandler implements VerbHandler {
 
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
-    private Paxos paxos = componentManager.getDefaultServer().getPaxos();
+    private Paxos paxos = componentManager.getLeaderElection().getPaxos();
 
     @Override
     public void doVerb(Message message) {

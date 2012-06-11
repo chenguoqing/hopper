@@ -34,6 +34,10 @@ public class GlobalConfiguration extends LifecycleProxy {
     }
 
     /**
+     * Default system property
+     */
+    public static final String DEFAULT_SYSTEM_PROPERTY = "configFile";
+    /**
      * Resource prefix: classpath
      */
     private static final String CLASSPATH_PREFIX = "classpath:";
@@ -42,13 +46,9 @@ public class GlobalConfiguration extends LifecycleProxy {
      */
     private static final String FILE_PREFIX = "file:";
     /**
-     * Default system property
-     */
-    public static final String DEFAULT_SYSTEM_PROPERTY = "configFile";
-    /**
      * Default configuration path
      */
-    private static final String defaultYAML = FILE_PREFIX + "/conf/hopper.conf";
+    private static final String defaultYAML = CLASSPATH_PREFIX + "/conf/hopper.yaml";
     /**
      * Configuration root object
      */
@@ -79,7 +79,7 @@ public class GlobalConfiguration extends LifecycleProxy {
 
     public StorageMode getStorageMode() {
         String mode = innerConfig.getString("storage_mode", StorageMode.HASH.name());
-        StorageMode _mode = StorageMode.valueOf(mode);
+        StorageMode _mode = StorageMode.valueOf(mode.toUpperCase());
 
         return _mode == null ? StorageMode.HASH : _mode;
     }
@@ -232,10 +232,16 @@ public class GlobalConfiguration extends LifecycleProxy {
             path = path.substring(CLASSPATH_PREFIX.length());
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
-            if (cl == null) {
-                cl = this.getClass().getClassLoader();
+            InputStream in = null;
+            if (cl != null) {
+                in = cl.getResourceAsStream(path);
+
             }
-            return cl.getResourceAsStream(path);
+
+            if (in == null) {
+                in = this.getClass().getResourceAsStream(path);
+            }
+            return in;
         }
 
         if (path.startsWith(FILE_PREFIX)) {
@@ -280,7 +286,10 @@ public class GlobalConfiguration extends LifecycleProxy {
                 return defaultValue;
             }
 
-            return Long.getLong(v.toString());
+            if (v instanceof Integer) {
+                return ((Integer) v).intValue();
+            }
+            return (Long) v;
         }
 
         int getInt(String key, int defaultValue) {
@@ -290,7 +299,7 @@ public class GlobalConfiguration extends LifecycleProxy {
                 return defaultValue;
             }
 
-            return Integer.getInteger(v.toString());
+            return (Integer) v;
         }
 
         long getLongFromNestedMap(String mapKey, String itemKey, long defaultValue) {
@@ -305,7 +314,11 @@ public class GlobalConfiguration extends LifecycleProxy {
             if (v == null) {
                 return defaultValue;
             }
-            return Long.getLong(v.toString());
+
+            if (v instanceof Integer) {
+                return ((Integer) v).intValue();
+            }
+            return (Long) v;
         }
 
         int getIntFromNestedMap(String mapKey, String itemKey, int defaultValue) {
@@ -332,7 +345,7 @@ public class GlobalConfiguration extends LifecycleProxy {
         }
 
         void loadGroup() throws Exception {
-            List<Object> list = innerConfig.getList("group_nodes");
+            List<Object> list = getList("group_nodes");
             if (list == null) {
                 return;
             }
@@ -341,13 +354,12 @@ public class GlobalConfiguration extends LifecycleProxy {
             loadLocalEndpoint();
 
             for (Object o : list) {
-                Map<String, String> map = (Map<String, String>) o;
-                String serverId = map.get("serverId");
-                String address = map.get("address");
-                String port = map.get("port");
+                Map<String, Object> map = (Map<String, Object>) o;
+                Integer serverId = (Integer) map.get("serverId");
+                String address = (String) map.get("address");
+                Integer port = (Integer) map.get("port");
 
-                Endpoint endpoint = new Endpoint(Integer.getInteger(serverId), InetAddress.getByName(address),
-                        Integer.parseInt(port));
+                Endpoint endpoint = new Endpoint(serverId, InetAddress.getByName(address), port);
 
                 endpointMap.put(endpoint.serverId, endpoint);
             }
@@ -363,7 +375,7 @@ public class GlobalConfiguration extends LifecycleProxy {
                 _rpcAddress = InetAddress.getByName(rpcAddress);
             }
 
-            int rpcPort = (int) getLong("rpc_port", 7910);
+            int rpcPort = getInt("rpc_port", 7910);
 
             String s2sAddress = (String) yamlMap.get("s2s_address");
             InetAddress _s2sAddress = null;
@@ -372,9 +384,9 @@ public class GlobalConfiguration extends LifecycleProxy {
                 _s2sAddress = InetAddress.getByName(s2sAddress);
             }
 
-            int s2sPort = (int) getLong("s2s_port", 7920);
+            int s2sPort = getInt("s2s_port", 7920);
 
-            int localServerId = (int) getLong("serverId", 1);
+            int localServerId = getInt("serverId", 1);
 
             this.localRpcEndpoint = new Endpoint(localServerId, _rpcAddress, rpcPort);
             this.localServerEndpoint = new Endpoint(localServerId, _s2sAddress, s2sPort);

@@ -15,6 +15,10 @@ import java.util.concurrent.ConcurrentMap;
 public class MapStorage extends AbstractStateStorage {
     private final ConcurrentMap<String, StateNode> map = new ConcurrentHashMap<String, StateNode>();
 
+    public MapStorage() {
+        super();
+    }
+
     @Override
     protected StateNode doPut(StateNode node) {
         return map.putIfAbsent(node.key, node);

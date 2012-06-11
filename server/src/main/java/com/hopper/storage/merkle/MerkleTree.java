@@ -47,7 +47,7 @@ public class MerkleTree implements Serializer {
         if (hashDepth > 30) {
             throw new IllegalArgumentException("hashDepth muse be less than 31.");
         }
-        int rangeSize = Math.abs(range.getRight() - range.getLeft());
+        long rangeSize = Math.abs((long)range.getRight() - (long)range.getLeft());
 
         int hashSize = 2 << hashDepth;
 
