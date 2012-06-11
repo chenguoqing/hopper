@@ -31,7 +31,7 @@ public class DefaultLeaderElection implements LeaderElection {
     /**
      * Singleton instance
      */
-    private Paxos paxos = componentManager.getDefaultServer().getPaxos();
+    private final Paxos paxos = componentManager.getDefaultServer().getPaxos();
 
     @Override
     public void startElecting() {
@@ -93,6 +93,8 @@ public class DefaultLeaderElection implements LeaderElection {
                 retry = waitingNextElection(config.getPeriodForJoin());
             } catch (TimeoutException e) {
                 retry = waitingNextElection(config.getPeriodForJoin());
+            } catch (InterruptedException e) {
+                retry = false;
             } catch (Exception e) {
                 retry = waitingNextElection(config.getPeriodForJoin());
             }
@@ -197,7 +199,7 @@ public class DefaultLeaderElection implements LeaderElection {
      * Await completion for current running election. The behind idea is
      * avoiding competing.
      */
-    private void awaitIfNecessary() throws TimeoutException {
+    private void awaitIfNecessary() throws TimeoutException, InterruptedException {
         // It indicating that local server has voted for current instance, as
         // optimization it may not start a new election, instead of waiting the
         // electing complete.
@@ -456,16 +458,6 @@ public class DefaultLeaderElection implements LeaderElection {
         }
 
         return -1;
-    }
-
-    private boolean waitingNodesJoining() {
-        try {
-            Thread.sleep(config.getRetryElectionPeriod());
-        } catch (InterruptedException e) {
-            return false;
-        }
-
-        return true;
     }
 
     private boolean waitingNextElection(long timeout) {

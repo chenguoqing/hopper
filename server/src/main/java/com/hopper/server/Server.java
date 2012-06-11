@@ -85,7 +85,7 @@ public interface Server extends Lifecycle {
 
     boolean isKnownLeader();
 
-    int getLeaderWithLock(long timeout) throws TimeoutException;
+    void getLeaderWithLock(long timeout) throws TimeoutException, InterruptedException;
 
     /**
      * Clear the associated leader

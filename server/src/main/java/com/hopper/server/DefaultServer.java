@@ -5,8 +5,6 @@ import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.quorum.Paxos;
 import com.hopper.session.ClientSession;
-import com.hopper.session.IncomingSession;
-import com.hopper.session.OutgoingSession;
 import com.hopper.session.SessionManager;
 import com.hopper.stage.Stage;
 import com.hopper.thrift.HopperService;
@@ -27,42 +25,56 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * The default implementation of {@link Server}, {@link DefaultServer} starts the socket connections and joins the
+ * server to group(starting the leader election)
+ */
 public class DefaultServer extends LifecycleProxy implements Server {
 
     private static Logger logger = LoggerFactory.getLogger(DefaultServer.class);
-
-    private final Object leaderLock = new Object();
-
     /**
-     * Outer connection endpoint
+     * Leader lock object
      */
-    private Endpoint endpoint;
+    private final Object leaderLock = new Object();
     /**
-     * Internal communication endpoint
+     * Outer connection rpcEndpoint
+     */
+    private Endpoint rpcEndpoint;
+    /**
+     * Internal communication rpcEndpoint
      */
     private Endpoint serverEndpoint;
     /**
      * Paxos node for election
      */
     private Paxos paxosNode;
-
-    private int leader;
-
+    /**
+     * Current leader,-1 indicates there is no leader
+     */
+    private volatile int leader = -1;
+    /**
+     * Election state
+     */
     private ElectionState electionState;
 
     private ComponentManager componentManager;
-
+    /**
+     * Server-to-server bootstrap (for shutdown)
+     */
     private ServerBootstrap serverBootstrap;
+    /**
+     * Client-to-server bootstrap( for shutdown)
+     */
     private ServerBootstrap rpcBootstrap;
 
     @Override
     protected void doInit() {
-        if (endpoint == null) {
-            throw new IllegalArgumentException("endpoint is null.");
+        if (rpcEndpoint == null) {
+            throw new IllegalArgumentException("rpcEndpoint is null.");
         }
 
         if (serverEndpoint == null) {
-            throw new IllegalArgumentException("server endpoint is null.");
+            throw new IllegalArgumentException("server rpcEndpoint is null.");
         }
 
         if (paxosNode == null) {
@@ -86,9 +98,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     private void startServerSocket() {
-        this.serverBootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(componentManager
-                .getStageManager().getThreadPool(Stage.SERVER_BOSS), componentManager.getStageManager().getThreadPool
-                (Stage.SERVER_WORKER)));
+        this.serverBootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(componentManager.getStageManager
+                ().getThreadPool(Stage.SERVER_BOSS), componentManager.getStageManager().getThreadPool(Stage
+                .SERVER_WORKER)));
 
         // set customs pipeline factory
         serverBootstrap.setPipelineFactory(new ServerPiplelineFactory());
@@ -104,9 +116,9 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * Start client-server socket with avro, all client requests will be processed by avro.
      */
     private void startClientSocket() {
-        this.rpcBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(componentManager
-                .getStageManager().getThreadPool(Stage.CLIENT_BOSS), componentManager.getStageManager().getThreadPool
-                (Stage.CLIENT_WORKER)));
+        this.rpcBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(componentManager.getStageManager()
+                .getThreadPool(Stage.CLIENT_BOSS), componentManager.getStageManager().getThreadPool(Stage
+                .CLIENT_WORKER)));
 
         // set customs pipeline factory
         HopperService.Processor<HopperServiceImpl> processor = new HopperService.Processor<HopperServiceImpl>(new
@@ -118,7 +130,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
         rpcBootstrap.setOptions(componentManager.getGlobalConfiguration().getRpcTcpSettings());
 
         // Bind and start to accept incoming connections.
-        rpcBootstrap.bind(new InetSocketAddress(endpoint.address, endpoint.port));
+        rpcBootstrap.bind(new InetSocketAddress(rpcEndpoint.address, rpcEndpoint.port));
     }
 
     /**
@@ -163,17 +175,16 @@ public class DefaultServer extends LifecycleProxy implements Server {
         for (Endpoint endpoint : componentManager.getGlobalConfiguration().getGroupEndpoints()) {
             sessionManager.closeServerSession(endpoint);
         }
-
     }
 
     @Override
     public void setRpcEndpoint(Endpoint endpoint) {
-        this.endpoint = endpoint;
+        this.rpcEndpoint = endpoint;
     }
 
     @Override
     public Endpoint getRpcEndPoint() {
-        return endpoint;
+        return rpcEndpoint;
     }
 
     @Override
@@ -198,7 +209,13 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
     @Override
     public void setLeader(int serverId) {
+        if (serverId < 0) {
+            throw new IllegalArgumentException("leader id must be greater than 0.");
+        }
+
         this.leader = serverId;
+
+        leaderLock.notifyAll();
     }
 
     @Override
@@ -212,9 +229,17 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     @Override
-    public int getLeaderWithLock(long timeout) throws TimeoutException {
-        //TODO:
-        return 0;
+    public void getLeaderWithLock(long timeout) throws TimeoutException, InterruptedException {
+        if (isKnownLeader()) {
+            return;
+        }
+
+        synchronized (leaderLock) {
+            if (isKnownLeader()) {
+                return;
+            }
+            leaderLock.wait(timeout);
+        }
     }
 
     @Override
@@ -279,7 +304,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
         ElectionState state = getElectionState();
 
         if (state == Server.ElectionState.LOOKING || state == Server.ElectionState.SYNC || getState() != Lifecycle
-                .LifecycleState.RUNNING) {
+                .LifecycleState.RUNNING || componentManager.getState() != LifecycleState.RUNNING) {
             throw new ServiceUnavailableException();
         }
     }
