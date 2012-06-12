@@ -24,6 +24,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class MessageService {
     public static final Logger logger = LoggerFactory.getLogger(MessageService.class);
+    /**
+     * Waiting mode: waiting for all nodes response
+     */
+    public static final int WAITING_MODE_QUORUM = 0;
+    /**
+     * Waiting mode: waiting for quorum nodes response
+     */
+    public static final int WAITING_MODE_ALL = 1;
+
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
     private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
@@ -53,9 +62,9 @@ public class MessageService {
      * Send the message to all endpoints and waiting the response.
      *
      * @param message     the message to send
-     * @param waitingMode waiting mode 0 - waiting for quorum nodes replies, 1 -  for all nodes
+     * @param waitingMode see above
      */
-    public List<Message> sendMessageToQuorum(final Message message, int waitingMode) {
+    public List<Message> sendMessageToQuorum(Message message, int waitingMode) {
 
         int waitCount = waitingMode == 0 ? config.getQuorumSize() : config.getGroupEndpoints().length;
 

@@ -85,7 +85,7 @@ public class DummyConnection extends LifecycleProxy implements Connection {
     }
 
     @Override
-    public void sendOnwayUntilComplete(Message message) {
+    public void sendOnewayUntilComplete(Message message) {
     }
 
     @Override

@@ -49,7 +49,7 @@ public abstract class SessionProxy implements Session {
             throw new IllegalStateException("Not bound connection.");
         }
 
-        connection.sendOnwayUntilComplete(message);
+        connection.sendOnewayUntilComplete(message);
     }
 
     @Override

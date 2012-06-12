@@ -53,10 +53,6 @@ public class NettyConnection extends LifecycleProxy implements Connection {
      */
     private final CacheManager cacheManager = componentManager.getCacheManager();
     /**
-     * Schedule manager
-     */
-    private final ScheduleManager scheduleManager = componentManager.getScheduleManager();
-    /**
      * Source endpoint
      */
     private Endpoint source;
@@ -204,7 +200,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     }
 
     @Override
-    public void sendOnwayUntilComplete(Message message) {
+    public void sendOnewayUntilComplete(Message message) {
         if (channel == null || !channel.isOpen()) {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
@@ -240,7 +236,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
         ChannelFuture channelFuture = channel.write(message);
 
-        DefaultLatchFuture future = new DefaultLatchFuture();
+        DefaultLatchFuture<Message> future = new DefaultLatchFuture<Message>();
 
         cacheManager.put(message.getId(), future, config.getRpcTimeout());
 
@@ -248,9 +244,8 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
             @Override
             public void operationComplete(ChannelFuture callbackFuture) throws Exception {
-                // if exception occurs when sending message,set the exception to
-                // MesageFuture for quick unlocking the blocking threads on
-                // MesageFuture
+                // if exception occurs when sending message,set the exception to MesageFuture for quick unlocking the
+                // blocking threads on MessageFuture
                 if (callbackFuture.getCause() != null) {
 
                     // if sending message failure, remove the future from cache

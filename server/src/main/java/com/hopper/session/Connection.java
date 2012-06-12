@@ -90,7 +90,7 @@ public interface Connection extends Lifecycle {
 	 * Send synchronous message( waiting until operation complete), if
 	 * exceptions occurs, {@link RuntimeException} will be thrown.
 	 */
-	void sendOnwayUntilComplete(Message message);
+	void sendOnewayUntilComplete(Message message);
 
 	/**
 	 * Send asynchronous message(without waiting for complete) and return the
