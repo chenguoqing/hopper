@@ -123,13 +123,13 @@ public class DefaultLeaderElection implements LeaderElection {
 
         QueryLeader highestResult = queryResults.get(0);
 
-        int localHighestEpoch = paxos.getEpoch() - 1;
+        int localHighestEpoch = paxos.getEpoch();
 
         // This indicating that other nodes had undergone some election instances.  If the higher instance number has
         // found, re-starting the paxos progress.
         if (highestResult.getEpoch() > localHighestEpoch) {
             localHighestEpoch = highestResult.getEpoch();
-            paxos.updateInstance(localHighestEpoch + 1);
+            paxos.updateInstance(localHighestEpoch);
 
             throw new PaxosRejectedException(PaxosRejectedException.INSTANCE_REJECT);
         }
@@ -326,7 +326,8 @@ public class DefaultLeaderElection implements LeaderElection {
         phase1.setBody(prepare);
 
         // Receive the promise(Phase1b) message
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1, MessageService.WAITING_MODE_ALL);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1,
+                MessageService.WAITING_MODE_ALL);
 
         // if no majority responses, it can't work
         if (replies.size() < config.getQuorumSize() - 1) {

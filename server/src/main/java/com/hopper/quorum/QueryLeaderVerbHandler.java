@@ -21,7 +21,7 @@ public class QueryLeaderVerbHandler implements VerbHandler {
         reply.setId(message.getId());
 
         QueryLeader leader = new QueryLeader();
-        leader.setEpoch(componentManager.getLeaderElection().getPaxos().getEpoch() - 1);
+        leader.setEpoch(componentManager.getLeaderElection().getPaxos().getEpoch());
         leader.setLeader(componentManager.getDefaultServer().getLeader());
 
         reply.setBody(leader);

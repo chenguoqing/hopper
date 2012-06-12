@@ -19,25 +19,21 @@ public class PrepareVerbHandler implements VerbHandler {
     public void doVerb(Message message) {
         Prepare prepare = (Prepare) message.getBody();
 
-        final int localEpoch = paxos.getEpoch();
-        final int localRnd = paxos.getRnd();
-
         // local epoch  is greater
-        if (localEpoch > prepare.getEpoch()) {
+        if (paxos.getEpoch() > prepare.getEpoch()) {
             sendPromise(message.getId(), Promise.REJECT_EPOCH);
 
             // local ballot is greater
-        } else if (localRnd > prepare.getBallot()) {
+        } else if (paxos.getRnd() > prepare.getBallot()) {
             sendPromise(message.getId(), Promise.REJECT_BALLOT);
 
             // target's greater
         } else {
-            if (localEpoch < prepare.getEpoch()) {
-                //TODO:
+            if (paxos.getEpoch() < prepare.getEpoch()) {
                 paxos.updateInstance(prepare.getEpoch());
             }
 
-            if (localRnd < prepare.getBallot()) {
+            if (paxos.getRnd() < prepare.getBallot()) {
                 paxos.setRnd(prepare.getBallot());
             }
             sendPromise(message.getId(), Promise.PROMISE);

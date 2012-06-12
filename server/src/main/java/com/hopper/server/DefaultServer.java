@@ -3,7 +3,6 @@ package com.hopper.server;
 import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleProxy;
-import com.hopper.quorum.PaxosResult;
 import com.hopper.session.ClientSession;
 import com.hopper.session.SessionManager;
 import com.hopper.stage.Stage;
@@ -46,11 +45,6 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * Current leader,-1 indicates there is no leader
      */
     private volatile int leader = -1;
-    /**
-     * Election result
-     */
-    private volatile PaxosResult paxosResult;
-
     /**
      * Election state
      */
@@ -206,16 +200,6 @@ public class DefaultServer extends LifecycleProxy implements Server {
     @Override
     public Endpoint getServerEndpoint() {
         return serverEndpoint;
-    }
-
-    @Override
-    public void setPaxosResult(PaxosResult paxosResult) {
-        this.paxosResult = paxosResult;
-    }
-
-    @Override
-    public PaxosResult getPaxosResult() {
-        return paxosResult;
     }
 
     @Override

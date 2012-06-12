@@ -62,9 +62,6 @@ public class LearnVerbHandler implements VerbHandler {
 
         server.setElectionState(Server.ElectionState.SYNC);
 
-        // setting the election result
-        server.setPaxosResult(new PaxosResult(learn.getEpoch(), learn.getVval()));
-
         // close current instance
         paxos.closeInstance();
 
