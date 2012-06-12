@@ -100,7 +100,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
                 .SERVER_WORKER)));
 
         // set customs pipeline factory
-        serverBootstrap.setPipelineFactory(new ServerPiplelineFactory());
+        serverBootstrap.setPipelineFactory(new ServerPipelineFactory());
 
         // configure tcp
         serverBootstrap.setOptions(componentManager.getGlobalConfiguration().getS2STcpSettings());
@@ -226,7 +226,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     @Override
-    public void getLeaderWithLock(long timeout) throws TimeoutException, InterruptedException {
+    public void awaitLeader(long timeout) throws TimeoutException, InterruptedException {
         if (isKnownLeader()) {
             return;
         }
@@ -259,18 +259,13 @@ public class DefaultServer extends LifecycleProxy implements Server {
     }
 
     @Override
-    public boolean hasLeader() {
-        return leader != -1;
-    }
-
-    @Override
     public boolean isLeader() {
         return leader != -1 && serverEndpoint.serverId == leader;
     }
 
     @Override
-    public boolean isLeader(Endpoint endpoint) {
-        return leader != -1 && endpoint.serverId == leader;
+    public boolean isLeader(int serverId) {
+        return isKnownLeader() && serverId == leader;
     }
 
     @Override
@@ -310,7 +305,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
      * The {@link ChannelPipelineFactory} implementation for server
      * communication
      */
-    public static class ServerPiplelineFactory implements ChannelPipelineFactory {
+    public static class ServerPipelineFactory implements ChannelPipelineFactory {
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {

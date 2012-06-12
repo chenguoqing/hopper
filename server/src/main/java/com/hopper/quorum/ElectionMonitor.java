@@ -57,10 +57,9 @@ public class ElectionMonitor extends LifecycleProxy {
                 if (!session.isAlive()) {
                     Endpoint source = session.getConnection().getSourceEndpoint();
 
-                    // if local is follower and remote is leader, it
-                    // indicating that current is disconnecting from leader, it
-                    // must start a leader election
-                    if (server.isFollower() && server.isLeader(source)) {
+                    // if local is follower and remote is leader, it indicating that current is disconnecting from
+                    // leader, it must start a leader election
+                    if (server.isFollower() && server.isLeader(source.serverId)) {
 
                         // unbound local leader
                         server.clearLeader();
@@ -112,7 +111,7 @@ public class ElectionMonitor extends LifecycleProxy {
 
                 // If current node is follower and has not found leader,
                 // starting election
-                if (!server.hasLeader()) {
+                if (!server.isKnownLeader()) {
                     // starting leader electing
                     componentManager.getLeaderElection().startElecting();
                 }

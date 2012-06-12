@@ -122,14 +122,13 @@ public class DefaultLeaderElection implements LeaderElection {
 
         QueryLeader highestResult = queryResults.get(0);
 
-        int localHighestEpoch = paxos.getEpoch();
+        int localHighestEpoch = paxos.getEpoch() - 1;
 
-        // This indicating that other nodes had undergone some election instances. This will occurs when the heart
-        // beat timeout is very long.
-        // If the higher instance number has been found, re-starting the paxos progress.
+        // This indicating that other nodes had undergone some election instances.  If the higher instance number has
+        // found, re-starting the paxos progress.
         if (highestResult.getEpoch() > localHighestEpoch) {
             localHighestEpoch = highestResult.getEpoch();
-            paxos.updateInstance(localHighestEpoch);
+            paxos.updateInstance(localHighestEpoch + 1);
 
             throw new PaxosRejectedException(PaxosRejectedException.INSTANCE_REJECT);
         }
@@ -200,18 +199,17 @@ public class DefaultLeaderElection implements LeaderElection {
     }
 
     /**
-     * Await completion for current running election. The behind idea is
-     * avoiding competing.
+     * Await completion for current running election. The behind idea is avoiding competing.
      */
     private void awaitIfNecessary() throws TimeoutException, InterruptedException {
-        // It indicating that local server has voted for current instance, as
-        // optimization it may not start a new election, instead of waiting the
+        // It indicating that local server has voted for current instance, as optimization it may not start a new
+        // election, instead of waiting the
         // electing complete.
         if (paxos.isVoted()) {
             // It indicating that election is running
             if (!componentManager.getDefaultServer().isKnownLeader()) {
                 // Waiting for the election complete
-                componentManager.getDefaultServer().getLeaderWithLock(config.getWaitingPeriodForElectionComplete());
+                componentManager.getDefaultServer().awaitLeader(config.getWaitingPeriodForElectionComplete());
             }
         }
     }

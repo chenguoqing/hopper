@@ -6,11 +6,14 @@ import com.hopper.future.LatchFutureListener;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
+import com.hopper.thrift.ChannelBound;
 import com.hopper.verb.Verb;
 import com.hopper.verb.handler.VerbMappings;
+import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -108,6 +111,27 @@ public class MessageService {
         } catch (Exception e) {
             logger.error("Failed to send message.", e);
         }
+    }
+
+    /**
+     * @param message
+     */
+    public void responseOneway(Message message) {
+        Channel channel = ChannelBound.get();
+
+        if (channel == null) {
+            throw new IllegalStateException("Not bound channel for current thread.");
+        }
+
+        // send response
+        SocketAddress socketAddress = channel.getRemoteAddress();
+        Endpoint endpoint = componentManager.getGlobalConfiguration().getEndpoint(socketAddress);
+
+        if (endpoint == null) {
+            throw new IllegalStateException("Not found endpoint for address:" + socketAddress);
+        }
+
+        sendOneway(message, endpoint.serverId);
     }
 
     /**

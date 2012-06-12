@@ -61,6 +61,7 @@ public class LearnVerbHandler implements VerbHandler {
 
         server.setElectionState(Server.ElectionState.SYNC);
 
+        // close current instance
         paxos.closeInstance();
 
         int olderLeader = server.getLeader();

@@ -1,6 +1,5 @@
 package com.hopper.verb.handler;
 
-import com.hopper.quorum.LeaderElection;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
@@ -19,7 +18,14 @@ public class QueryLeaderVerbHandler implements VerbHandler {
 
         Message reply = new Message();
         reply.setVerb(Verb.REPLY_QUERY_LEADER);
-        reply.setId(Message.nextId());
+        reply.setId(message.getId());
 
+        QueryLeader leader = new QueryLeader();
+        leader.setEpoch(componentManager.getLeaderElection().getPaxos().getEpoch() - 1);
+        leader.setLeader(componentManager.getDefaultServer().getLeader());
+
+        reply.setBody(leader);
+
+        componentManager.getMessageService().responseOneway(reply);
     }
 }

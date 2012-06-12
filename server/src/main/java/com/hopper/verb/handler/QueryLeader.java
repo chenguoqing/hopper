@@ -38,7 +38,7 @@ public class QueryLeader implements Serializer {
     }
 
     public boolean hasLeader() {
-        return leader != -1;
+        return leader > 0;
     }
 
     @Override

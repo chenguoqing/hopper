@@ -8,7 +8,7 @@ import com.hopper.lifecycle.LifecycleException;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
-import com.hopper.server.DefaultServer.ServerPiplelineFactory;
+import com.hopper.server.DefaultServer;
 import com.hopper.server.Endpoint;
 import com.hopper.utils.ScheduleManager;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -126,7 +126,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
                 workerExecutor));
 
         // set customs pipeline factory
-        bootstrap.setPipelineFactory(new ServerPiplelineFactory());
+        bootstrap.setPipelineFactory(new DefaultServer.ServerPipelineFactory());
 
         // Start the connection attempt.
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(dest.address, dest.port));

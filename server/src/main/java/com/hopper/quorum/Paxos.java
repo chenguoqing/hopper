@@ -4,7 +4,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * {@link Paxos} holds all election information
+ * {@link Paxos} representing a running election progress, if the election progress has completed,
+ * all status except <code>epoch</code> will be cleared. "epoch" indicates the instance of next election.
+ * <p/>
+ * "leader" as the election result will be hold on {@link com.hopper.server.Server#setLeader(int)}
  *
  * @author chenguoqing
  */

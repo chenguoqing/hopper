@@ -71,14 +71,34 @@ public interface Server extends Lifecycle {
      */
     int getLeader();
 
-    boolean isKnownLeader();
+    /**
+     * Test if the local node is leader
+     */
+    boolean isLeader();
 
-    void getLeaderWithLock(long timeout) throws TimeoutException, InterruptedException;
+    /**
+     * If the special server id is leader
+     */
+    boolean isLeader(int serverId);
+
+    /**
+     * The if the node knows leader
+     */
+    boolean isKnownLeader();
 
     /**
      * Clear the associated leader
      */
     void clearLeader();
+
+    /**
+     * Waiting until the leader has benn set
+     *
+     * @param timeout wait milliseconds
+     * @throws TimeoutException     If time out
+     * @throws InterruptedException If thread has been interrupted
+     */
+    void awaitLeader(long timeout) throws TimeoutException, InterruptedException;
 
     /**
      * Abandon the leader identity
@@ -89,21 +109,6 @@ public interface Server extends Lifecycle {
      * Take over the leader identity
      */
     void takeLeadership();
-
-    /**
-     * Whether existing a local leader
-     */
-    boolean hasLeader();
-
-    /**
-     * Test if the local endpoint is test?
-     */
-    boolean isLeader();
-
-    /**
-     * If the special {@link Endpoint} is leader
-     */
-    boolean isLeader(Endpoint endpoint);
 
     /**
      * Test if the local endpoint is follower
