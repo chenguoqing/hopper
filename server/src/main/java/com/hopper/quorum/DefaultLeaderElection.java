@@ -325,7 +325,7 @@ public class DefaultLeaderElection implements LeaderElection {
         phase1.setBody(prepare);
 
         // Receive the promise(Phase1b) message
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1, 1);
 
         // if no majority responses, it can't work
         if (replies.size() < config.getQuorumSize() - 1) {

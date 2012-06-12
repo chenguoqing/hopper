@@ -8,10 +8,6 @@ package com.hopper.verb;
 public enum Verb {
 
     /**
-     * (Response)Register master session
-     */
-    RES_CREATE_SESSION(1),
-    /**
      * Close session
      */
     UNBOUND_MULTIPLEXER_SESSION(3),
@@ -27,10 +23,6 @@ public enum Verb {
      * Leader duplicate data to follower
      */
     REQ_DUPLICATE(1), RES_DUPLICATE(2),
-    /**
-     * Start leader electing
-     */
-    ELECTING(2),
     /**
      * Acquire current leader
      */

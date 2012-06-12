@@ -17,7 +17,6 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,8 +57,6 @@ public class MessageService {
      */
     public List<Message> sendMessageToQuorum(final Message message, int waitingMode) {
 
-        List<Future<Message>> futures = new ArrayList<Future<Message>>();
-
         int waitCount = waitingMode == 0 ? config.getQuorumSize() : config.getGroupEndpoints().length;
 
         final CountDownLatch latch = new CountDownLatch(waitCount);
@@ -83,7 +80,7 @@ public class MessageService {
                     public void complete(LatchFuture<Message> future) {
                         if (future.isSuccess()) {
                             try {
-                                replies.add((Message) future.get());
+                                replies.add(future.get());
                             } catch (Exception e) {
                                 logger.error("Failed to get result ", e);
                             }
@@ -114,7 +111,7 @@ public class MessageService {
     }
 
     /**
-     * @param message
+     * Response the message to sender(the sender will be retrieved from {@link ChannelBound)
      */
     public void responseOneway(Message message) {
         Channel channel = ChannelBound.get();
