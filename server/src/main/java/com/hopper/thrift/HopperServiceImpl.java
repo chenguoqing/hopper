@@ -17,7 +17,7 @@ import com.hopper.verb.Verb;
 import com.hopper.verb.handler.Mutation;
 import com.hopper.verb.handler.MutationReply;
 import com.hopper.verb.handler.MutationVerbHandler;
-import com.hopper.verb.handler.VerbMappings;
+import com.hopper.verb.VerbMappings;
 import org.apache.thrift.TException;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;

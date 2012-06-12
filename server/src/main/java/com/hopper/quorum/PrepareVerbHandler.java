@@ -6,8 +6,6 @@ import com.hopper.session.Message;
 import com.hopper.session.OutgoingSession;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
-import com.hopper.verb.handler.Prepare;
-import com.hopper.verb.handler.Promise;
 
 public class PrepareVerbHandler implements VerbHandler {
 

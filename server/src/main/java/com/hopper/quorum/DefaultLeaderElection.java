@@ -203,8 +203,7 @@ public class DefaultLeaderElection implements LeaderElection {
      */
     private void awaitIfNecessary() throws TimeoutException, InterruptedException {
         // It indicating that local server has voted for current instance, as optimization it may not start a new
-        // election, instead of waiting the
-        // electing complete.
+        // election, instead of waiting until the electing complete.
         if (paxos.isVoted()) {
             // It indicating that election is running
             if (!componentManager.getDefaultServer().isKnownLeader()) {
@@ -215,7 +214,7 @@ public class DefaultLeaderElection implements LeaderElection {
     }
 
     /**
-     * Starting paxos algorithm for leader election
+     * Starting paxos algorithm
      */
     private void startPaxos() {
 
@@ -232,6 +231,9 @@ public class DefaultLeaderElection implements LeaderElection {
         phase2(leader);
     }
 
+    /**
+     * Executes paxos Phase1
+     */
     private int phase1() {
 
         // Executing Phase1a(Prepare)
@@ -279,8 +281,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
         int reject = 0;
 
-        // Majority has rejected the prepare
-        // if local epoch is smaller
+        // Majority has rejected the prepare ,if local epoch is smaller
         if (rejectEpoch > 0) {
             reject = PaxosRejectedException.INSTANCE_REJECT;
             paxos.updateInstance(rejectEpoch);
@@ -368,7 +369,7 @@ public class DefaultLeaderElection implements LeaderElection {
             if (accepted.getStatus() == Accepted.ACCEPTED) {
                 numAccepted++;
             } else if (accepted.getStatus() == Accepted.REJECT_BALLOT) {
-                rejectedEpoch = Math.max(rejectedEpoch, accepted.getRnd());
+                rejectedRnd = Math.max(rejectedEpoch, accepted.getRnd());
             } else if (accepted.getStatus() == Accepted.REJECT_EPOCH) {
                 rejectedEpoch = Math.max(rejectedEpoch, accepted.getEpoch());
             }

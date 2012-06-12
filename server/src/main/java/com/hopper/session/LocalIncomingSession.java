@@ -9,7 +9,7 @@ import com.hopper.server.ComponentManagerFactory;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import com.hopper.verb.handler.HeartBeat;
-import com.hopper.verb.handler.VerbMappings;
+import com.hopper.verb.VerbMappings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

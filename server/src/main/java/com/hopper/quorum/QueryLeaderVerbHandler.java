@@ -1,4 +1,4 @@
-package com.hopper.verb.handler;
+package com.hopper.quorum;
 
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;

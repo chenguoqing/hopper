@@ -1,10 +1,14 @@
-package com.hopper.verb.handler;
+package com.hopper.verb;
 
+import com.hopper.quorum.Prepare;
 import com.hopper.quorum.PrepareVerbHandler;
+import com.hopper.quorum.Promise;
+import com.hopper.quorum.QueryLeaderVerbHandler;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import com.hopper.sync.*;
 import com.hopper.session.Serializer;
+import com.hopper.verb.handler.*;
 
 import java.util.EnumMap;
 
@@ -34,9 +38,12 @@ public class VerbMappings {
         handlerMappings.put(Verb.QUERY_LEADER, new QueryLeaderVerbHandler());
         handlerMappings.put(Verb.REPLY_QUERY_LEADER, new ReplyVerbHandler());
 
-        handlerMappings.put(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
         handlerMappings.put(Verb.PAXOS_PREPARE, new PrepareVerbHandler());
+        handlerMappings.put(Verb.PAXOS_PROMISE, new ReplyVerbHandler());
+
         handlerMappings.put(Verb.PAXOS_ACCEPT, new AcceptVerbHandler());
+
+        handlerMappings.put(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
         handlerMappings.put(Verb.REQUIRE_DIFF, new RequireDiffVerbHandler());
         handlerMappings.put(Verb.DIFF_RESULT, new ReplyVerbHandler());
         handlerMappings.put(Verb.REQUIRE_TREE, new RequireTreeVerbhandler());

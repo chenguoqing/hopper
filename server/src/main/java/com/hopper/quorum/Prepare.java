@@ -1,4 +1,4 @@
-package com.hopper.verb.handler;
+package com.hopper.quorum;
 
 import com.hopper.session.Serializer;
 

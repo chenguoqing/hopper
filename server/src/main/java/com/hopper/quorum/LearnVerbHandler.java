@@ -1,9 +1,8 @@
-package com.hopper.verb.handler;
+package com.hopper.quorum;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.future.LatchFuture;
 import com.hopper.future.LatchFutureListener;
-import com.hopper.quorum.Paxos;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
@@ -16,6 +15,8 @@ import com.hopper.sync.DiffResult;
 import com.hopper.sync.SyncException;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
+import com.hopper.verb.handler.BatchSessionCreator;
+import com.hopper.verb.handler.QueryMaxXid;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
