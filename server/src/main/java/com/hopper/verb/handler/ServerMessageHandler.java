@@ -4,7 +4,9 @@ import com.hopper.GlobalConfiguration;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
-import com.hopper.session.*;
+import com.hopper.session.IncomingSession;
+import com.hopper.session.Message;
+import com.hopper.session.SessionManager;
 import com.hopper.thrift.ChannelBound;
 import com.hopper.verb.Verb;
 import org.jboss.netty.channel.*;
@@ -114,39 +116,6 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             // delegates the message processing to bound IncomingSession
             session.receive(message);
         }
-    }
-
-    private boolean checkSession(Message message, Channel channel) {
-
-        IncomingSession incomingSession = componentManager.getSessionManager().getIncomingSession(channel);
-
-        // validate whether the channel has been bound with one
-        // IncomingSession
-        if (incomingSession == null) {
-            throw new NotAuthException();
-        }
-
-        String sessionId = message.getSessionId();
-
-        // if session id is null, it indicates that the message target is the
-        // master session
-        if (sessionId == null || sessionId.equals(incomingSession.getId())) {
-            return true;
-        }
-
-        // otherwise, the session may be a multiplexer session, it must be bound
-        // on the outgoing channel,and, must have a connected ClientSession
-        OutgoingSession outgoingServerSession = componentManager.getSessionManager().getOutgoingSession(sessionId);
-        if (outgoingServerSession == null) {
-            throw new NotBoundSessionException(sessionId, config.getEndpoint(channel.getRemoteAddress()));
-        }
-
-        ClientSession clientSession = componentManager.getSessionManager().getClientSession(sessionId);
-        if (clientSession == null) {
-            throw new NotFoundClientSessionException(sessionId);
-        }
-
-        return true;
     }
 
     @Override

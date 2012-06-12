@@ -35,14 +35,14 @@ public enum Verb {
      * Acquire current leader
      */
     QUERY_LEADER(3),
+    /**
+     * Response the query leader
+     */
+    REPLY_QUERY_LEADER(4),
 
     TEST_LEADER(4),
 
     RES_TEST_LEADER(5),
-    /**
-     * Response the query leader
-     */
-    ERS_QUERY_LEADER(4),
     /**
      * Acquire max xid
      */

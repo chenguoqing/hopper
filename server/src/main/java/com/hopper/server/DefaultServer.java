@@ -48,7 +48,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
     /**
      * Election state
      */
-    private ElectionState electionState;
+    private volatile ElectionState electionState;
 
     private ComponentManager componentManager;
     /**

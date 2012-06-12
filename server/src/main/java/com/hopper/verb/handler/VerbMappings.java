@@ -31,6 +31,7 @@ public class VerbMappings {
     static {
 
         // register response verb handler
+        handlerMappings.put(Verb.QUERY_LEADER, new QueryLeaderVerbHandler());
         handlerMappings.put(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
         handlerMappings.put(Verb.PAXOS_PREPARE, new PrepareVerbHandler());
         handlerMappings.put(Verb.PAXOS_ACCEPT, new AcceptVerbHandler());

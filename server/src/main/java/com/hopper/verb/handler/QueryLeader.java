@@ -13,10 +13,6 @@ import java.io.IOException;
  */
 public class QueryLeader implements Serializer {
     /**
-     * Target's server id
-     */
-    private int serverId;
-    /**
      * Election instance
      */
     private int epoch;
@@ -24,14 +20,6 @@ public class QueryLeader implements Serializer {
      * The alive leader
      */
     private int leader;
-
-    public int getServerId() {
-        return serverId;
-    }
-
-    public void setServerId(int serverId) {
-        this.serverId = serverId;
-    }
 
     public int getEpoch() {
         return epoch;
@@ -55,14 +43,12 @@ public class QueryLeader implements Serializer {
 
     @Override
     public void serialize(DataOutput out) throws IOException {
-        out.writeInt(serverId);
         out.writeInt(epoch);
         out.writeInt(leader);
     }
 
     @Override
     public void deserialize(DataInput in) throws IOException {
-        this.serverId = in.readInt();
         this.epoch = in.readInt();
         this.leader = in.readInt();
     }
