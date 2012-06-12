@@ -4,6 +4,7 @@ import com.hopper.GlobalConfiguration;
 import com.hopper.quorum.NoQuorumException;
 import com.hopper.server.*;
 import com.hopper.session.Message;
+import com.hopper.session.MessageService;
 import com.hopper.storage.OwnerNoMatchException;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
@@ -224,7 +225,8 @@ public class MutationVerbHandler implements VerbHandler {
         message.setId(Message.nextId());
         message.setBody(mutation);
 
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
+                MessageService.WAITING_MODE_QUORUM);
 
         // Failed to synchronize the modification to quorum
         if (replies.size() < config.getQuorumSize() - 1) {

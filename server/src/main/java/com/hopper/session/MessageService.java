@@ -66,7 +66,7 @@ public class MessageService {
      */
     public List<Message> sendMessageToQuorum(Message message, int waitingMode) {
 
-        int waitCount = waitingMode == 0 ? config.getQuorumSize() : config.getGroupEndpoints().length;
+        int waitCount = waitingMode == WAITING_MODE_QUORUM ? config.getQuorumSize() : config.getGroupEndpoints().length;
 
         final CountDownLatch latch = new CountDownLatch(waitCount);
 

@@ -22,16 +22,22 @@ public class PrepareVerbHandler implements VerbHandler {
         final int localEpoch = paxos.getEpoch();
         final int localRnd = paxos.getRnd();
 
-        // local epoch or ballot is greater, reject the prepare
+        // local epoch  is greater
         if (localEpoch > prepare.getEpoch()) {
             sendPromise(message.getId(), Promise.REJECT_EPOCH);
+
+            // local ballot is greater
         } else if (localRnd > prepare.getBallot()) {
             sendPromise(message.getId(), Promise.REJECT_BALLOT);
+
+            // target's greater
         } else {
-            // target's epoch is greater than local
             if (localEpoch < prepare.getEpoch()) {
-                paxos.closeInstance();
-            } else if (localRnd < prepare.getBallot()) {
+                //TODO:
+                paxos.updateInstance(prepare.getEpoch());
+            }
+
+            if (localRnd < prepare.getBallot()) {
                 paxos.setRnd(prepare.getBallot());
             }
             sendPromise(message.getId(), Promise.PROMISE);

@@ -6,6 +6,7 @@ import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server.ElectionState;
 import com.hopper.session.Message;
+import com.hopper.session.MessageService;
 import com.hopper.session.OutgoingSession;
 import com.hopper.verb.Verb;
 import com.hopper.verb.handler.*;
@@ -325,7 +326,7 @@ public class DefaultLeaderElection implements LeaderElection {
         phase1.setBody(prepare);
 
         // Receive the promise(Phase1b) message
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1, 1);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1, MessageService.WAITING_MODE_ALL);
 
         // if no majority responses, it can't work
         if (replies.size() < config.getQuorumSize() - 1) {
