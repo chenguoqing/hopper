@@ -21,8 +21,14 @@ public class AcceptVerbHandler implements VerbHandler {
         } else if (accpet.getBallot() < paxos.getRnd()) {
             sendResponse(message.getId(), Accepted.REJECT_BALLOT);
         } else {
-            paxos.setVrnd(accpet.getBallot());
-            paxos.setVval(accpet.getVval());
+            paxos.paxosLock.writeLock().lock();
+            try {
+                paxos.setRnd(accpet.getBallot());
+                paxos.setVrnd(accpet.getBallot());
+                paxos.setVval(accpet.getVval());
+            } finally {
+                paxos.paxosLock.writeLock().unlock();
+            }
             sendResponse(message.getId(), Accepted.ACCEPTED);
         }
     }

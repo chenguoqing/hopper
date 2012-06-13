@@ -24,7 +24,7 @@ public class PrepareVerbHandler implements VerbHandler {
             sendPromise(message.getId(), Promise.REJECT_EPOCH);
 
             // local ballot is greater
-        } else if (paxos.getRnd() > prepare.getBallot()) {
+        } else if (paxos.getRnd() >= prepare.getBallot()) {
             sendPromise(message.getId(), Promise.REJECT_BALLOT);
 
             // target's greater

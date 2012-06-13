@@ -15,7 +15,7 @@ public class Paxos {
     /**
      * Inner read/werite lock
      */
-    private final ReadWriteLock readWritelock = new ReentrantReadWriteLock();
+    public final ReadWriteLock paxosLock = new ReentrantReadWriteLock();
 
     /**
      * Epoch(increase for each election)
@@ -35,83 +35,83 @@ public class Paxos {
     private int vval = -1;
 
     public int getRnd() {
-        readWritelock.readLock().lock();
+        paxosLock.readLock().lock();
         try {
             return rnd;
         } finally {
-            readWritelock.readLock().unlock();
+            paxosLock.readLock().unlock();
         }
     }
 
     public void setRnd(int rnd) {
-        readWritelock.writeLock().lock();
+        paxosLock.writeLock().lock();
         try {
             this.rnd = rnd;
         } finally {
-            readWritelock.writeLock().unlock();
+            paxosLock.writeLock().unlock();
         }
     }
 
     public int getVrnd() {
-        readWritelock.readLock().lock();
+        paxosLock.readLock().lock();
         try {
             return vrnd;
         } finally {
-            readWritelock.readLock().unlock();
+            paxosLock.readLock().unlock();
         }
     }
 
     public void setVrnd(int vrnd) {
-        readWritelock.writeLock().lock();
+        paxosLock.writeLock().lock();
         try {
             this.vrnd = vrnd;
         } finally {
-            readWritelock.writeLock().unlock();
+            paxosLock.writeLock().unlock();
         }
     }
 
     public int getVval() {
-        readWritelock.readLock().lock();
+        paxosLock.readLock().lock();
         try {
             return vval;
         } finally {
-            readWritelock.readLock().unlock();
+            paxosLock.readLock().unlock();
         }
     }
 
     public void setVval(int vval) {
-        readWritelock.writeLock().lock();
+        paxosLock.writeLock().lock();
         try {
             this.vval = vval;
         } finally {
-            readWritelock.writeLock().unlock();
+            paxosLock.writeLock().unlock();
         }
     }
 
     public boolean isVoted() {
-        readWritelock.readLock().lock();
+        paxosLock.readLock().lock();
         try {
             return vval != -1;
         } finally {
-            readWritelock.readLock().unlock();
+            paxosLock.readLock().unlock();
         }
     }
 
     public int getEpoch() {
-        readWritelock.readLock().lock();
+        paxosLock.readLock().lock();
         try {
             return epoch;
         } finally {
-            readWritelock.readLock().unlock();
+            paxosLock.readLock().unlock();
         }
     }
 
     public void setEpoch(int epoch) {
-        readWritelock.writeLock().lock();
+        paxosLock.writeLock().lock();
         try {
             this.epoch = epoch;
         } finally {
-            readWritelock.writeLock().unlock();
+            paxosLock.writeLock().unlock();
         }
     }
 
@@ -119,14 +119,14 @@ public class Paxos {
      * Close current election
      */
     public void closeInstance() {
-        readWritelock.writeLock().lock();
+        paxosLock.writeLock().lock();
         try {
             this.epoch++;
             this.rnd = 0;
             this.vrnd = 0;
             this.vval = -1;
         } finally {
-            readWritelock.writeLock().unlock();
+            paxosLock.writeLock().unlock();
         }
     }
 
@@ -134,14 +134,14 @@ public class Paxos {
      * Update the epoch to greater one and unbound other status.
      */
     public void updateInstance(int epoch) {
-        readWritelock.writeLock().lock();
+        paxosLock.writeLock().lock();
         try {
             this.epoch = epoch;
             this.rnd = 0;
             this.vrnd = 0;
             this.vval = -1;
         } finally {
-            readWritelock.writeLock().unlock();
+            paxosLock.writeLock().unlock();
         }
     }
 }

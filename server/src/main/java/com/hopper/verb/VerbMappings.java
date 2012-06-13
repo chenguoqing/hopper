@@ -1,9 +1,11 @@
 package com.hopper.verb;
 
 import com.hopper.quorum.*;
-import com.hopper.sync.*;
 import com.hopper.session.Serializer;
-import com.hopper.verb.handler.*;
+import com.hopper.sync.*;
+import com.hopper.verb.handler.Mutation;
+import com.hopper.verb.handler.MutationVerbHandler;
+import com.hopper.verb.handler.ReplyVerbHandler;
 
 import java.util.EnumMap;
 
@@ -28,6 +30,7 @@ public class VerbMappings {
         registerVerbBody(Verb.PAXOS_PROMISE, Promise.class);
         registerVerbBody(Verb.PAXOS_ACCEPT, Accept.class);
         registerVerbBody(Verb.PAXOS_ACCEPTED, Accepted.class);
+        registerVerbBody(Verb.PAXOS_LEARN, Learn.class);
         registerVerbBody(Verb.REQUIRE_DIFF, RequireDiff.class);
         registerVerbBody(Verb.DIFF_RESULT, DiffResult.class);
         registerVerbBody(Verb.MUTATION, Mutation.class);
@@ -41,6 +44,8 @@ public class VerbMappings {
 
         registerVerbHandler(Verb.PAXOS_ACCEPT, new AcceptVerbHandler());
         registerVerbHandler(Verb.PAXOS_ACCEPTED, new ReplyVerbHandler());
+
+        registerVerbHandler(Verb.PAXOS_LEARN, new LearnVerbHandler());
 
         handlerMappings.put(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
         handlerMappings.put(Verb.REQUIRE_DIFF, new RequireDiffVerbHandler());

@@ -395,9 +395,9 @@ public class DefaultLeaderElection implements LeaderElection {
         }
 
         // Majority has reached consensus, send LEARN message
-        if (numAccepted > config.getQuorumSize() - 1) {
-
+        if (numAccepted >= config.getQuorumSize() - 1) {
             Message learnMessage = makeLearnMessage();
+
             // Send Learn message to all nodes
             componentManager.getMessageService().sendLearnMessage(learnMessage);
             return;
