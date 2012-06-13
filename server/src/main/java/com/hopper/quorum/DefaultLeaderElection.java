@@ -90,7 +90,8 @@ public class DefaultLeaderElection implements LeaderElection {
 
                     // if the candidate is alive, takes it as local leader.
                     LearnVerbHandler handler = (LearnVerbHandler) VerbMappings.getVerbHandler(Verb.PAXOS_LEARN);
-                    handler.learnElectedLeader(paxos.getEpoch(),componentManager.getDefaultServer().getLeader(),candidateLeader);
+                    handler.learnElectedLeader(paxos.getEpoch(), componentManager.getDefaultServer().getLeader(),
+                            candidateLeader);
                 }
             } catch (NoQuorumException e) {
                 logger.debug("No enough nodes are alive, waiting for other nodes joining...");
@@ -108,12 +109,20 @@ public class DefaultLeaderElection implements LeaderElection {
             } catch (ElectionTerminatedException e) {
                 retry = false;
             } catch (TestLeaderFailureException e) {
+                logger.debug("Failed to test candidate leader:{},waiting {} milliseconds for the next election",
+                        new Object[]{e.leader, config.getPeriodForJoin(), e});
+
                 retry = waitingNextElection(config.getPeriodForJoin());
             } catch (TimeoutException e) {
+                logger.debug("Timeout for get result,waiting {} milliseconds for next election",
+                        config.getPeriodForJoin(), e);
                 retry = waitingNextElection(config.getPeriodForJoin());
             } catch (InterruptedException e) {
+                logger.debug("Stop current election instance because of interrupt.");
                 retry = false;
             } catch (Exception e) {
+                logger.debug("Unknown exception occurred, waiting {} milliseconds for the next election",
+                        config.getPeriodForJoin(), e);
                 retry = waitingNextElection(config.getPeriodForJoin());
             }
         } while (retry);
@@ -410,8 +419,6 @@ public class DefaultLeaderElection implements LeaderElection {
      */
     private void testCandidateLeader(int leader) {
 
-        Endpoint leaderEndpoint = config.getEndpoint(leader);
-
         try {
             Message request = new Message();
             request.setVerb(Verb.TEST_LEADER);
@@ -426,14 +433,12 @@ public class DefaultLeaderElection implements LeaderElection {
 
             // Candidate is not a leader
             if (!isLeader) {
-                throw new TestLeaderFailureException();
+                throw new TestLeaderFailureException(leader, "The candidate leader has loosen leadership");
             }
         } catch (TestLeaderFailureException e) {
-            logger.debug("Test leader failure,candidate leader has loosen leadership.");
             throw e;
         } catch (Exception e) {
-            logger.debug("Failed to test leader " + leaderEndpoint, e);
-            throw new TestLeaderFailureException();
+            throw new TestLeaderFailureException(leader, e);
         }
     }
 

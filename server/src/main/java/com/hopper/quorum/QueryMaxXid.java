@@ -1,4 +1,4 @@
-package com.hopper.verb.handler;
+package com.hopper.quorum;
 
 import com.hopper.session.Serializer;
 
@@ -7,11 +7,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-5-3
- * Time: 下午2:40
- * To change this template use File | Settings | File Templates.
+ * The server max id
  */
 public class QueryMaxXid implements Serializer {
     private int serverId;

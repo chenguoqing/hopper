@@ -7,7 +7,6 @@ import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingSession;
 import com.hopper.stage.Stage;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateNodeSnapshot;
@@ -80,7 +79,7 @@ public class DataSyncService extends LifecycleProxy {
     public void applyDiff(DiffResult diff) {
 
         if (diff.getMaxXid() <= storage.getMaxXid()) {
-            logger.info("Ignoring the diff result, because oft he target xid {} is smaller than local {}",
+            logger.debug("Ignoring the diff result, because oft he target xid {} is smaller than local {}",
                     new Object[]{diff.getMaxXid(), storage.getMaxXid()});
             return;
         }
@@ -135,10 +134,9 @@ public class DataSyncService extends LifecycleProxy {
      * Push the local data to remote servers(local data is fresh)
      */
     public List<LatchFuture<Boolean>> syncDataToRemote(Integer[] remoteServers) {
-        RequireRemoteSyncTask[] tasks = new RequireRemoteSyncTask[remoteServers.length];
         List<LatchFuture<Boolean>> futures = new ArrayList<LatchFuture<Boolean>>(remoteServers.length);
-        for (int i = 0; i < tasks.length; i++) {
-            RequireRemoteSyncTask task = new RequireRemoteSyncTask(config.getEndpoint(remoteServers[i]));
+        for (int serverId : remoteServers) {
+            RequireRemoteSyncTask task = new RequireRemoteSyncTask(config.getEndpoint(serverId));
             LatchFuture<Boolean> future = (LatchFuture<Boolean>) threadPool.submit(task);
             futures.add(future);
         }
@@ -152,7 +150,6 @@ public class DataSyncService extends LifecycleProxy {
      */
     private class RequireRemoteDiffTask implements Callable<DiffResult> {
         final GlobalConfiguration config = ComponentManagerFactory.getComponentManager().getGlobalConfiguration();
-        final StateStorage storage = ComponentManagerFactory.getComponentManager().getStateStorage();
         final int remoteServerId;
 
         private RequireRemoteDiffTask(int remoteServerId) {
@@ -167,7 +164,7 @@ public class DataSyncService extends LifecycleProxy {
 
     private DiffResult syncDiff(int remoteServerId) throws Exception {
         Message message = new Message();
-        message.setVerb(Verb.DIFF_RESULT);
+        message.setVerb(Verb.REQUIRE_DIFF);
         message.setId(Message.nextId());
 
         RequireDiff diff = new RequireDiff();
@@ -195,24 +192,22 @@ public class DataSyncService extends LifecycleProxy {
             request.setVerb(Verb.REQUIRE_TREE);
             request.setId(Message.nextId());
 
-            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(remoteServer);
-
-            Future<Message> future = session.send(request);
+            Future<Message> future = componentManager.getMessageService().send(request, remoteServer.serverId);
 
             Message reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
 
             MerkleTree tree = (MerkleTree) reply.getBody();
 
             storage.getHashTree().loadHash();
-            Difference difference = storage.getHashTree().difference(tree);
 
             request = new Message();
             request.setVerb(Verb.APPLY_DIFF);
             request.setId(Message.nextId());
 
+            Difference difference = storage.getHashTree().difference(tree);
             request.setBody(difference);
 
-            future = session.send(request);
+            future = componentManager.getMessageService().send(request, remoteServer.serverId);
 
             reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
 

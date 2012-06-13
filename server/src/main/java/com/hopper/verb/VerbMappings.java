@@ -2,6 +2,8 @@ package com.hopper.verb;
 
 import com.hopper.quorum.*;
 import com.hopper.session.Serializer;
+import com.hopper.storage.merkle.Difference;
+import com.hopper.storage.merkle.MerkleTree;
 import com.hopper.sync.*;
 import com.hopper.verb.handler.Mutation;
 import com.hopper.verb.handler.MutationVerbHandler;
@@ -31,8 +33,11 @@ public class VerbMappings {
         registerVerbBody(Verb.PAXOS_ACCEPT, Accept.class);
         registerVerbBody(Verb.PAXOS_ACCEPTED, Accepted.class);
         registerVerbBody(Verb.PAXOS_LEARN, Learn.class);
+        registerVerbBody(Verb.QUERY_MAX_XID_RESULT, QueryMaxXid.class);
         registerVerbBody(Verb.REQUIRE_DIFF, RequireDiff.class);
         registerVerbBody(Verb.DIFF_RESULT, DiffResult.class);
+        registerVerbBody(Verb.TREE_RESULT, MerkleTree.class);
+        registerVerbBody(Verb.APPLY_DIFF, Difference.class);
         registerVerbBody(Verb.MUTATION, Mutation.class);
 
         // register response verb handler
@@ -50,14 +55,22 @@ public class VerbMappings {
         registerVerbHandler(Verb.TEST_LEADER, new TestLeaderVerbHandler());
         registerVerbHandler(Verb.TEST_LEADER_RESULT, new ReplyVerbHandler());
 
-        handlerMappings.put(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
-        handlerMappings.put(Verb.REQUIRE_DIFF, new RequireDiffVerbHandler());
-        handlerMappings.put(Verb.DIFF_RESULT, new ReplyVerbHandler());
-        handlerMappings.put(Verb.REQUIRE_TREE, new RequireTreeVerbhandler());
-        handlerMappings.put(Verb.TREE_RESULT, new ReplyVerbHandler());
-        handlerMappings.put(Verb.APPLY_DIFF, new ApplyDiffVerbHandler());
-        handlerMappings.put(Verb.APPLY_DIFF_RESULT, new ReplyVerbHandler());
-        handlerMappings.put(Verb.MUTATION, new MutationVerbHandler());
+        registerVerbHandler(Verb.QUERY_MAX_XID, new QueryMaxXidVerbHandler());
+        registerVerbHandler(Verb.QUERY_MAX_XID_RESULT, new ReplyVerbHandler());
+
+        registerVerbHandler(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
+
+        registerVerbHandler(Verb.REQUIRE_DIFF, new RequireDiffVerbHandler());
+        registerVerbHandler(Verb.DIFF_RESULT, new ReplyVerbHandler());
+
+        registerVerbHandler(Verb.REQUIRE_TREE, new RequireTreeVerbhandler());
+        registerVerbHandler(Verb.TREE_RESULT, new ReplyVerbHandler());
+
+        registerVerbHandler(Verb.APPLY_DIFF, new ApplyDiffVerbHandler());
+        registerVerbHandler(Verb.APPLY_DIFF_RESULT, new ReplyVerbHandler());
+
+        registerVerbHandler(Verb.MUTATION, new MutationVerbHandler());
+        registerVerbHandler(Verb.REPLY_MUTATION, new ReplyVerbHandler());
     }
 
     /**

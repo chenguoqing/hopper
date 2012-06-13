@@ -34,12 +34,11 @@ public enum Verb {
 
     TEST_LEADER(4),
     TEST_LEADER_RESULT(4),
-
-    RES_TEST_LEADER(5),
     /**
      * Acquire max xid
      */
     QUERY_MAX_XID(4),
+    QUERY_MAX_XID_RESULT(4),
     /**
      * Compare hash tree
      */

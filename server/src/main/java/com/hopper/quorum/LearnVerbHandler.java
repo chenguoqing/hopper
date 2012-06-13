@@ -9,6 +9,7 @@ import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
+import com.hopper.session.MessageService;
 import com.hopper.session.OutgoingSession;
 import com.hopper.sync.DataSyncService;
 import com.hopper.sync.DiffResult;
@@ -16,7 +17,6 @@ import com.hopper.sync.SyncException;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import com.hopper.verb.handler.BatchSessionCreator;
-import com.hopper.verb.handler.QueryMaxXid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,15 +64,19 @@ public class LearnVerbHandler implements VerbHandler {
 
         learnedInstances.add(learn.getEpoch());
 
+        logger.debug("The election instance {} has chosen leader {}", learn.getEpoch(), learn.getVval());
+
         // TODO:
         if (learn.getEpoch() > paxos.getEpoch()) {
             paxos.setEpoch(learn.getEpoch());
         }
 
         try {
+            logger.debug("Start data synchronization...");
             learnElectedLeader(learn.getEpoch(), server.getLeader(), learn.getVval());
+            logger.debug("Success to synchronize data.");
         } catch (Exception e) {
-            logger.error("Failed to learn elected leader:{}", learn.getVval(), e);
+            logger.error("Failed to synchronize data, leader:{}", learn.getVval(), e);
             componentManager.getLeaderElection().startElecting();
         }
     }
@@ -93,12 +97,17 @@ public class LearnVerbHandler implements VerbHandler {
 
         logger.debug("Election for instance {} has completed, elected leader:{}", epoch, newLeader);
 
-        if (server.isLeader()) {
-            takeLeadership();
-            server.setElectionState(Server.ElectionState.LEADING);
-        } else {
-            acceptLeader(olderLeader, newLeader);
-            server.setElectionState(Server.ElectionState.FOLLOWING);
+        try {
+            if (server.isLeader()) {
+                takeLeadership();
+                server.setElectionState(Server.ElectionState.LEADING);
+            } else {
+                acceptLeader(olderLeader, newLeader);
+                server.setElectionState(Server.ElectionState.FOLLOWING);
+            }
+        } catch (Exception e) {
+            server.setElectionState(Server.ElectionState.SYNC_FAILED);
+            throw e;
         }
     }
 
@@ -118,15 +127,14 @@ public class LearnVerbHandler implements VerbHandler {
         message.setVerb(Verb.QUERY_MAX_XID);
         message.setId(Message.nextId());
 
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 1);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
+                MessageService.WAITING_MODE_QUORUM);
 
         int repliesNum = replies.size();
 
         // No majority response, starts a new election
-        // Subsequently, the ElectionMonitor will mutation the new election
         if (repliesNum < config.getQuorumSize() - 1) {
-            componentManager.getDefaultServer().setElectionState(Server.ElectionState.SYNC_FAILED);
-            return;
+            throw new NoQuorumException();
         }
 
         List<QueryMaxXid> maxXidResult = new ArrayList<QueryMaxXid>();
