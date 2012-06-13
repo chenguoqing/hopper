@@ -263,11 +263,4 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
         return future;
     }
-
-    /**
-     * Start ping with interval
-     */
-    @Override
-    public void background() {
-    }
 }

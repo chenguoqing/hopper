@@ -92,9 +92,4 @@ public class DummyConnection extends LifecycleProxy implements Connection {
     public LatchFuture<Message> send(Message message) {
         return null;
     }
-
-    @Override
-    public void background() {
-    }
-
 }

@@ -47,6 +47,9 @@ public class VerbMappings {
 
         registerVerbHandler(Verb.PAXOS_LEARN, new LearnVerbHandler());
 
+        registerVerbHandler(Verb.TEST_LEADER, new TestLeaderVerbHandler());
+        registerVerbHandler(Verb.TEST_LEADER_RESULT, new ReplyVerbHandler());
+
         handlerMappings.put(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
         handlerMappings.put(Verb.REQUIRE_DIFF, new RequireDiffVerbHandler());
         handlerMappings.put(Verb.DIFF_RESULT, new ReplyVerbHandler());

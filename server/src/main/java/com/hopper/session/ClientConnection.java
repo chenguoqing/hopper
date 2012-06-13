@@ -103,8 +103,4 @@ public class ClientConnection extends LifecycleProxy implements Connection {
     public LatchFuture<Message> send(Message message) {
         return null;
     }
-
-    @Override
-    public void background() {
-    }
 }

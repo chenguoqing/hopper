@@ -76,8 +76,6 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
             isStartedBackground = true;
             scheduleManager.schedule(heartBeatTask, componentManager.getGlobalConfiguration().getPingPeriod(),
                     componentManager.getGlobalConfiguration().getPingPeriod());
-            // start connection background tasks
-            getConnection().background();
         }
     }
 

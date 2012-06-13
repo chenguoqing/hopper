@@ -1,7 +1,7 @@
 package com.hopper.session;
 
-import com.hopper.lifecycle.Lifecycle;
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.Lifecycle;
 import com.hopper.server.Endpoint;
 import org.jboss.netty.channel.Channel;
 
@@ -99,10 +99,4 @@ public interface Connection extends Lifecycle {
 	 * {@link Future#get()} method has been invoked.
 	 */
 	LatchFuture<Message> send(Message message);
-
-	/**
-	 * Starting the background thread for asynchronous processing for the
-	 * connection.
-	 */
-	void background();
 }

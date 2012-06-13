@@ -68,26 +68,33 @@ public class LearnVerbHandler implements VerbHandler {
             paxos.setEpoch(learn.getEpoch());
         }
 
+        try {
+            learnElectedLeader(learn.getEpoch(), server.getLeader(), learn.getVval());
+        } catch (Exception e) {
+            logger.error("Failed to learn elected leader:{}", learn.getVval(), e);
+            componentManager.getLeaderElection().startElecting();
+        }
+    }
+
+    public void learnElectedLeader(int epoch, int olderLeader, int newLeader) throws Exception {
+
+        // running on SYNC status
         server.setElectionState(Server.ElectionState.SYNC);
+
+        // set new leader
+        server.setLeader(newLeader);
 
         // close current instance
         paxos.closeInstance();
 
-        int olderLeader = server.getLeader();
-        server.setLeader(learn.getVval());
+        logger.debug("Election for instance {} has completed, elected leader:{}", epoch, newLeader);
 
-        logger.debug("Election for instance {} has completed, elected leader:{}", learn.getEpoch(), learn.getVval());
-
-        try {
-            if (server.isLeader()) {
-                takeLeadership();
-                server.setElectionState(Server.ElectionState.LEADING);
-            } else {
-                transferLeader(olderLeader, learn.getVval());
-                server.setElectionState(Server.ElectionState.FOLLOWING);
-            }
-        } catch (Exception e) {
-            componentManager.getLeaderElection().startElecting();
+        if (server.isLeader()) {
+            takeLeadership();
+            server.setElectionState(Server.ElectionState.LEADING);
+        } else {
+            acceptLeader(olderLeader, newLeader);
+            server.setElectionState(Server.ElectionState.FOLLOWING);
         }
     }
 
@@ -173,7 +180,6 @@ public class LearnVerbHandler implements VerbHandler {
                     }
                 }
             } catch (InterruptedException e) {
-                return;
             } catch (ExecutionException e) {
                 throw new SyncException(e.getCause());
             }
@@ -194,7 +200,7 @@ public class LearnVerbHandler implements VerbHandler {
         return stales.toArray(new Integer[0]);
     }
 
-    private void transferLeader(int olderLeader, int newLeader) throws Exception {
+    private void acceptLeader(int olderLeader, int newLeader) throws Exception {
 
         // Inactive older leader
         inactiveOlderLeader(olderLeader);

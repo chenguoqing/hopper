@@ -33,6 +33,7 @@ public enum Verb {
     REPLY_QUERY_LEADER(4),
 
     TEST_LEADER(4),
+    TEST_LEADER_RESULT(4),
 
     RES_TEST_LEADER(5),
     /**

@@ -9,6 +9,7 @@ import com.hopper.session.Message;
 import com.hopper.session.MessageService;
 import com.hopper.session.OutgoingSession;
 import com.hopper.verb.Verb;
+import com.hopper.verb.VerbMappings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,12 +85,12 @@ public class DefaultLeaderElection implements LeaderElection {
                     // Retrieve the candidate leader
                     int candidateLeader = getCandidateLeader(replyResult);
 
-                    // if the candidate is alive, takes it as local leader.
-                    // Otherwise, waiting a next period
+                    // if the candidate is alive, takes it as local leader; Otherwise, waiting for a next period
                     testCandidateLeader(candidateLeader);
 
                     // if the candidate is alive, takes it as local leader.
-                    shutdownPaxosWithNewLeader(candidateLeader);
+                    LearnVerbHandler handler = (LearnVerbHandler) VerbMappings.getVerbHandler(Verb.PAXOS_LEARN);
+                    handler.learnElectedLeader(paxos.getEpoch(),componentManager.getDefaultServer().getLeader(),candidateLeader);
                 }
             } catch (NoQuorumException e) {
                 logger.debug("No enough nodes are alive, waiting for other nodes joining...");
@@ -183,32 +184,6 @@ public class DefaultLeaderElection implements LeaderElection {
         });
 
         return leaders;
-    }
-
-    private void shutdownPaxosWithNewLeader(int candidateLeader) throws Exception {
-
-        // Active the heart beat to leader
-        activeLeaderSession(candidateLeader);
-
-        // set the new leader
-        componentManager.getDefaultServer().setLeader(candidateLeader);
-
-        // close current instance
-        paxos.closeInstance();
-
-        // unbound the election status
-        componentManager.getDefaultServer().setElectionState(ElectionState.FOLLOWING);
-    }
-
-    /**
-     * Start to mutation some asynchronous works for leader session (starting for heart beat)
-     */
-    private void activeLeaderSession(int leader) throws Exception {
-        Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(leaderEndpoint);
-
-        // start heart beat
-        session.background();
     }
 
     /**
@@ -430,23 +405,19 @@ public class DefaultLeaderElection implements LeaderElection {
     }
 
     /**
-     * Test the candidate leader, if can communicate with the candidate leader
-     * and the candidate owns the leadership, then setting the candidate as the
-     * local leader. Otherwise, waiting the next communication period for
-     * retrying.
+     * Test the candidate leader, if can communicate with the candidate leader and the candidate owns the leadership,
+     * then setting the candidate as the local leader. Otherwise, waiting the next communication period for retrying.
      */
     private void testCandidateLeader(int leader) {
 
         Endpoint leaderEndpoint = config.getEndpoint(leader);
 
         try {
-            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(leaderEndpoint);
-
             Message request = new Message();
             request.setVerb(Verb.TEST_LEADER);
             request.setId(Message.nextId());
 
-            Future<Message> future = session.send(request);
+            Future<Message> future = componentManager.getMessageService().send(request, leader);
 
             Message reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
             byte[] body = (byte[]) reply.getBody();
@@ -458,7 +429,7 @@ public class DefaultLeaderElection implements LeaderElection {
                 throw new TestLeaderFailureException();
             }
         } catch (TestLeaderFailureException e) {
-            logger.debug("Test leader failure,Candidate leader has loosen leadership.");
+            logger.debug("Test leader failure,candidate leader has loosen leadership.");
             throw e;
         } catch (Exception e) {
             logger.debug("Failed to test leader " + leaderEndpoint, e);
@@ -467,9 +438,8 @@ public class DefaultLeaderElection implements LeaderElection {
     }
 
     /**
-     * If majority nodes believe the own leader is alive(may be different from
-     * each other), we takes the leader of holds maximum xid as the candidate
-     * leader
+     * If majority nodes believe the own leader is alive(may be different from each other),
+     * we takes the leader of holds maximum xid as the candidate leader
      */
     private int getCandidateLeader(List<QueryLeader> replies) {
 
