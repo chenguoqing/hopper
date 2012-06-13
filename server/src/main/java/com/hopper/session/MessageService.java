@@ -50,7 +50,7 @@ public class MessageService {
             }
 
             try {
-                OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
+                OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
                 session.sendOneway(message);
             } catch (Exception e) {
                 logger.error("Failed to connect to " + endpoint, e);
@@ -112,7 +112,7 @@ public class MessageService {
     public void sendOneway(Message message, int destServerId) {
         Endpoint endpoint = config.getEndpoint(destServerId);
         try {
-            OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
+            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
             logger.error("Failed to send message.", e);
@@ -145,7 +145,7 @@ public class MessageService {
      */
     public void sendOnwayUntilComplete(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
-        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
+        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
         session.sendOnwayUntilComplete(message);
     }
 
@@ -154,7 +154,7 @@ public class MessageService {
      */
     public LatchFuture<Message> send(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
-        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
+        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
         return session.send(message);
     }
 

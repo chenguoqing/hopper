@@ -1,9 +1,14 @@
 # Hopper global configuration information
 
-# mode
+# server mode
 # single --one node without election and synchronization
 # multi --- multiple nodes
 server_mode: single
+
+# leader election mode
+# fair -- fair election(default)
+# fast -- fast election
+election_mode: fair
 
 # storage mode(hash or tree)
 storage_mode: hash
@@ -34,7 +39,6 @@ shutdown_port: 7930
 
 # shutdown command
 shutdown_command: shutdown
-
 
 # configure all group nodes
 group_nodes:

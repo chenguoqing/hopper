@@ -7,7 +7,6 @@ import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.session.Message;
-import com.hopper.session.MessageService;
 import com.hopper.session.OutgoingSession;
 import com.hopper.stage.Stage;
 import com.hopper.storage.StateNode;
@@ -196,7 +195,7 @@ public class DataSyncService extends LifecycleProxy {
             request.setVerb(Verb.REQUIRE_TREE);
             request.setId(Message.nextId());
 
-            OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(remoteServer);
+            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(remoteServer);
 
             Future<Message> future = session.send(request);
 

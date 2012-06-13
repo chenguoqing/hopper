@@ -9,7 +9,6 @@ import com.hopper.session.Message;
 import com.hopper.session.MessageService;
 import com.hopper.session.OutgoingSession;
 import com.hopper.verb.Verb;
-import com.hopper.verb.handler.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +39,25 @@ public class DefaultLeaderElection implements LeaderElection {
 
     @Override
     public void startElecting() {
-
         if (componentManager.getDefaultServer().getElectionState() == ElectionState.LOOKING) {
             return;
         }
 
         componentManager.getDefaultServer().setElectionState(ElectionState.LOOKING);
+
+        Thread electionThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                asynElecting();
+            }
+        });
+
+        electionThread.setName("election-thread");
+        electionThread.setDaemon(true);
+        electionThread.start();
+    }
+
+    public void asynElecting() {
 
         int repeated = 0;
         boolean retry = false;
@@ -53,7 +65,7 @@ public class DefaultLeaderElection implements LeaderElection {
         do {
             repeated++;
 
-            logger.debug("Retrying to start election  [" + repeated + "]...");
+            logger.debug("Retrying to start election  [{}]...", repeated);
 
             try {
                 List<QueryLeader> replyResult = new ArrayList<QueryLeader>();
@@ -193,7 +205,7 @@ public class DefaultLeaderElection implements LeaderElection {
      */
     private void activeLeaderSession(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(leaderEndpoint);
 
         // start heart beat
         session.background();
@@ -221,11 +233,12 @@ public class DefaultLeaderElection implements LeaderElection {
 
         int leader = phase1();
 
-        // If the serverId from Phase1b is not a local server, it indicating
-        // there some contention and may be other servers have completed Phase1.
-        // As optimization current server may abandon the subsequent election
-        // steps.
-        if (leader != componentManager.getDefaultServer().getServerEndpoint().serverId) {
+        // If the serverId from Phase1b is not the local server, it indicating there are some contention and
+        // other servers may have completed Phase1, current node should abandon the subsequent election steps.
+        if (config.getElectionMode() == GlobalConfiguration.ElectionMode.FAST) {
+            if (leader != config.getLocalServerEndpoint().serverId) {
+                throw new ElectionTerminatedException();
+            }
         }
 
         // starting phase2
@@ -266,15 +279,19 @@ public class DefaultLeaderElection implements LeaderElection {
             }
         }
 
-        // if majority has promised the prepare
-        if (promiseCount >= config.getQuorumSize()) {
-            int leader = ((Promise) replies.get(0).getBody()).getVval();
+        // majority promised
+        if (promiseCount >= config.getQuorumSize() - 1) {
+            Promise first = (Promise) replies.get(0).getBody();
 
-            // Majority no chosen any value, we can decide any value, otherwise,
-            // it must pick up the first value
-            if (leader == -1) {
-                leader = paxos.getVval() > 0 ? paxos.getVval() : componentManager.getDefaultServer()
-                        .getServerEndpoint().serverId;
+            int leader = first.getVval();
+
+            if (paxos.getRnd() == first.getRnd() && paxos.getVrnd() > first.getVrnd()) {
+                leader = paxos.getVval();
+            }
+
+            // Majority has no chosen any value, it may free to decide; otherwise, must pick up the first one
+            if (leader < 0) {
+                leader = componentManager.getDefaultServer().getServerEndpoint().serverId;
             }
 
             return leader;
@@ -310,9 +327,9 @@ public class DefaultLeaderElection implements LeaderElection {
         }
 
         // send prepare(Phase1a) message
-        Message phase1 = new Message();
-        phase1.setId(Message.nextId());
-        phase1.setVerb(Verb.PAXOS_PREPARE);
+        Message message = new Message();
+        message.setId(Message.nextId());
+        message.setVerb(Verb.PAXOS_PREPARE);
 
         Prepare prepare = new Prepare();
 
@@ -323,10 +340,10 @@ public class DefaultLeaderElection implements LeaderElection {
 
         prepare.setBallot(ballot);
         prepare.setEpoch(paxos.getEpoch());
-        phase1.setBody(prepare);
+        message.setBody(prepare);
 
         // Receive the promise(Phase1b) message
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(phase1,
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_ALL);
 
         // if no majority responses, it can't work
@@ -354,7 +371,8 @@ public class DefaultLeaderElection implements LeaderElection {
 
         message.setBody(accept);
 
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
+                MessageService.WAITING_MODE_ALL);
 
         // No majority are alive
         if (replies.size() < config.getQuorumSize()) {
@@ -362,7 +380,6 @@ public class DefaultLeaderElection implements LeaderElection {
         }
 
         int numAccepted = 0;
-
         int rejectedRnd = -1;
         int rejectedEpoch = -1;
 
@@ -423,7 +440,7 @@ public class DefaultLeaderElection implements LeaderElection {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
 
         try {
-            OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(leaderEndpoint);
 
             Message request = new Message();
             request.setVerb(Verb.TEST_LEADER);

@@ -56,7 +56,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
         }
 
         // create a outgoing session for the endpoint
-        componentManager.getSessionManager().createLocalOutgoingSession(endpoint);
+        componentManager.getSessionManager().createOutgoingSession(endpoint);
 
         // forward to others handlers
         super.childChannelOpen(ctx, e);

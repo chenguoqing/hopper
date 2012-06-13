@@ -1,6 +1,5 @@
-package com.hopper.verb.handler;
+package com.hopper.quorum;
 
-import com.hopper.quorum.Paxos;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;

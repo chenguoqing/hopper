@@ -96,7 +96,7 @@ public class SessionManager extends LifecycleProxy {
     /**
      * Create a {@link OutgoingSession} with endpoint
      */
-    public OutgoingSession createLocalOutgoingSession(Endpoint endpoint) throws Exception {
+    public OutgoingSession createOutgoingSession(Endpoint endpoint) throws Exception {
 
         OutgoingSession session = componentManager.getSessionManager().getOutgoingSession(endpoint);
 
@@ -113,7 +113,8 @@ public class SessionManager extends LifecycleProxy {
                 ((LocalIncomingSession) session).setId(SessionIdGenerator.generateSessionId());
 
                 // create connection
-                Connection connection = componentManager.getConnectionManager().createOutgoingServerConnection(session, endpoint);
+                Connection connection = componentManager.getConnectionManager().createOutgoingConnection(session,
+                        endpoint);
 
                 // bound the session to connection
                 ((LocalIncomingSession) session).setConnection(connection);

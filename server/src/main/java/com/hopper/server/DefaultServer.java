@@ -254,9 +254,6 @@ public class DefaultServer extends LifecycleProxy implements Server {
     @Override
     public void takeLeadership() {
         this.leader = serverEndpoint.serverId;
-
-
-
         componentManager.getStateStorage().executeInvalidateTask();
         componentManager.getStateStorage().enablePurgeThread();
     }

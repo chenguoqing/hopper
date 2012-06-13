@@ -53,11 +53,14 @@ public class ConnectionManager {
      * Create a {@link Connection} instance, but doen't invoking any lifecycle
      * methods. The initial works will be delayed to caller.
      */
-    public Connection createOutgoingServerConnection(OutgoingSession session, Endpoint endpoint) throws Exception {
+    public Connection createOutgoingConnection(OutgoingSession session, Endpoint endpoint) throws Exception {
         NettyConnection connection = (NettyConnection) componentManager.getConnectionManager().getOutgoingConnection
                 (endpoint);
 
         if (connection != null) {
+            if (!connection.validate()) {
+                connection.reconnect();
+            }
             return connection;
         }
 

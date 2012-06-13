@@ -1,11 +1,6 @@
 package com.hopper.verb;
 
-import com.hopper.quorum.Prepare;
-import com.hopper.quorum.PrepareVerbHandler;
-import com.hopper.quorum.Promise;
-import com.hopper.quorum.QueryLeaderVerbHandler;
-import com.hopper.verb.Verb;
-import com.hopper.verb.VerbHandler;
+import com.hopper.quorum.*;
 import com.hopper.sync.*;
 import com.hopper.session.Serializer;
 import com.hopper.verb.handler.*;

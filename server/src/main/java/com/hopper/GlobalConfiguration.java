@@ -35,6 +35,10 @@ public class GlobalConfiguration extends LifecycleProxy {
         HASH, TREE
     }
 
+    public static enum ElectionMode {
+        FAIR,FAST
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(GlobalConfiguration.class);
 
     /**
@@ -88,6 +92,13 @@ public class GlobalConfiguration extends LifecycleProxy {
         StorageMode _mode = StorageMode.valueOf(mode.toUpperCase());
 
         return _mode == null ? StorageMode.HASH : _mode;
+    }
+
+    public ElectionMode getElectionMode() {
+        String mode = innerConfig.getString("election_mode", ElectionMode.FAIR.name());
+        ElectionMode _mode = ElectionMode.valueOf(mode.toUpperCase());
+
+        return _mode == null ? ElectionMode.FAIR : _mode;
     }
 
     /**

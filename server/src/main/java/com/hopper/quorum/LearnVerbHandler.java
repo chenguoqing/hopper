@@ -17,14 +17,22 @@ import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import com.hopper.verb.handler.BatchSessionCreator;
 import com.hopper.verb.handler.QueryMaxXid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * {@link LearnVerbHandler} processes the learn message
+ */
 public class LearnVerbHandler implements VerbHandler {
-
+    /**
+     * Logger
+     */
+    private static Logger logger = LoggerFactory.getLogger(LearnVerbHandler.class);
     /**
      * Singleton instance
      */
@@ -67,6 +75,8 @@ public class LearnVerbHandler implements VerbHandler {
 
         int olderLeader = server.getLeader();
         server.setLeader(learn.getVval());
+
+        logger.debug("Election for instance {} has completed, elected leader:{}", learn.getEpoch(), learn.getVval());
 
         try {
             if (server.isLeader()) {
@@ -187,7 +197,7 @@ public class LearnVerbHandler implements VerbHandler {
     private void transferLeader(int olderLeader, int newLeader) throws Exception {
 
         // Inactive older leader
-        inActiveOlderLeader(olderLeader);
+        inactiveOlderLeader(olderLeader);
 
         // Active new leader
         activeNewLeader(newLeader);
@@ -199,7 +209,7 @@ public class LearnVerbHandler implements VerbHandler {
     /**
      * Inactive the older leader, close all bound sessions
      */
-    private void inActiveOlderLeader(int oldLeader) {
+    private void inactiveOlderLeader(int oldLeader) {
         if (oldLeader < 0) {
             return;
         }
@@ -213,7 +223,7 @@ public class LearnVerbHandler implements VerbHandler {
      */
     private void activeNewLeader(int leader) throws Exception {
         Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingSession session = componentManager.getSessionManager().createLocalOutgoingSession(leaderEndpoint);
+        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(leaderEndpoint);
 
         // start heart beat
         session.background();
