@@ -18,25 +18,29 @@ public class VerbMappings {
     private static final EnumMap<Verb, VerbHandler> handlerMappings = new EnumMap<Verb, VerbHandler>(Verb.class);
 
     static {
-        classMappings.put(Verb.PAXOS_PREPARE, Prepare.class);
-        classMappings.put(Verb.PAXOS_PROMISE, Promise.class);
-        classMappings.put(Verb.PAXOS_ACCEPT, Accept.class);
-        classMappings.put(Verb.REQUIRE_DIFF, RequireDiff.class);
-        classMappings.put(Verb.DIFF_RESULT, DiffResult.class);
-        classMappings.put(Verb.MUTATION, Mutation.class);
-
+        initialize();
     }
 
-    static {
+    private static void initialize() {
+
+        // register body class
+        registerVerbBody(Verb.PAXOS_PREPARE, Prepare.class);
+        registerVerbBody(Verb.PAXOS_PROMISE, Promise.class);
+        registerVerbBody(Verb.PAXOS_ACCEPT, Accept.class);
+        registerVerbBody(Verb.PAXOS_ACCEPTED, Accepted.class);
+        registerVerbBody(Verb.REQUIRE_DIFF, RequireDiff.class);
+        registerVerbBody(Verb.DIFF_RESULT, DiffResult.class);
+        registerVerbBody(Verb.MUTATION, Mutation.class);
 
         // register response verb handler
-        handlerMappings.put(Verb.QUERY_LEADER, new QueryLeaderVerbHandler());
-        handlerMappings.put(Verb.REPLY_QUERY_LEADER, new ReplyVerbHandler());
+        registerVerbHandler(Verb.QUERY_LEADER, new QueryLeaderVerbHandler());
+        registerVerbHandler(Verb.REPLY_QUERY_LEADER, new ReplyVerbHandler());
 
-        handlerMappings.put(Verb.PAXOS_PREPARE, new PrepareVerbHandler());
-        handlerMappings.put(Verb.PAXOS_PROMISE, new ReplyVerbHandler());
+        registerVerbHandler(Verb.PAXOS_PREPARE, new PrepareVerbHandler());
+        registerVerbHandler(Verb.PAXOS_PROMISE, new ReplyVerbHandler());
 
-        handlerMappings.put(Verb.PAXOS_ACCEPT, new AcceptVerbHandler());
+        registerVerbHandler(Verb.PAXOS_ACCEPT, new AcceptVerbHandler());
+        registerVerbHandler(Verb.PAXOS_ACCEPTED, new ReplyVerbHandler());
 
         handlerMappings.put(Verb.RES_BOUND_MULTIPLEXER_SESSION, new ReplyVerbHandler());
         handlerMappings.put(Verb.REQUIRE_DIFF, new RequireDiffVerbHandler());
@@ -46,6 +50,17 @@ public class VerbMappings {
         handlerMappings.put(Verb.APPLY_DIFF, new ApplyDiffVerbHandler());
         handlerMappings.put(Verb.APPLY_DIFF_RESULT, new ReplyVerbHandler());
         handlerMappings.put(Verb.MUTATION, new MutationVerbHandler());
+    }
+
+    /**
+     * Register the verb and handler
+     */
+    public static void registerVerbHandler(Verb verb, VerbHandler handler) {
+        handlerMappings.put(verb, handler);
+    }
+
+    public static void registerVerbBody(Verb verb, Class<? extends Serializer> cz) {
+        classMappings.put(verb, cz);
     }
 
     public static Class<? extends Serializer> getVerClass(Verb verb) {

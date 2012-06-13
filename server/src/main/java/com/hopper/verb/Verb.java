@@ -59,6 +59,8 @@ public enum Verb {
      * Paxos(Leader election) : Phase2a
      */
     PAXOS_ACCEPT(8),
+
+    PAXOS_ACCEPTED(8),
     /**
      * Paxos learn message
      */
