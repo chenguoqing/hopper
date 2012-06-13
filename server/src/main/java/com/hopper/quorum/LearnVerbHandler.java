@@ -53,7 +53,7 @@ public class LearnVerbHandler implements VerbHandler {
     private final Set<Integer> learnedInstances = new HashSet<Integer>();
 
     @Override
-    public synchronized void doVerb(Message message) {
+    public void doVerb(Message message) {
 
         Learn learn = (Learn) message.getBody();
 
@@ -64,6 +64,7 @@ public class LearnVerbHandler implements VerbHandler {
 
         learnedInstances.add(learn.getEpoch());
 
+        // TODO:
         if (learn.getEpoch() > paxos.getEpoch()) {
             paxos.setEpoch(learn.getEpoch());
         }
@@ -86,6 +87,9 @@ public class LearnVerbHandler implements VerbHandler {
 
         // close current instance
         paxos.closeInstance();
+
+        // clear learned instances
+        learnedInstances.clear();
 
         logger.debug("Election for instance {} has completed, elected leader:{}", epoch, newLeader);
 
@@ -256,14 +260,9 @@ public class LearnVerbHandler implements VerbHandler {
             Message message = new Message();
             message.setVerb(Verb.BOUND_MULTIPLEXER_SESSION);
             message.setId(Message.nextId());
-
             message.setBody(batchCreator);
 
-            OutgoingSession serverSession = componentManager.getSessionManager().getOutgoingSession(config
-                    .getEndpoint(newLeader));
-            if (serverSession != null) {
-                serverSession.sendOneway(message);
-            }
+            componentManager.getMessageService().sendOneway(message, newLeader);
         }
     }
 }

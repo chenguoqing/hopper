@@ -100,15 +100,14 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
             BatchSessionCreator batchCreator = (BatchSessionCreator) message.getBody();
 
-            Message reply = new Message();
-            reply.setId(message.getId());
-            reply.setVerb(Verb.RES_BOUND_MULTIPLEXER_SESSION);
-            reply.setBody(new byte[]{0});
-
             for (String multiplexerSessionId : batchCreator.getSessions()) {
                 session.boundMultiplexerSession(multiplexerSessionId);
             }
 
+            Message reply = new Message();
+            reply.setId(message.getId());
+            reply.setVerb(Verb.RES_BOUND_MULTIPLEXER_SESSION);
+            reply.setBody(new byte[]{0});
             // send reply
             session.sendOneway(reply);
         } else {
