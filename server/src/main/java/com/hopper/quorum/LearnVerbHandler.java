@@ -114,7 +114,7 @@ public class LearnVerbHandler implements VerbHandler {
     /**
      * Take over the leader ship
      */
-    private void takeLeadership() {
+    private void takeLeadership() throws Exception {
         componentManager.getDefaultServer().takeLeadership();
         startLeaderDataSync();
     }
@@ -122,7 +122,7 @@ public class LearnVerbHandler implements VerbHandler {
     /**
      * Leader starts data synchronization
      */
-    private void startLeaderDataSync() {
+    private void startLeaderDataSync() throws Exception {
         Message message = new Message();
         message.setVerb(Verb.QUERY_MAX_XID);
         message.setId(Message.nextId());
@@ -191,7 +191,6 @@ public class LearnVerbHandler implements VerbHandler {
                         latch.await(config.getSyncTimeout(), TimeUnit.MILLISECONDS);
                     }
                 }
-            } catch (InterruptedException e) {
             } catch (ExecutionException e) {
                 throw new SyncException(e.getCause());
             }
