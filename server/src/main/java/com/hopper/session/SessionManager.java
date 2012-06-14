@@ -110,14 +110,14 @@ public class SessionManager extends LifecycleProxy {
                 session = new LocalOutgoingSession();
 
                 // local session id
-                ((LocalIncomingSession) session).setId(SessionIdGenerator.generateSessionId());
+                ((LocalOutgoingSession) session).setId(SessionIdGenerator.generateSessionId());
 
                 // create connection
                 Connection connection = componentManager.getConnectionManager().createOutgoingConnection(session,
                         endpoint);
 
                 // bound the session to connection
-                ((LocalIncomingSession) session).setConnection(connection);
+                ((LocalOutgoingSession) session).setConnection(connection);
 
                 // register session to SessionManager
                 addOutgoingServerSession(session);

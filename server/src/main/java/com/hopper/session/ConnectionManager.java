@@ -70,6 +70,7 @@ public class ConnectionManager {
         connection.setSession(session);
 
         // start connection
+        connection.initialize();
         connection.start();
 
         // register connection

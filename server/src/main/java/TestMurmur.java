@@ -1,11 +1,6 @@
-package com.hopper.utils;
-
-import com.hopper.session.Serializer;
-
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This is a very fast, non-cryptographic hash suitable for general hash-based
@@ -16,7 +11,42 @@ import java.io.ObjectOutputStream;
  * <p/>
  * <b>Notice:</b> The source code is coming from Cassandra
  */
-public class MurmurHash {
+public class TestMurmur {
+
+    public static void main(String[] args) {
+
+        int m = 0;
+        if (args.length > 0) {
+            m = Integer.valueOf(args[0]);
+        }
+
+        List<Integer> hashs = new ArrayList<Integer>(1000000);
+        long t = System.currentTimeMillis();
+
+        for (int i = 0; i < 1000000; i++) {
+            String str = "abcad013256489700054123" + i;
+
+            int hash = m == 0 ? str.hashCode() : hash(str);
+            hashs.add(hash);
+        }
+
+        System.out.println(System.currentTimeMillis() - t);
+
+        Collections.sort(hashs);
+
+        int collisionCount = 0;
+        for (int i = 1; i < hashs.size(); i++) {
+            int c1 = hashs.get(i - 1);
+            int c2 = hashs.get(i);
+
+            if (c2 == c1) {
+                collisionCount++;
+            }
+        }
+
+
+        System.out.println("collision count:" + collisionCount);
+    }
 
     /**
      * Hash the string, takes the length as seed
@@ -39,29 +69,6 @@ public class MurmurHash {
         return hash(data, 0, data.length, data.length);
     }
 
-    /**
-     * Hash object
-     */
-    public static int hash(Object o) throws IOException {
-        if (o == null) {
-            throw new NullPointerException();
-        }
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        if (o instanceof Serializer) {
-            ((Serializer) o).serialize(new DataOutputStream(out));
-        } else {
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
-            objectOutputStream.writeObject(o);
-            objectOutputStream.close();
-        }
-
-        byte[] data = out.toByteArray();
-        int seed = System.identityHashCode(o);
-
-        return hash(data, 0, data.length, seed);
-    }
 
     public static int hash(byte[] data, int offset, int length, int seed) {
         int m = 0x5bd1e995;

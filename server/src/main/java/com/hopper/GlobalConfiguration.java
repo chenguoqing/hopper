@@ -13,10 +13,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * {@link GlobalConfiguration} maintains all configuration items for hopper that will be loaded from YAML
@@ -36,7 +33,7 @@ public class GlobalConfiguration extends LifecycleProxy {
     }
 
     public static enum ElectionMode {
-        FAIR,FAST
+        FAIR, FAST
     }
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalConfiguration.class);
@@ -152,6 +149,16 @@ public class GlobalConfiguration extends LifecycleProxy {
 
     public int getQuorumSize() {
         return (getGroupEndpoints().length / 2) + 1;
+    }
+
+    /**
+     * Return the base ballot id for server.
+     * <p/>
+     * It will map all server id to ballot id that from 0 to server count(exclude),
+     * {@link com.hopper.quorum.BallotGenerator} will generate a ballot for server by the base ballot id.
+     */
+    public int getServerBallotId(int serverId) {
+        return innerConfig.ballotIds.get(serverId);
     }
 
     public long getPeriodForJoin() {
@@ -274,7 +281,14 @@ public class GlobalConfiguration extends LifecycleProxy {
          */
         final Map<String, Object> yamlMap;
 
+        /**
+         * The map of server id and endpoint
+         */
         final Map<Integer, Endpoint> endpointMap = new HashMap<Integer, Endpoint>();
+        /**
+         * The map of server id and base ballot id
+         */
+        final Map<Integer, Integer> ballotIds = new HashMap<Integer, Integer>();
 
         Endpoint localRpcEndpoint;
         Endpoint localServerEndpoint;
@@ -379,6 +393,13 @@ public class GlobalConfiguration extends LifecycleProxy {
                 Endpoint endpoint = new Endpoint(serverId, InetAddress.getByName(address), port);
 
                 endpointMap.put(endpoint.serverId, endpoint);
+            }
+
+            List<Integer> serverIdList = new ArrayList<Integer>(endpointMap.keySet());
+            Collections.sort(serverIdList);
+
+            for (int i = 0; i < serverIdList.size(); i++) {
+                ballotIds.put(serverIdList.get(i), i);
             }
         }
 

@@ -107,6 +107,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
         // Bind and start to accept incoming connections.
         this.serverChannel = serverBootstrap.bind(new InetSocketAddress(serverEndpoint.address, serverEndpoint.port));
+
+        logger.info("Listen server connection on port {}", serverEndpoint.port);
     }
 
     /**
@@ -128,6 +130,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
         // Bind and start to accept incoming connections.
         this.rpcChannel = rpcBootstrap.bind(new InetSocketAddress(rpcEndpoint.address, rpcEndpoint.port));
+
+        logger.info("Listen client connection on port {}", rpcEndpoint.port);
     }
 
     /**
