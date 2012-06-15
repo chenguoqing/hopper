@@ -1,3 +1,5 @@
+#!/bin/sh
+
 conf_path=$1
 
 echo "the conf path is $conf_path"
@@ -12,7 +14,7 @@ JAVA_OPTS="$JAVA_OPTS -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspen
 
 CURRENT_DIR=`pwd`
 mkdir logs
-CLASSPATH="$conf_path:$CURRENT_DIR/lib/*:$CURRENT_DIR/bin/*"
+CLASSPATH="$CURRENT_DIR/conf:$CURRENT_DIR/lib/*"
 LOG_PATH="logs/fos.log"
 
 echo "start fos server"
