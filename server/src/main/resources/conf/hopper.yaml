@@ -20,7 +20,7 @@ rpc_timeout: 2000
 ping_period: 1000
 
 # The address for accepting client connection, leaving it blank to InetAddress.getLocalHost()
-rpc_address: localhost
+rpc_address: 10.132.65.24
 
 # port for listening client
 rpc_port: 7910
@@ -42,9 +42,9 @@ shutdown_command: shutdown
 
 # configure all group nodes
 group_nodes:
-    - {serverId: 1,address: 127.0.0.1,port: 7920}
-    - {serverId: 2,address: 127.0.0.1,port: 7921}
-    - {serverId: 3,address: 127.0.0.1,port: 7921}
+    - {serverId: 1,address: 10.132.65.24,port: 7920}
+    - {serverId: 2,address: 10.132.65.25,port: 7920}
+    - {serverId: 3,address: 10.132.65.26,port: 7920}
 
 # The period for join waiting(milliseconds)
 period_for_waiting_join: 5000
