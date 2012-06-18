@@ -1,7 +1,6 @@
 package yaml;
 
 import junit.framework.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -21,7 +20,7 @@ public class HopperYamlTest {
     public void test() throws Exception {
         Yaml yaml = new Yaml();
 
-        InputStream in = getClass().getResourceAsStream("/conf/hopper.yaml");
+        InputStream in = getClass().getResourceAsStream("/hopper.yaml");
 
         Assert.assertNotNull(in);
 

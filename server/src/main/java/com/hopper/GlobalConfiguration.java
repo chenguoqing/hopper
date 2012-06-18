@@ -51,9 +51,13 @@ public class GlobalConfiguration extends LifecycleProxy {
      */
     private static final String FILE_PREFIX = "file:";
     /**
+     * Default logback file name
+     */
+    private static final String DEFAULT_CONF_FILE = "hopper.yaml";
+    /**
      * Default configuration path
      */
-    private static final String defaultYAML = CLASSPATH_PREFIX + "/conf/hopper.yaml";
+    private static final String defaultYAML = CLASSPATH_PREFIX + DEFAULT_CONF_FILE;
     /**
      * Configuration root object
      */
@@ -70,7 +74,7 @@ public class GlobalConfiguration extends LifecycleProxy {
             Map<String, Object> yamlMap = (Map<String, Object>) yaml.load(in);
             this.innerConfig = new InnerConfig(yamlMap);
 
-            logger.info("Used the configuration file:{}", configPath);
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to load yaml configuration file:" + configPath, e);
         }
@@ -254,18 +258,8 @@ public class GlobalConfiguration extends LifecycleProxy {
 
         if (path.startsWith(CLASSPATH_PREFIX)) {
             path = path.substring(CLASSPATH_PREFIX.length());
-            ClassLoader cl = Thread.currentThread().getContextClassLoader();
-
-            InputStream in = null;
-            if (cl != null) {
-                in = cl.getResourceAsStream(path);
-
-            }
-
-            if (in == null) {
-                in = this.getClass().getResourceAsStream(path);
-            }
-            return in;
+            logger.info("Used the configuration file:{}", path);
+            return readClasspath(path);
         }
 
         if (path.startsWith(FILE_PREFIX)) {
@@ -273,6 +267,21 @@ public class GlobalConfiguration extends LifecycleProxy {
         }
 
         return new FileInputStream(path);
+    }
+
+    private InputStream readClasspath(String path) {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+
+        InputStream in = null;
+        if (cl != null) {
+            in = cl.getResourceAsStream(path);
+
+        }
+
+        if (in == null) {
+            in = this.getClass().getResourceAsStream(path);
+        }
+        return in;
     }
 
     class InnerConfig {
@@ -407,7 +416,7 @@ public class GlobalConfiguration extends LifecycleProxy {
             // Resolve rpc address
             String rpcAddress = (String) yamlMap.get("rpc_address");
             InetAddress _rpcAddress;
-            if (rpcAddress == null || rpcAddress.equals("")) {
+            if (rpcAddress == null) {
                 _rpcAddress = InetAddress.getLocalHost();
             } else {
                 _rpcAddress = InetAddress.getByName(rpcAddress);

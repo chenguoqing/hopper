@@ -2,7 +2,7 @@
 <configuration>
     <property name="default_pattern" value="%date [%thread] %-5level %logger{30} - %msg%n"/>
 
-    <property name="log.basedir" value="/logs"/>
+    <property name="log.basedir" value="/var/logs/hopper"/>
     <property name="log.root.level" value="DEBUG"/>
     <property name="log.hopper.level" value="DEBUG"/>
     <property name="log.appender" value="STDOUT"/>
