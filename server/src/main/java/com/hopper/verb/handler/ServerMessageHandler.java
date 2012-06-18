@@ -42,6 +42,8 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             return;
         }
 
+        logger.info("Accept the connection from {},and create incoming session for this connection.", endpoint.address);
+
         IncomingSession incomingSession = componentManager.getSessionManager().getIncomingSession(endpoint);
 
         if (incomingSession == null) {
@@ -56,6 +58,8 @@ public class ServerMessageHandler extends SimpleChannelHandler {
         }
 
         // create a outgoing session for the endpoint
+        logger.info("Create outgoing session for {}", endpoint.address);
+
         componentManager.getSessionManager().createOutgoingSession(endpoint);
 
         // forward to others handlers
@@ -128,4 +132,8 @@ public class ServerMessageHandler extends SimpleChannelHandler {
         }
     }
 
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+        e.getCause().printStackTrace();
+    }
 }

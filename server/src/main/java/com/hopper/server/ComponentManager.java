@@ -150,6 +150,11 @@ public class ComponentManager extends LifecycleProxy {
         DefaultServer server = new DefaultServer();
         server.setRpcEndpoint(globalConfiguration.getLocalRpcEndpoint());
         server.setServerEndpoint(globalConfiguration.getLocalServerEndpoint());
+
+        logger.info("Create default server, rpc endpoint:{},s2s endpoint:{}", server.getRpcEndPoint(),
+                server.getServerEndpoint());
+        System.out.printf("Create default server, rpc endpoint:%s,s2s endpoint:%s", server.getRpcEndPoint(),
+                server.getServerEndpoint());
         return server;
     }
 

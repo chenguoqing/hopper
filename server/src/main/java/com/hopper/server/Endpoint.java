@@ -58,4 +58,10 @@ public class Endpoint {
 
         return serverId == other.serverId && address.equals(other.address) && port == other.port;
     }
+
+    @Override
+    public String toString() {
+        String str = "[serverId:%d,address:%s,port:%d]";
+        return String.format(str, serverId, address == null ? "" : address.getHostAddress(), port);
+    }
 }
