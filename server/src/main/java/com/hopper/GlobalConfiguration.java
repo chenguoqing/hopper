@@ -74,7 +74,7 @@ public class GlobalConfiguration extends LifecycleProxy {
             Map<String, Object> yamlMap = (Map<String, Object>) yaml.load(in);
             this.innerConfig = new InnerConfig(yamlMap);
 
-
+            logger.info("Used the configuration file:{}", configPath);
         } catch (Exception e) {
             throw new RuntimeException("Failed to load yaml configuration file:" + configPath, e);
         }
@@ -258,7 +258,6 @@ public class GlobalConfiguration extends LifecycleProxy {
 
         if (path.startsWith(CLASSPATH_PREFIX)) {
             path = path.substring(CLASSPATH_PREFIX.length());
-            logger.info("Used the configuration file:{}", path);
             return readClasspath(path);
         }
 
