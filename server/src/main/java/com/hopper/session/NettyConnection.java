@@ -8,14 +8,12 @@ import com.hopper.lifecycle.LifecycleException;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
-import com.hopper.server.DefaultServer;
 import com.hopper.server.Endpoint;
 import com.hopper.stage.Stage;
 import com.hopper.stage.StageManager;
+import com.hopper.verb.handler.ServerMessageHandler;
 import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.timeout.TimeoutException;
 import org.slf4j.Logger;
@@ -114,7 +112,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
                 .SERVER_BOSS), stageManager.getThreadPool(Stage.SERVER_WORKER)));
 
         // set customs pipeline factory
-        bootstrap.setPipelineFactory(new DefaultServer.ServerPipelineFactory());
+        bootstrap.setPipelineFactory(new SenderPipelineFactory());
 
         // Start the connection attempt.
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(dest.address, dest.port));
@@ -188,7 +186,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
-        ChannelFuture channelFuture = this.channel.write(message.serialize());
+        ChannelFuture channelFuture = this.channel.write(message);
 
         channelFuture.addListener(new ChannelFutureListener() {
             @Override
@@ -206,7 +204,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
-        ChannelFuture channelFuture = this.channel.write(message.serialize());
+        ChannelFuture channelFuture = this.channel.write(message);
 
         // waiting for complete
         channelFuture.awaitUninterruptibly(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
@@ -235,7 +233,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
-        ChannelFuture channelFuture = channel.write(message.serialize());
+        ChannelFuture channelFuture = channel.write(message);
 
         DefaultLatchFuture<Message> future = new DefaultLatchFuture<Message>();
 
@@ -263,5 +261,34 @@ public class NettyConnection extends LifecycleProxy implements Connection {
         });
 
         return future;
+    }
+
+    private static class SenderPipelineFactory implements ChannelPipelineFactory {
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+            // Create a default pipeline implementation.
+            ChannelPipeline pipeline = Channels.pipeline();
+
+            // put command decoder
+            pipeline.addLast("encoder", new MessageEncoder());
+
+            // put command handler
+            pipeline.addLast("commandHandler", new ServerMessageHandler());
+
+            return pipeline;
+        }
+    }
+
+    private static class MessageEncoder extends SimpleChannelDownstreamHandler {
+        @Override
+        public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+
+            if (e.getMessage() instanceof Message) {
+                Message message = (Message) e.getMessage();
+                e.getChannel().write(message.serialize());
+            } else {
+                ctx.sendDownstream(e);
+            }
+        }
     }
 }

@@ -30,7 +30,8 @@ public class ServerMessageHandler extends SimpleChannelHandler {
     private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
 
     @Override
-    public void childChannelOpen(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
+    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+
         final Channel channel = ctx.getChannel();
         SocketAddress address = channel.getRemoteAddress();
         Endpoint endpoint = config.getEndpoint(address);
@@ -63,7 +64,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
         componentManager.getSessionManager().createOutgoingSession(endpoint);
 
         // forward to others handlers
-        super.childChannelOpen(ctx, e);
+        super.channelOpen(ctx, e);
     }
 
     @Override
@@ -118,17 +119,6 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             IncomingSession session = componentManager.getSessionManager().getIncomingSession(ChannelBound.get());
             // delegates the message processing to bound IncomingSession
             session.receive(message);
-        }
-    }
-
-    @Override
-    public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-
-        if (e.getMessage() instanceof Message) {
-            Message message = (Message) e.getMessage();
-            e.getChannel().write(message.serialize());
-        } else {
-            ctx.sendDownstream(e);
         }
     }
 

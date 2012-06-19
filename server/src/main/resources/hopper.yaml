@@ -3,7 +3,7 @@
 # server mode
 # single --one node without election and synchronization
 # multi --- multiple nodes
-server_mode: multi
+server_mode: single
 
 # leader election mode
 # fair -- fair election(default)
