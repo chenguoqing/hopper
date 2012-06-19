@@ -154,7 +154,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
         final SessionManager sessionManager = componentManager.getSessionManager();
 
         // close rpc server
-        if (this.rpcBootstrap != null) {
+        if (this.rpcBootstrap != null && this.rpcChannel != null) {
             ChannelFuture future = this.rpcChannel.close();
             future.awaitUninterruptibly();
             rpcBootstrap.releaseExternalResources();
@@ -169,7 +169,7 @@ public class DefaultServer extends LifecycleProxy implements Server {
         }
 
         // close s2s server
-        if (this.serverBootstrap != null) {
+        if (this.serverBootstrap != null && this.serverChannel != null) {
             ChannelFuture future = this.serverChannel.close();
             future.awaitUninterruptibly();
             serverBootstrap.releaseExternalResources();

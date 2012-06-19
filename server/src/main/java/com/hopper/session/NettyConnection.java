@@ -10,18 +10,18 @@ import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.DefaultServer;
 import com.hopper.server.Endpoint;
-import com.hopper.utils.ScheduleManager;
+import com.hopper.stage.Stage;
+import com.hopper.stage.StageManager;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.timeout.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,17 +31,10 @@ import java.util.concurrent.TimeUnit;
  * @author chenguoqing
  */
 public class NettyConnection extends LifecycleProxy implements Connection {
+    private static Logger logger = LoggerFactory.getLogger(NettyConnection.class);
     /**
-     * The boss executor for {@link ChannelFactory},all connection will share
-     * this executor
+     * ComponentManager reference
      */
-    private static final Executor bossExecutor = Executors.newCachedThreadPool();
-    /**
-     * The worker executor for {@link ChannelFactory},all connection will share
-     * this executor
-     */
-    private static final Executor workerExecutor = Executors.newCachedThreadPool();
-
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
     /**
@@ -52,6 +45,10 @@ public class NettyConnection extends LifecycleProxy implements Connection {
      * Singleton CacheManager instance
      */
     private final CacheManager cacheManager = componentManager.getCacheManager();
+    /**
+     * Stage manager
+     */
+    private final StageManager stageManager = componentManager.getStageManager();
     /**
      * Source endpoint
      */
@@ -64,6 +61,9 @@ public class NettyConnection extends LifecycleProxy implements Connection {
      * The connected channel future
      */
     private Channel channel;
+
+    private ClientBootstrap bootstrap;
+
     /**
      * Local associated session
      */
@@ -72,14 +72,6 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     protected void doStart() {
         connect();
-    }
-
-    @Override
-    protected void doShutdown() {
-        if (channel != null) {
-            channel.close();
-            channel = null;
-        }
     }
 
     @Override
@@ -118,8 +110,8 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     public void connect() {
         // Configure the client.
-        ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(bossExecutor,
-                workerExecutor));
+        this.bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(stageManager.getThreadPool(Stage
+                .SERVER_BOSS), stageManager.getThreadPool(Stage.SERVER_WORKER)));
 
         // set customs pipeline factory
         bootstrap.setPipelineFactory(new DefaultServer.ServerPipelineFactory());
@@ -133,6 +125,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
         Throwable t = future.getCause();
 
         if (t != null) {
+            this.bootstrap = null;
             if (t instanceof RuntimeException) {
                 throw (RuntimeException) t;
             }
@@ -141,11 +134,19 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
         this.channel = future.getChannel();
 
-        // Wait until the connection is closed or the connection attempt fails.
-        future.getChannel().getCloseFuture().awaitUninterruptibly();
+        logger.debug("Connected to server:{}", dest);
+    }
 
-        // Shut down thread pools to exit.
-        bootstrap.releaseExternalResources();
+    @Override
+    protected void doShutdown() {
+        if (channel != null && bootstrap != null) {
+            channel.close();
+            // Wait until the connection is closed or the connection attempt fails.
+            channel.getCloseFuture().awaitUninterruptibly();
+            // Shut down thread pools to exit.
+            bootstrap.releaseExternalResources();
+            channel = null;
+        }
     }
 
     @Override
@@ -187,7 +188,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
-        ChannelFuture channelFuture = this.channel.write(message);
+        ChannelFuture channelFuture = this.channel.write(message.serialize());
 
         channelFuture.addListener(new ChannelFutureListener() {
             @Override
@@ -205,7 +206,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
-        ChannelFuture channelFuture = this.channel.write(message);
+        ChannelFuture channelFuture = this.channel.write(message.serialize());
 
         // waiting for complete
         channelFuture.awaitUninterruptibly(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
@@ -234,7 +235,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
-        ChannelFuture channelFuture = channel.write(message);
+        ChannelFuture channelFuture = channel.write(message.serialize());
 
         DefaultLatchFuture<Message> future = new DefaultLatchFuture<Message>();
 
