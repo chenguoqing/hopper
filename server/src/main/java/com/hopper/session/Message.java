@@ -1,9 +1,9 @@
 package com.hopper.session;
 
 import com.hopper.server.ComponentManagerFactory;
+import com.hopper.utils.ByteUtils;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
-import com.hopper.utils.ByteUtils;
 
 import java.io.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -122,7 +122,8 @@ public class Message {
 
         ByteUtils.int2Bytes(contentSize, buf, 0);
 
-        bout.write(buf, 4, contentSize);
+        // TODO:
+        System.arraycopy(bout.toByteArray(), 0, buf, 4, contentSize);
 
         return buf;
     }

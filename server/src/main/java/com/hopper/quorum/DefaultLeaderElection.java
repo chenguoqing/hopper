@@ -176,7 +176,8 @@ public class DefaultLeaderElection implements LeaderElection {
         message.setVerb(Verb.QUERY_LEADER);
         message.setId(Message.nextId());
 
-        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message, 0);
+        List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
+                MessageService.WAITING_MODE_ALL);
 
         List<QueryLeader> leaders = new ArrayList<QueryLeader>(replies.size());
 
@@ -329,7 +330,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
         // Receive the promise(Phase1b) message
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
-                MessageService.WAITING_MODE_ALL);
+                MessageService.WAITING_MODE_QUORUM);
 
         // if no majority responses, it can't work
         if (replies.size() < config.getQuorumSize() - 1) {
