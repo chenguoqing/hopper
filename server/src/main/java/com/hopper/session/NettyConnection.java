@@ -12,6 +12,8 @@ import com.hopper.server.Endpoint;
 import com.hopper.stage.Stage;
 import com.hopper.stage.StageManager;
 import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.timeout.TimeoutException;
@@ -280,7 +282,8 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
             if (e.getMessage() instanceof Message) {
                 Message message = (Message) e.getMessage();
-                e.getChannel().write(message.serialize());
+                ChannelBuffer buffer = ChannelBuffers.wrappedBuffer(message.serialize());
+                e.getChannel().write(buffer);
             } else {
                 ctx.sendDownstream(e);
             }
