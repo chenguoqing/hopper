@@ -39,11 +39,12 @@ public class ServerMessageHandler extends SimpleChannelHandler {
         // Only the allowed endpoints can connect to this port
         if (endpoint == null) {
             channel.close();
-            logger.error("Reject the invalidate connection from :" + address);
+            logger.debug("Reject the invalidate connection from :" + address);
             return;
         }
 
-        logger.info("Accept the connection from {},and create incoming session for this connection.", endpoint.address);
+        logger.debug("Accepted the connection from {},and creating incoming session for this connection...",
+                endpoint.address);
 
         IncomingSession incomingSession = componentManager.getSessionManager().getIncomingSession(endpoint);
 
@@ -53,16 +54,19 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
         // The session has created for other channel from endpoint
         if (incomingSession.getConnection().getChannel() != channel) {
-            logger.error("The session for {} has created, only one connection can be allowed.", address);
+            logger.debug("The session for {} has created, only one connection can be allowed.", address);
             channel.close();
             return;
         }
 
         // create a outgoing session for the endpoint
-        logger.info("Create outgoing session for {}", endpoint.address);
+        logger.debug("Creating outgoing session for {} ...", endpoint.address);
 
-        componentManager.getSessionManager().createOutgoingSession(endpoint);
-
+        try {
+            componentManager.getSessionManager().createOutgoingSession(endpoint);
+        } catch (Exception ex) {
+            logger.debug("Failed to create outgoing session for {}", endpoint.address, ex);
+        }
         // forward to others handlers
         super.channelOpen(ctx, e);
     }

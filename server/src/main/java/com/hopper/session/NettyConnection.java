@@ -11,7 +11,6 @@ import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.stage.Stage;
 import com.hopper.stage.StageManager;
-import com.hopper.verb.handler.ServerMessageHandler;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -271,10 +270,6 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
             // put command decoder
             pipeline.addLast("encoder", new MessageEncoder());
-
-            // put command handler
-            pipeline.addLast("commandHandler", new ServerMessageHandler());
-
             return pipeline;
         }
     }
