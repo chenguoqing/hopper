@@ -1,7 +1,6 @@
 package com.hopper.session;
 
 import com.hopper.server.ComponentManagerFactory;
-import com.hopper.utils.ByteUtils;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
 
@@ -99,8 +98,8 @@ public class Message {
      */
     public byte[] serialize() {
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(bout);
+        LengthOutputStream lengthOutputStream = new LengthOutputStream();
+        DataOutputStream dos = new DataOutputStream(lengthOutputStream);
 
         try {
             dos.writeInt(id);
@@ -116,16 +115,9 @@ public class Message {
             // nothing
         }
 
-        int contentSize = bout.size();
+        lengthOutputStream.complete();
 
-        byte[] buf = new byte[4 + contentSize];
-
-        ByteUtils.int2Bytes(contentSize, buf, 0);
-
-        // TODO:
-        System.arraycopy(bout.toByteArray(), 0, buf, 4, contentSize);
-
-        return buf;
+        return lengthOutputStream.toFullByteArray();
     }
 
     /**
