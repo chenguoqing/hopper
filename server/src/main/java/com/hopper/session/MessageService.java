@@ -68,6 +68,8 @@ public class MessageService {
      */
     public List<Message> sendMessageToQuorum(Message message, int waitingMode) {
 
+        logger.debug("Send message {} to quorum", message);
+
         int waitCount = waitingMode == WAITING_MODE_QUORUM ? config.getQuorumSize() : config.getGroupEndpoints().length;
 
         final CountDownLatch latch = new CountDownLatch(waitCount);
@@ -113,11 +115,14 @@ public class MessageService {
 
     public void sendOneway(Message message, int destServerId) {
         Endpoint endpoint = config.getEndpoint(destServerId);
+
+        logger.debug("Send one-way message {} to {}", message, endpoint);
+
         try {
             OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
-            logger.error("Failed to send message.", e);
+            logger.error("Failed to send one-way message {} to {}.", new Object[]{message, endpoint, e});
         }
     }
 
@@ -135,6 +140,8 @@ public class MessageService {
         SocketAddress socketAddress = channel.getRemoteAddress();
         Endpoint endpoint = componentManager.getGlobalConfiguration().getEndpoint(socketAddress);
 
+        logger.debug("Responses message {} to {}", message, endpoint);
+
         if (endpoint == null) {
             throw new IllegalStateException("Not found endpoint for address:" + socketAddress);
         }
@@ -145,8 +152,11 @@ public class MessageService {
     /**
      * Send message to  <code>targetServerId</code> waits until the operation complete.
      */
-    public void sendOnwayUntilComplete(Message message, int destServerId) throws Exception {
+    public void sendOnewayUntilComplete(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
+
+        logger.debug("Send one-way until message {} to {}", message, endpoint);
+
         OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
         session.sendOnewayUntilComplete(message);
     }
@@ -156,6 +166,7 @@ public class MessageService {
      */
     public LatchFuture<Message> send(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
+        logger.debug("Send message {} to {}", message, endpoint);
         OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
         return session.send(message);
     }

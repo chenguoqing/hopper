@@ -108,7 +108,7 @@ public class HopperServiceImpl implements HopperService.Iface {
             message.setBody(batch);
 
             try {
-                componentManager.getMessageService().sendOnwayUntilComplete(message, server.getLeader());
+                componentManager.getMessageService().sendOnewayUntilComplete(message, server.getLeader());
             } catch (Exception e) {
                 throw new RetryException(config.getRetryPeriod());
             }

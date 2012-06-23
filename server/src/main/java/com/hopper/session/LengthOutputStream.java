@@ -60,7 +60,9 @@ public class LengthOutputStream extends ByteArrayOutputStream {
      * Return the origin buffer, the caller should not modify the buffer data.
      */
     public synchronized byte[] toFullByteArray() {
-        return buf;
+        byte[] copy = new byte[count];
+        System.arraycopy(buf, 0, copy, 0, count);
+        return copy;
     }
 
     @Override

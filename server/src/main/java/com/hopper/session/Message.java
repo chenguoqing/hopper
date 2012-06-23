@@ -3,6 +3,7 @@ package com.hopper.session;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.io.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,9 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * encapsulated into <tt>{@link #body}</tt> filed, only the implementations can
  * understand the <tt>{@link #body}</tt>.
  * <p/>
- * Message will be delivered to one session, indicating with
- * <tt>{@link #sessionId}</tt>, the session can be local session or multiplexer
- * session.
  *
  * @author chenguoqing
  */
@@ -32,10 +30,6 @@ public class Message {
      * Message verb
      */
     private Verb verb;
-    /**
-     * The associated session id
-     */
-    private String sessionId;
     /**
      * The associated command
      */
@@ -57,13 +51,6 @@ public class Message {
         this.verb = verb;
     }
 
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
-    }
 
     public Object getBody() {
         return body;
@@ -104,7 +91,6 @@ public class Message {
         try {
             dos.writeInt(id);
             dos.writeInt(verb.type);
-            writeUTF(dos, sessionId);
 
             if (body instanceof Serializer) {
                 ((Serializer) body).serialize(dos);
@@ -138,7 +124,6 @@ public class Message {
                 throw new MessageDecodeException("Found the invalidate verb: " + iverb);
             }
 
-            this.sessionId = readUTF(in);
 
             Class<? extends Serializer> bodyClazz = VerbMappings.getVerClass(verb);
 
@@ -165,19 +150,22 @@ public class Message {
         return instance;
     }
 
-    /**
-     * Wrapper the writeUTF method
-     */
-    private void writeUTF(DataOutput out, String s) throws IOException {
-        out.writeUTF(s == null ? "null" : sessionId);
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("id:").append(id).append("\r\n");
+        sb.append("verb:").append(verb).append("\r\n");
+        sb.append("body:").append(toBodyString(body));
+
+        return sb.toString();
     }
 
-    /**
-     * Wrapper readUTF method
-     */
-    private String readUTF(DataInput in) throws IOException {
-        String s = in.readUTF();
-        return "null".equals(s) ? null : s;
+    private String toBodyString(Object body) {
+        if (body == null) {
+            return "";
+        }
+
+        return ToStringBuilder.reflectionToString(body);
     }
 
     static class IDGenerator {
