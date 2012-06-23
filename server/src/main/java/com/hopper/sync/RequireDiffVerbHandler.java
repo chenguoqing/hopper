@@ -3,7 +3,6 @@ package com.hopper.sync;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
-import com.hopper.session.OutgoingSession;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.merkle.Difference;
 import com.hopper.storage.merkle.MerkleTree;
@@ -36,9 +35,6 @@ public class RequireDiffVerbHandler implements VerbHandler {
         reply.setId(message.getId());
         reply.setBody(result);
 
-        OutgoingSession session = componentManager.getSessionManager().getOutgoingSession(message.getSessionId());
-        if (session != null) {
-            session.sendOneway(reply);
-        }
+        componentManager.getMessageService().responseOneway(reply);
     }
 }

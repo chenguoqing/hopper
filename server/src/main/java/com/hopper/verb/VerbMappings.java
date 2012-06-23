@@ -5,9 +5,7 @@ import com.hopper.session.Serializer;
 import com.hopper.storage.merkle.Difference;
 import com.hopper.storage.merkle.MerkleTree;
 import com.hopper.sync.*;
-import com.hopper.verb.handler.Mutation;
-import com.hopper.verb.handler.MutationVerbHandler;
-import com.hopper.verb.handler.ReplyVerbHandler;
+import com.hopper.verb.handler.*;
 
 import java.util.EnumMap;
 
@@ -39,6 +37,7 @@ public class VerbMappings {
         registerVerbBody(Verb.TREE_RESULT, MerkleTree.class);
         registerVerbBody(Verb.APPLY_DIFF, Difference.class);
         registerVerbBody(Verb.MUTATION, Mutation.class);
+        registerVerbBody(Verb.NOTIFY_STATUS_CHANGE, NotifyStatusChange.class);
 
         // register response verb handler
         registerVerbHandler(Verb.QUERY_LEADER, new QueryLeaderVerbHandler());
@@ -71,6 +70,8 @@ public class VerbMappings {
 
         registerVerbHandler(Verb.MUTATION, new MutationVerbHandler());
         registerVerbHandler(Verb.REPLY_MUTATION, new ReplyVerbHandler());
+
+        registerVerbHandler(Verb.NOTIFY_STATUS_CHANGE, new NotifyStatusChangeVerbHandler());
     }
 
     /**

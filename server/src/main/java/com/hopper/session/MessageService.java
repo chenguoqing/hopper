@@ -9,11 +9,13 @@ import com.hopper.server.Endpoint;
 import com.hopper.thrift.ChannelBound;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
+import com.hopper.verb.handler.NotifyStatusChange;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -174,7 +176,13 @@ public class MessageService {
                 Message message = new Message();
                 message.setVerb(Verb.NOTIFY_STATUS_CHANGE);
                 message.setId(Message.nextId());
-                message.setSessionId(clientSessionId);
+
+                NotifyStatusChange notifyStatusChange = new NotifyStatusChange();
+                notifyStatusChange.setClientSessionId(clientSessionId);
+                notifyStatusChange.setOldStatus(oldStatus);
+                notifyStatusChange.setNewStatus(newStatus);
+
+                message.setBody(notifyStatusChange);
 
                 outgoingSession.sendOneway(message);
             }

@@ -9,11 +9,7 @@ import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-5-16
- * Time: 下午5:45
- * To change this template use File | Settings | File Templates.
+ * The verb handler for making local merkle tree
  */
 public class RequireTreeVerbhandler implements VerbHandler {
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
@@ -29,9 +25,6 @@ public class RequireTreeVerbhandler implements VerbHandler {
 
         reply.setBody(storage.getHashTree());
 
-        OutgoingSession session = componentManager.getSessionManager().getOutgoingSession(message.getSessionId());
-        if (session != null) {
-            session.sendOneway(reply);
-        }
+        componentManager.getMessageService().responseOneway(reply);
     }
 }
