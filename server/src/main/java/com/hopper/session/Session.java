@@ -29,7 +29,7 @@ public interface Session {
 	 * Send synchronous message( waiting until operation complete), if
 	 * exceptions occurs, {@link RuntimeException} will be thrown.
 	 */
-	void sendOnwayUntilComplete(Message message);
+	void sendOnewayUntilComplete(Message message);
 	
 	/**
 	 * Send packet with future

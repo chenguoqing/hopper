@@ -8,7 +8,7 @@ public abstract class SessionProxy implements Session {
     /**
      * Singleton SessionManager instance
      */
-    protected static SessionManager sessionManager = ComponentManagerFactory.getComponentManager().getSessionManager();
+    protected SessionManager sessionManager = ComponentManagerFactory.getComponentManager().getSessionManager();
 
     /**
      * Associated connection
@@ -44,7 +44,7 @@ public abstract class SessionProxy implements Session {
     }
 
     @Override
-    public void sendOnwayUntilComplete(Message message) {
+    public void sendOnewayUntilComplete(Message message) {
         if (connection == null) {
             throw new IllegalStateException("Not bound connection.");
         }

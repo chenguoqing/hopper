@@ -14,10 +14,11 @@ import com.hopper.storage.OwnerNoMatchException;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.StatusNoMatchException;
 import com.hopper.verb.Verb;
+import com.hopper.verb.VerbMappings;
+import com.hopper.verb.handler.BatchMultiplexerSessions;
 import com.hopper.verb.handler.Mutation;
 import com.hopper.verb.handler.MutationReply;
 import com.hopper.verb.handler.MutationVerbHandler;
-import com.hopper.verb.VerbMappings;
 import org.apache.thrift.TException;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
@@ -100,7 +101,11 @@ public class HopperServiceImpl implements HopperService.Iface {
             Message message = new Message();
             message.setVerb(Verb.BOUND_MULTIPLEXER_SESSION);
             message.setId(Message.nextId());
-            message.setBody(sessionId.getBytes());
+
+            BatchMultiplexerSessions batch = new BatchMultiplexerSessions();
+            batch.add(sessionId);
+
+            message.setBody(batch);
 
             try {
                 componentManager.getMessageService().sendOnwayUntilComplete(message, server.getLeader());
@@ -127,7 +132,10 @@ public class HopperServiceImpl implements HopperService.Iface {
             Message message = new Message();
             message.setVerb(Verb.UNBOUND_MULTIPLEXER_SESSION);
             message.setId(Message.nextId());
-            message.setSessionId(sessionId);
+
+            BatchMultiplexerSessions batch = new BatchMultiplexerSessions();
+            batch.add(sessionId);
+            message.setBody(batch);
 
             componentManager.getMessageService().sendOneway(message, server.getLeader());
         }

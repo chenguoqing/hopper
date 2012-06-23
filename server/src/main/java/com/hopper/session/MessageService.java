@@ -146,7 +146,7 @@ public class MessageService {
     public void sendOnwayUntilComplete(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
         OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
-        session.sendOnwayUntilComplete(message);
+        session.sendOnewayUntilComplete(message);
     }
 
     /**

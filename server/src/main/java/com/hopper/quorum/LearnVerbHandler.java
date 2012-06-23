@@ -16,7 +16,7 @@ import com.hopper.sync.DiffResult;
 import com.hopper.sync.SyncException;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
-import com.hopper.verb.handler.BatchSessionCreator;
+import com.hopper.verb.handler.BatchMultiplexerSessions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -251,7 +251,7 @@ public class LearnVerbHandler implements VerbHandler {
      */
     private void transferClientSession(int newLeader) {
 
-        BatchSessionCreator batchCreator = new BatchSessionCreator();
+        BatchMultiplexerSessions batchCreator = new BatchMultiplexerSessions();
 
         ClientSession[] clientSessions = componentManager.getSessionManager().getAllClientSessions();
 

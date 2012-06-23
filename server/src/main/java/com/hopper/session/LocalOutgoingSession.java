@@ -5,8 +5,10 @@ import com.hopper.lifecycle.LifecycleEvent.EventType;
 import com.hopper.lifecycle.LifecycleListener;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
+import com.hopper.server.Server;
 import com.hopper.utils.ScheduleManager;
 import com.hopper.verb.Verb;
+import com.hopper.verb.handler.BatchMultiplexerSessions;
 import com.hopper.verb.handler.HeartBeat;
 
 public class LocalOutgoingSession extends SessionProxy implements OutgoingSession, LifecycleListener {
@@ -44,13 +46,27 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
      */
     @Override
     public void lifecycle(LifecycleEvent event) {
-        Message message = new Message();
-        message.setId(Message.nextId());
-        message.setVerb(Verb.UNBOUND_MULTIPLEXER_SESSION);
-        message.setSessionId(getId());
 
-        // notify endpoint
-        this.sendOnwayUntilComplete(message);
+        final Server server = componentManager.getDefaultServer();
+
+        ClientSession[] clientSessions = sessionManager.getAllClientSessions();
+
+        if (clientSessions != null && server.isKnownLeader() && !server.isLeader()) {
+
+            Message message = new Message();
+            message.setId(Message.nextId());
+            message.setVerb(Verb.UNBOUND_MULTIPLEXER_SESSION);
+
+            BatchMultiplexerSessions batch = new BatchMultiplexerSessions();
+            for (ClientSession clientSession : clientSessions) {
+                batch.add(clientSession.getId());
+            }
+
+            message.setBody(batch);
+
+            // notify endpoint
+            componentManager.getMessageService().sendOneway(message, server.getLeader());
+        }
 
         // remove self from session manager
         sessionManager.removeOutgoingServerSession(this);

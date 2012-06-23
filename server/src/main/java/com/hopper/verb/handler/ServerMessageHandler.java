@@ -107,7 +107,7 @@ public class ServerMessageHandler extends SimpleChannelHandler {
         if (verb == Verb.BOUND_MULTIPLEXER_SESSION) {
             IncomingSession session = componentManager.getSessionManager().getIncomingSession(channel);
 
-            BatchSessionCreator batchCreator = (BatchSessionCreator) message.getBody();
+            BatchMultiplexerSessions batchCreator = (BatchMultiplexerSessions) message.getBody();
 
             for (String multiplexerSessionId : batchCreator.getSessions()) {
                 session.boundMultiplexerSession(multiplexerSessionId);
