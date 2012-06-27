@@ -17,10 +17,13 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.timeout.TimeoutException;
+import org.jboss.netty.util.internal.DeadLockProofWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,7 +78,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
     @Override
     public String getInfo() {
-        return "Server-to-server outgoing connection";
+        return "S2S outgoing connection";
     }
 
     @Override
@@ -118,22 +121,30 @@ public class NettyConnection extends LifecycleProxy implements Connection {
         // Start the connection attempt.
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(dest.address, dest.port));
 
-        // Wait complete for connect
-        future.awaitUninterruptibly();
-
-        Throwable t = future.getCause();
-
-        if (t != null) {
-            this.bootstrap = null;
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            }
-            throw new RuntimeException(t);
-        }
-
         this.channel = future.getChannel();
 
-        logger.debug("Connected to server:{}", dest);
+        // If the method is invoked by non-io thread, it should wait until complete
+        if (DeadLockProofWorker.PARENT.get() == null) {
+            future.awaitUninterruptibly(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
+
+            Throwable t = future.getCause();
+            throwRuntimeException(t);
+
+        } else {
+            // Otherwise, the new connection should not block the current IO thread
+            future.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    if (future.isSuccess()) {
+                        logger.debug("Connected to server:{}", dest);
+                    } else {
+                        if (future.isDone()) {
+                            logger.debug("Failed to connect to {}", dest, future.getCause());
+                        }
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -172,7 +183,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
     @Override
     public boolean validate() {
-        return channel.isConnected();
+        return channel != null && channel.isConnected();
     }
 
     @Override
@@ -181,9 +192,9 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     }
 
     @Override
-    public void sendOneway(Message message) {
+    public void sendOneway(final Message message) {
 
-        if (channel == null || !channel.isOpen()) {
+        if (!validate()) {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
@@ -193,7 +204,8 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             @Override
             public void operationComplete(ChannelFuture callbackFuture) throws Exception {
                 if (callbackFuture.getCause() != null) {
-                    logger.error("Failed to send message.", callbackFuture.getCause());
+                    logger.error("Failed to send message {} to {}.", new Object[]{message, dest,
+                            callbackFuture.getCause()});
                 }
             }
         });
@@ -201,7 +213,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
     @Override
     public void sendOnewayUntilComplete(Message message) {
-        if (channel == null || !channel.isOpen()) {
+        if (!validate()) {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
@@ -214,23 +226,13 @@ public class NettyConnection extends LifecycleProxy implements Connection {
             throw new TimeoutException();
         }
 
-        Throwable t = channelFuture.getCause();
-
-        if (t != null) {
-            logger.error("Failed to send message.", t);
-
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            }
-
-            throw new RuntimeException(t);
-        }
+        throwRuntimeException(channelFuture.getCause());
     }
 
     @Override
     public LatchFuture<Message> send(final Message message) {
 
-        if (channel == null || !channel.isOpen()) {
+        if (!validate()) {
             throw new IllegalStateException("Channel is not open or has been closed.");
         }
 
@@ -255,8 +257,6 @@ public class NettyConnection extends LifecycleProxy implements Connection {
                         // set the exception for unlocking the threads waiting
                         cacheFuture.setException(callbackFuture.getCause());
                     }
-
-                    logger.error("Failed to send message.", callbackFuture.getCause());
                 }
             }
         });
@@ -272,7 +272,22 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
             // put command decoder
             pipeline.addLast("encoder", new MessageEncoder());
+            pipeline.addLast("exception", new ExceptionHandler());
             return pipeline;
+        }
+    }
+
+    private static class ExceptionHandler extends SimpleChannelHandler {
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+
+            Throwable t = e.getCause();
+
+            if (t instanceof ConnectException) {
+                logger.error("Failed to connect..", e.getCause());
+            } else {
+                logger.error("Unknown exception occurred.", e);
+            }
         }
     }
 
@@ -288,5 +303,22 @@ public class NettyConnection extends LifecycleProxy implements Connection {
                 ctx.sendDownstream(e);
             }
         }
+    }
+
+    private void throwRuntimeException(Throwable t) {
+
+        if (t == null) {
+            return;
+        }
+
+        if (t instanceof ExecutionException) {
+            t = t.getCause();
+        }
+
+        if (t instanceof RuntimeException) {
+            throw (RuntimeException) t;
+        }
+
+        throw new RuntimeException(t);
     }
 }

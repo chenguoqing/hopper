@@ -149,7 +149,7 @@ public class SessionManager extends LifecycleProxy {
      * Retrieve all incoming sessions
      */
     public IncomingSession[] getAllIncomingSessions() {
-        return incomingSessions.keySet().toArray(new IncomingSession[]{});
+        return incomingSessions.values().toArray(new IncomingSession[]{});
     }
 
     /**

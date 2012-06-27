@@ -26,6 +26,7 @@ public class VerbMappings {
     private static void initialize() {
 
         // register body class
+        registerVerbBody(Verb.REPLY_QUERY_LEADER, QueryLeader.class);
         registerVerbBody(Verb.PAXOS_PREPARE, Prepare.class);
         registerVerbBody(Verb.PAXOS_PROMISE, Promise.class);
         registerVerbBody(Verb.PAXOS_ACCEPT, Accept.class);

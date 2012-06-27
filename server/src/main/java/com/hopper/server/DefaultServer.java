@@ -87,11 +87,11 @@ public class DefaultServer extends LifecycleProxy implements Server {
         // start internal listen port
         startServerSocket();
 
-        // join group
-        joinGroup();
-
         // start client listen port
         startClientSocket();
+
+        // join group
+        joinGroup();
     }
 
     private void startServerSocket() {

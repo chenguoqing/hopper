@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -103,7 +102,7 @@ public class MessageService {
 
                 latch.await(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                logger.error("Failed to connect to " + endpoint, e);
+                logger.error("Failed to send message to " + endpoint, e);
             }
         }
         return replies;

@@ -9,187 +9,186 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * The convince proxy class for Lifecycle implementation
- * 
+ *
  * @author chenguoqing
- * 
  */
 public abstract class LifecycleProxy implements Lifecycle {
-	/**
-	 * Common logger
-	 */
-	protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    /**
+     * Common logger
+     */
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	/**
-	 * Registered listener
-	 */
-	private final Queue<LifecycleListener> listeners = new ConcurrentLinkedQueue<LifecycleListener>();
+    /**
+     * Registered listener
+     */
+    private final Queue<LifecycleListener> listeners = new ConcurrentLinkedQueue<LifecycleListener>();
 
-	/**
-	 * The lifecycle state
-	 */
-	private volatile LifecycleState state = LifecycleState.NEW;
+    /**
+     * The lifecycle state
+     */
+    private volatile LifecycleState state = LifecycleState.NEW;
 
-	@Override
-	public void initialize() throws LifecycleException {
+    @Override
+    public void initialize() throws LifecycleException {
 
-		if (state != LifecycleState.NEW) {
-			throw new LifecycleException("The object has been initialized.");
-		}
+        if (state != LifecycleState.NEW) {
+            throw new LifecycleException("The object has been initialized.");
+        }
 
-		this.state = LifecycleState.INITIALIZING;
+        this.state = LifecycleState.INITIALIZING;
 
-		LifecycleEvent event = new LifecycleEvent(this, EventType.INITIALIZE);
-		fireLifecycleEvent(event);
+        LifecycleEvent event = new LifecycleEvent(this, EventType.INITIALIZE);
+        fireLifecycleEvent(event);
 
-		try {
-			doInit();
-		} catch (Exception e) {
-			throw new LifecycleException("Failed to initialize...", e);
-		}
+        try {
+            doInit();
+        } catch (Exception e) {
+            throw new LifecycleException("Failed to initialize...", e);
+        }
 
-		this.state = LifecycleState.INITIALIZED;
+        this.state = LifecycleState.INITIALIZED;
 
-		event = new LifecycleEvent(this, EventType.INTIALIZED);
-		fireLifecycleEvent(event);
-	}
+        event = new LifecycleEvent(this, EventType.INTIALIZED);
+        fireLifecycleEvent(event);
+    }
 
-	/**
-	 * Real work will delegate to implementations
-	 */
-	protected void doInit() {
-	}
+    /**
+     * Real work will delegate to implementations
+     */
+    protected void doInit() {
+    }
 
-	@Override
-	public void start() throws LifecycleException {
+    @Override
+    public void start() throws LifecycleException {
 
-		if (this.state != LifecycleState.INITIALIZED && this.state != LifecycleState.SHUTDOWN) {
-			throw new LifecycleException("Please initialize or shutdown first.");
-		}
+        if (this.state != LifecycleState.INITIALIZED && this.state != LifecycleState.SHUTDOWN) {
+            throw new LifecycleException("Please initialize or shutdown first.");
+        }
 
-		this.state = LifecycleState.STARTING;
+        this.state = LifecycleState.STARTING;
 
-		LifecycleEvent event = new LifecycleEvent(this, EventType.STARTING);
-		fireLifecycleEvent(event);
+        LifecycleEvent event = new LifecycleEvent(this, EventType.STARTING);
+        fireLifecycleEvent(event);
 
-		try {
-			doStart();
-		} catch (Exception e) {
-			throw new LifecycleException("Failed to starting...", e);
-		}
+        try {
+            doStart();
+        } catch (Exception e) {
+            throw new LifecycleException("Failed to start " + getInfo(), e);
+        }
 
-		this.state = LifecycleState.RUNNING;
+        this.state = LifecycleState.RUNNING;
 
-		event = new LifecycleEvent(this, EventType.STARTED);
-		fireLifecycleEvent(event);
-	}
+        event = new LifecycleEvent(this, EventType.STARTED);
+        fireLifecycleEvent(event);
+    }
 
-	/**
-	 * Subclass will do real starting works
-	 */
-	protected void doStart() {
-	}
+    /**
+     * Subclass will do real starting works
+     */
+    protected void doStart() {
+    }
 
-	@Override
-	public void pause() throws LifecycleException {
-		if (state != LifecycleState.RUNNING) {
-			throw new LifecycleException("Invalidate state.");
-		}
+    @Override
+    public void pause() throws LifecycleException {
+        if (state != LifecycleState.RUNNING) {
+            throw new LifecycleException("Invalidate state.");
+        }
 
-		this.state = LifecycleState.PAUSING;
+        this.state = LifecycleState.PAUSING;
 
-		LifecycleEvent event = new LifecycleEvent(this, EventType.RESUMING);
-		fireLifecycleEvent(event);
+        LifecycleEvent event = new LifecycleEvent(this, EventType.RESUMING);
+        fireLifecycleEvent(event);
 
-		try {
-			doPause();
-		} catch (Exception e) {
-			throw new LifecycleException("Failed to pause.", e);
-		}
+        try {
+            doPause();
+        } catch (Exception e) {
+            throw new LifecycleException("Failed to pause.", e);
+        }
 
-		this.state = LifecycleState.PAUSED;
+        this.state = LifecycleState.PAUSED;
 
-		event = new LifecycleEvent(this, EventType.PAUSED);
-		fireLifecycleEvent(event);
-	}
+        event = new LifecycleEvent(this, EventType.PAUSED);
+        fireLifecycleEvent(event);
+    }
 
-	protected void doPause() {
-	}
+    protected void doPause() {
+    }
 
-	@Override
-	public void resume() throws LifecycleException {
-		if (state != LifecycleState.PAUSED) {
-			throw new LifecycleException("Invalidate state.");
-		}
+    @Override
+    public void resume() throws LifecycleException {
+        if (state != LifecycleState.PAUSED) {
+            throw new LifecycleException("Invalidate state.");
+        }
 
-		this.state = LifecycleState.RESUMING;
+        this.state = LifecycleState.RESUMING;
 
-		LifecycleEvent event = new LifecycleEvent(this, EventType.RESUMING);
-		fireLifecycleEvent(event);
+        LifecycleEvent event = new LifecycleEvent(this, EventType.RESUMING);
+        fireLifecycleEvent(event);
 
-		try {
-			doResume();
-		} catch (Exception e) {
-			throw new LifecycleException("Failed to resume", e);
-		}
+        try {
+            doResume();
+        } catch (Exception e) {
+            throw new LifecycleException("Failed to resume", e);
+        }
 
-		this.state = LifecycleState.RESUMED;
+        this.state = LifecycleState.RESUMED;
 
-		event = new LifecycleEvent(this, EventType.RESUMED);
-		fireLifecycleEvent(event);
-	}
+        event = new LifecycleEvent(this, EventType.RESUMED);
+        fireLifecycleEvent(event);
+    }
 
-	protected void doResume() {
-	}
+    protected void doResume() {
+    }
 
-	@Override
-	public void shutdown() {
+    @Override
+    public void shutdown() {
 
-		this.state = LifecycleState.SHUTDOWNING;
+        this.state = LifecycleState.SHUTDOWNING;
 
-		LifecycleEvent event = new LifecycleEvent(this, EventType.SHUTDOWNING);
-		fireLifecycleEvent(event);
+        LifecycleEvent event = new LifecycleEvent(this, EventType.SHUTDOWNING);
+        fireLifecycleEvent(event);
 
-		try {
-			doShutdown();
-		} catch (Exception e) {
-			logger.error("Exception has been occurred when shutdowning.", e);
-		}
+        try {
+            doShutdown();
+        } catch (Exception e) {
+            logger.error("Exception has been occurred when shutdowning.", e);
+        }
 
-		this.state = LifecycleState.SHUTDOWN;
+        this.state = LifecycleState.SHUTDOWN;
 
-		event = new LifecycleEvent(this, EventType.SHUTDOWN);
-		fireLifecycleEvent(event);
-	}
+        event = new LifecycleEvent(this, EventType.SHUTDOWN);
+        fireLifecycleEvent(event);
+    }
 
-	/**
-	 * Subclass will do real shut down works
-	 */
-	protected void doShutdown() {
-	}
+    /**
+     * Subclass will do real shut down works
+     */
+    protected void doShutdown() {
+    }
 
-	@Override
-	public LifecycleState getState() {
-		return state;
-	}
+    @Override
+    public LifecycleState getState() {
+        return state;
+    }
 
-	@Override
-	public void addListener(LifecycleListener listener) {
-		this.listeners.add(listener);
-	}
+    @Override
+    public void addListener(LifecycleListener listener) {
+        this.listeners.add(listener);
+    }
 
-	@Override
-	public void removeListener(LifecycleListener listener) {
-		this.listeners.remove(listener);
-	}
+    @Override
+    public void removeListener(LifecycleListener listener) {
+        this.listeners.remove(listener);
+    }
 
-	/**
-	 * Fire the {@link LifecycleEvent}
-	 */
-	private void fireLifecycleEvent(LifecycleEvent event) {
-		for (LifecycleListener listener : listeners) {
-			if (listener.support(event.type)) {
-				listener.lifecycle(event);
-			}
-		}
-	}
+    /**
+     * Fire the {@link LifecycleEvent}
+     */
+    private void fireLifecycleEvent(LifecycleEvent event) {
+        for (LifecycleListener listener : listeners) {
+            if (listener.support(event.type)) {
+                listener.lifecycle(event);
+            }
+        }
+    }
 }

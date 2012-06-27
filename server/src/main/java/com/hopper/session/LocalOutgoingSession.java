@@ -107,6 +107,8 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
             beat.setLeader(componentManager.getDefaultServer().isLeader());
             beat.setMaxXid(componentManager.getStateStorage().getMaxXid());
 
+            message.setBody(beat);
+
             sendOneway(message);
         }
     }
