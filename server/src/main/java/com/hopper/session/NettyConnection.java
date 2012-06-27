@@ -51,6 +51,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
      * Stage manager
      */
     private final StageManager stageManager = componentManager.getStageManager();
+
     /**
      * Source endpoint
      */
@@ -150,17 +151,10 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     protected void doShutdown() {
         if (channel != null && bootstrap != null) {
-            channel.close();
-            // Wait until the connection is closed or the connection attempt fails.
-            channel.getCloseFuture().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    // Shut down thread pools to exit.
-                    bootstrap.releaseExternalResources();
-                    channel = null;
-                    bootstrap = null;
-                }
-            });
+            final Runnable shutdownTask = new ShutdownTask(channel, bootstrap);
+            componentManager.getStageManager().getThreadPool(Stage.SHUTDOWN_OUTGOING_CONNECTION).execute(shutdownTask);
+            channel = null;
+            bootstrap = null;
         }
     }
 
@@ -324,5 +318,28 @@ public class NettyConnection extends LifecycleProxy implements Connection {
         }
 
         throw new RuntimeException(t);
+    }
+
+    /**
+     * Shutdown current connection and release resources with a non-worker thread
+     */
+    private class ShutdownTask implements Runnable {
+        final Channel channel;
+        final ClientBootstrap bootstrap;
+
+        private ShutdownTask(Channel channel, ClientBootstrap bootstrap) {
+            this.channel = channel;
+            this.bootstrap = bootstrap;
+        }
+
+        @Override
+        public void run() {
+
+            // Wait until the connection is closed or the connection attempt fails.
+            channel.close().awaitUninterruptibly();
+
+            // Shut down thread pools to exit.
+            bootstrap.releaseExternalResources();
+        }
     }
 }

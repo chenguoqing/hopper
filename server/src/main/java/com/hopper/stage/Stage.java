@@ -14,5 +14,6 @@ public enum Stage {
     CLIENT_WORKER,
     SCHEDULE,
     STATE_CHANGE,
-    SYNC
+    SYNC,
+    SHUTDOWN_OUTGOING_CONNECTION
 }

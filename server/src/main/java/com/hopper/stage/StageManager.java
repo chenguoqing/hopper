@@ -37,6 +37,7 @@ public class StageManager extends LifecycleProxy {
         states.put(Stage.SERVER_WORKER, (ThreadPoolExecutor) Executors.newCachedThreadPool());
         states.put(Stage.CLIENT_BOSS, (ThreadPoolExecutor) Executors.newCachedThreadPool());
         states.put(Stage.CLIENT_WORKER, (ThreadPoolExecutor) Executors.newCachedThreadPool());
+        states.put(Stage.SHUTDOWN_OUTGOING_CONNECTION, (ThreadPoolExecutor) Executors.newCachedThreadPool());
         states.put(Stage.SYNC, newDataSyncThreadPool());
     }
 
