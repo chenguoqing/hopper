@@ -72,11 +72,10 @@ public class ServerMessageHandler extends SimpleChannelHandler {
     }
 
     @Override
-    public void childChannelClosed(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
+    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         final Channel channel = ctx.getChannel();
         Endpoint endpoint = config.getEndpoint(channel.getRemoteAddress());
         componentManager.getSessionManager().closeServerSession(endpoint);
-        super.childChannelClosed(ctx, e);
     }
 
     @Override

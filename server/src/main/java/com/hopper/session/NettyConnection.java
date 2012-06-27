@@ -152,10 +152,15 @@ public class NettyConnection extends LifecycleProxy implements Connection {
         if (channel != null && bootstrap != null) {
             channel.close();
             // Wait until the connection is closed or the connection attempt fails.
-            channel.getCloseFuture().awaitUninterruptibly();
-            // Shut down thread pools to exit.
-            bootstrap.releaseExternalResources();
-            channel = null;
+            channel.getCloseFuture().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    // Shut down thread pools to exit.
+                    bootstrap.releaseExternalResources();
+                    channel = null;
+                    bootstrap = null;
+                }
+            });
         }
     }
 
@@ -178,7 +183,6 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     public void close() {
         shutdown();
-        componentManager.getConnectionManager().removeOutgoingConnection(dest);
     }
 
     @Override
@@ -272,7 +276,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
             // put command decoder
             pipeline.addLast("encoder", new MessageEncoder());
-            pipeline.addLast("exception", new ExceptionHandler());
+//            pipeline.addLast("exception", new ExceptionHandler());
             return pipeline;
         }
     }
