@@ -68,6 +68,11 @@ public class ComponentManager extends LifecycleProxy {
             throw new RuntimeException(e);
         }
 
+        registerComponent(globalConfiguration);
+
+        this.stageManager = createStageManager();
+        registerComponent(stageManager);
+
         this.scheduleManager = createScheduleManager();
         registerComponent(scheduleManager);
 
@@ -83,9 +88,6 @@ public class ComponentManager extends LifecycleProxy {
         this.dataSyncService = createDataSyncService();
         registerComponent(dataSyncService);
 
-        this.stageManager = createStageManager();
-        registerComponent(stageManager);
-
         this.leaderElection = createLeaderElection();
         this.connectionManager = createConnectionManager();
 
@@ -95,13 +97,21 @@ public class ComponentManager extends LifecycleProxy {
         registerComponent(server);
 
         this.electionMonitor = createElectionMonitor();
-        registerComponent(electionMonitor);
+
+        if (globalConfiguration.getServerMode() == GlobalConfiguration.ServerMode.MULTI) {
+            registerComponent(electionMonitor);
+        }
     }
 
     @Override
     protected void doStart() {
         try {
             for (Lifecycle component : components) {
+
+                if (component.getState() != LifecycleState.NEW) {
+                    continue;
+                }
+
                 logger.info("Initialize " + component.getInfo() + "...");
                 component.initialize();
                 logger.info("Starting " + component.getInfo() + "...");
@@ -111,7 +121,7 @@ public class ComponentManager extends LifecycleProxy {
             throw new RuntimeException(e);
         }
 
-        logger.info("Hopper started.");
+        logger.info("Hopper server started.");
 
         // start shutdown socket
         Thread shutdownThread = new Thread() {
@@ -131,8 +141,6 @@ public class ComponentManager extends LifecycleProxy {
             component.shutdown();
             logger.debug("Shutdown the component:{} ", component.getInfo());
         }
-        this.globalConfiguration.shutdown();
-        logger.debug("Shutdown the component:{} ", globalConfiguration.getInfo());
 
         logger.info("Hopper has shutdown.");
     }

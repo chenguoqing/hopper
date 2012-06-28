@@ -1,58 +1,58 @@
 package com.hopper.session;
 
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.Lifecycle;
 
 /**
  * The interface representing a session between client/server and server.
- * 
+ *
  * @author chenguoqing
- * 
  */
-public interface Session {
+public interface Session extends Lifecycle {
 
-	/**
-	 * Return the session id, the id is unique through cluster
-	 */
-	String getId();
+    /**
+     * Return the session id, the id is unique through cluster
+     */
+    String getId();
 
-	/**
-	 * Whether the session is alive.
-	 */
-	boolean isAlive();
+    /**
+     * Whether the session is alive.
+     */
+    boolean isAlive();
 
-	/**
-	 * Send packet with no response
-	 */
-	void sendOneway(Message message);
+    /**
+     * Send packet with no response
+     */
+    void sendOneway(Message message);
 
-	/**
-	 * Send synchronous message( waiting until operation complete), if
-	 * exceptions occurs, {@link RuntimeException} will be thrown.
-	 */
-	void sendOnewayUntilComplete(Message message);
-	
-	/**
-	 * Send packet with future
-	 */
-	LatchFuture<Message> send(Message message);
+    /**
+     * Send synchronous message( waiting until operation complete), if
+     * exceptions occurs, {@link RuntimeException} will be thrown.
+     */
+    void sendOnewayUntilComplete(Message message);
 
-	/**
-	 * Close the session
-	 */
-	void close();
+    /**
+     * Send packet with future
+     */
+    LatchFuture<Message> send(Message message);
 
-	/**
-	 * Set {@link SessionManager}
-	 */
-	void setSessionManager(SessionManager manager);
+    /**
+     * Close the session
+     */
+    void close();
 
-	/**
-	 * Return the associated {@link SessionManager}
-	 */
-	SessionManager getSessionManager();
+    /**
+     * Set {@link SessionManager}
+     */
+    void setSessionManager(SessionManager manager);
 
-	/**
-	 * Retrieve the associated {@link Connection}
-	 */
-	Connection getConnection();
+    /**
+     * Return the associated {@link SessionManager}
+     */
+    SessionManager getSessionManager();
+
+    /**
+     * Retrieve the associated {@link Connection}
+     */
+    Connection getConnection();
 }

@@ -2,9 +2,10 @@ package com.hopper.session;
 
 import com.hopper.future.LatchFuture;
 import com.hopper.lifecycle.LifecycleListener;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManagerFactory;
 
-public abstract class SessionProxy implements Session {
+public abstract class SessionProxy extends LifecycleProxy implements Session {
     /**
      * Singleton SessionManager instance
      */
@@ -62,10 +63,15 @@ public abstract class SessionProxy implements Session {
     }
 
     @Override
-    public void close() {
+    protected void doShutdown() {
         if (connection != null) {
             connection.close();
         }
+    }
+
+    @Override
+    public void close() {
+        shutdown();
     }
 
     @Override
@@ -91,4 +97,8 @@ public abstract class SessionProxy implements Session {
         return connection;
     }
 
+    @Override
+    public String getInfo() {
+        return getClass().getSimpleName();
+    }
 }

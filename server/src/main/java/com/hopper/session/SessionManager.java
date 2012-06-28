@@ -86,6 +86,12 @@ public class SessionManager extends LifecycleProxy {
 
             ((LocalIncomingSession) incomingSession).setConnection(conn);
 
+            incomingSession.initialize();
+            // register a quorum listener
+            incomingSession.addListener(componentManager.getElectionMonitor());
+
+            incomingSession.start();
+
             // register session
             incomingSessions.put(channel, incomingSession);
         }
@@ -100,8 +106,12 @@ public class SessionManager extends LifecycleProxy {
 
         OutgoingSession session = componentManager.getSessionManager().getOutgoingSession(endpoint);
 
-        if (session != null) {
+        if (session != null && session.isAlive()) {
             return session;
+        }
+
+        if (session != null) {
+            componentManager.getSessionManager().closeServerSession(endpoint);
         }
 
         synchronized (endpoint) {
@@ -118,6 +128,9 @@ public class SessionManager extends LifecycleProxy {
 
                 // bound the session to connection
                 ((LocalOutgoingSession) session).setConnection(connection);
+
+                session.initialize();
+                session.start();
 
                 // register session to SessionManager
                 addOutgoingServerSession(session);
