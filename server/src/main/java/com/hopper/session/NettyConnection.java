@@ -114,7 +114,7 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     public void connect() {
         // Configure the client.
         this.bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(stageManager.getThreadPool(Stage
-                .SERVER_BOSS), stageManager.getThreadPool(Stage.SERVER_WORKER)));
+                .CLIENT_BOSS), stageManager.getThreadPool(Stage.CLIENT_WORKER)));
 
         // set customs pipeline factory
         bootstrap.setPipelineFactory(new SenderPipelineFactory());

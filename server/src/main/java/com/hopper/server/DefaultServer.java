@@ -96,8 +96,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
 
     private void startServerSocket() {
         this.serverBootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(componentManager.getStageManager
-                ().getThreadPool(Stage.SERVER_BOSS), componentManager.getStageManager().getThreadPool(Stage
-                .SERVER_WORKER)));
+                ().getThreadPool(Stage.S2S_BOSS), componentManager.getStageManager().getThreadPool(Stage
+                .S2S_WORKER)));
 
         // set customs pipeline factory
         serverBootstrap.setPipelineFactory(new ServerPipelineFactory());
@@ -116,8 +116,8 @@ public class DefaultServer extends LifecycleProxy implements Server {
      */
     private void startClientSocket() {
         this.rpcBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(componentManager.getStageManager()
-                .getThreadPool(Stage.CLIENT_BOSS), componentManager.getStageManager().getThreadPool(Stage
-                .CLIENT_WORKER)));
+                .getThreadPool(Stage.RPC_BOSS), componentManager.getStageManager().getThreadPool(Stage
+                .RPC_WORKER)));
 
         // set customs pipeline factory
         HopperService.Processor<HopperServiceImpl> processor = new HopperService.Processor<HopperServiceImpl>(new

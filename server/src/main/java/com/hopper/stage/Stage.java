@@ -8,6 +8,10 @@ package com.hopper.stage;
  * To change this template use File | Settings | File Templates.
  */
 public enum Stage {
+    S2S_BOSS,
+    S2S_WORKER,
+    RPC_BOSS,
+    RPC_WORKER,
     SERVER_BOSS,
     SERVER_WORKER,
     CLIENT_BOSS,
