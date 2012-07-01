@@ -60,4 +60,12 @@ public class StageManager extends LifecycleProxy {
                 config.getSyncThreadPoolMaxSize(), new LinkedBlockingQueue<Runnable>());
         return threadPool;
     }
+
+    public ThreadPoolExecutor createClientBossExecutor(Stage stage, String name) {
+        return (ThreadPoolExecutor) Executors.newCachedThreadPool();
+    }
+
+    public ThreadPoolExecutor createClientWorkExecutor(Stage stage, String name) {
+        return (ThreadPoolExecutor) Executors.newCachedThreadPool();
+    }
 }

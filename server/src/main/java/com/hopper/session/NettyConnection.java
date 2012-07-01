@@ -151,8 +151,18 @@ public class NettyConnection extends LifecycleProxy implements Connection {
     @Override
     protected void doShutdown() {
         if (channel != null && bootstrap != null) {
+
             final Runnable shutdownTask = new ShutdownTask(channel, bootstrap);
-            componentManager.getStageManager().getThreadPool(Stage.SHUTDOWN_OUTGOING_CONNECTION).execute(shutdownTask);
+
+            // If the invocation is within IO thread
+            if (DeadLockProofWorker.PARENT.get() != null) {
+                componentManager.getStageManager().getThreadPool(Stage.SHUTDOWN_OUTGOING_CONNECTION).execute(shutdownTask);
+
+                // If the invocation from user codes
+            } else {
+                shutdownTask.run();
+            }
+
             channel = null;
             bootstrap = null;
         }
