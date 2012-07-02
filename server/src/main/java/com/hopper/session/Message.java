@@ -6,7 +6,9 @@ import com.hopper.verb.VerbMappings;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.jboss.netty.buffer.ChannelBuffer;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -86,24 +88,24 @@ public class Message {
      */
     public ChannelBuffer serialize() {
 
-        BufferDataOutput buffer = new BufferDataOutput();
+        BufferDataOutput output = new BufferDataOutput();
 
         try {
-            buffer.writeInt(id);
-            buffer.writeInt(verb.type);
+            output.writeInt(id);
+            output.writeInt(verb.type);
 
             if (body instanceof Serializer) {
-                ((Serializer) body).serialize(buffer);
+                ((Serializer) body).serialize(output);
             } else if (body instanceof byte[]) {
-                buffer.write((byte[]) body);
+                output.write((byte[]) body);
             }
         } catch (IOException e) {
             // nothing
         }
 
-        buffer.complete();
+        output.complete();
 
-        return buffer.buffer();
+        return output.buffer();
     }
 
     /**
@@ -111,9 +113,9 @@ public class Message {
      * using it for deserializing; otherwise, setting the byte array as the
      * body.
      */
-    public void deserialize(byte[] buf) {
-        ByteArrayInputStream bis = new ByteArrayInputStream(buf);
-        DataInputStream in = new DataInputStream(bis);
+    public void deserialize(ChannelBuffer buffer) {
+
+        BufferDataInput in = new BufferDataInput(buffer);
 
         try {
             this.id = in.readInt();
@@ -124,16 +126,15 @@ public class Message {
                 throw new MessageDecodeException("Found the invalidate verb: " + iverb);
             }
 
-
             Class<? extends Serializer> bodyClazz = VerbMappings.getVerClass(verb);
 
             if (bodyClazz != null) {
                 this.body = deserializeBody(in, bodyClazz);
             } else {
-                int remaining = bis.available();
+                int remaining = in.avaliable();
                 if (remaining > 0) {
                     this.body = new byte[remaining];
-                    bis.read((byte[]) body);
+                    in.readFully((byte[]) body);
                 }
             }
         } catch (Exception e) {

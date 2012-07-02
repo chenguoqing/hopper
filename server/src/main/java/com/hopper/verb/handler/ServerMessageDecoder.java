@@ -23,16 +23,10 @@ public class ServerMessageDecoder extends FrameDecoder {
             return null;
         }
 
-        // skip the message size
-        buffer.skipBytes(4);
-
-        byte[] b = new byte[size];
-        buffer.readBytes(b);
-
         // Deserialize the message instance
         Message message = new Message();
 
-        message.deserialize(b);
+        message.deserialize(buffer);
 
         return message;
     }

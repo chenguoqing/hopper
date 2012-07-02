@@ -5,20 +5,20 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import java.io.DataInput;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.UTFDataFormatException;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-7-2
- * Time: 下午4:56
- * To change this template use File | Settings | File Templates.
+ * The implementation of {@link DataInput} that will read data from {@link ChannelBuffer}
  */
 public class BufferDataInput implements DataInput {
 
     private final ChannelBuffer buffer;
 
+    private final int size;
+
     public BufferDataInput(ChannelBuffer buffer) {
         this.buffer = buffer;
+        this.size = buffer.readInt();
     }
 
     @Override
@@ -104,14 +104,103 @@ public class BufferDataInput implements DataInput {
         throw new UnsupportedOperationException();
     }
 
+    public int avaliable() {
+        int len = size - buffer.readerIndex();
+        return len > 0 ? len : 0;
+    }
+
     @Override
     public String readUTF() throws IOException {
+        return _readUTF();
+    }
+
+    /**
+     * Reads from the
+     * stream <code>in</code> a representation
+     * of a Unicode  character string encoded in
+     * <a href="DataInput.html#modified-utf-8">modified UTF-8</a> format;
+     * this string of characters is then returned as a <code>String</code>.
+     * The details of the modified UTF-8 representation
+     * are  exactly the same as for the <code>readUTF</code>
+     * method of <code>DataInput</code>.
+     *
+     * @return a Unicode string.
+     * @throws EOFException                   if the input stream reaches the end
+     *                                        before all the bytes.
+     * @throws IOException                    the stream has been closed and the contained
+     *                                        input stream does not support reading after close, or
+     *                                        another I/O error occurs.
+     * @throws java.io.UTFDataFormatException if the bytes do not represent a
+     *                                        valid modified UTF-8 encoding of a Unicode string.
+     * @see java.io.DataInputStream#readUnsignedShort()
+     */
+    private String _readUTF() throws IOException {
         int utflen = readUnsignedShort();
 
         if (utflen == 0) {
             return null;
         }
 
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        char[] chararr = new char[utflen];
+
+        int char2, char3;
+        int count = 0;
+        int chararr_count = 0;
+
+        while (count < utflen) {
+            int c = (int) buffer.readByte() & 0xff;
+            switch (c >> 4) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                    /* 0xxxxxxx*/
+                    count++;
+                    chararr[chararr_count++] = (char) c;
+                    break;
+                case 12:
+                case 13:
+                    /* 110x xxxx   10xx xxxx*/
+                    if (count + 2 > utflen) {
+                        throw new UTFDataFormatException("malformed input: partial character at end");
+                    }
+
+                    char2 = (int) buffer.readByte();
+                    if ((char2 & 0xC0) != 0x80) {
+                        throw new UTFDataFormatException("malformed input around byte " + count);
+                    }
+
+                    chararr[chararr_count++] = (char) (((c & 0x1F) << 6) | (char2 & 0x3F));
+                    count += 2;
+                    break;
+                case 14:
+                    /* 1110 xxxx  10xx xxxx  10xx xxxx */
+
+                    if (count > utflen)
+                        throw new UTFDataFormatException("malformed input: partial character at end");
+                    char2 = (int) buffer.readByte();
+                    char3 = (int) buffer.readByte();
+
+                    if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80)) {
+                        throw new UTFDataFormatException("malformed input around byte " + (count - 1));
+                    }
+
+                    chararr[chararr_count++] = (char) (((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F)
+                            << 0));
+
+                    count += 3;
+                    break;
+                default:
+                    /* 10xx xxxx,  1111 xxxx */
+                    throw new UTFDataFormatException("malformed input around byte " + count);
+            }
+        }
+
+        // The number of chars produced may be less than utflen
+        return new String(chararr, 0, chararr_count);
     }
 }
