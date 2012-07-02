@@ -57,16 +57,15 @@ public class ComponentManager extends LifecycleProxy {
     }
 
     @Override
-    protected void doInit() {
+    protected void doInit() throws Exception {
+
         this.globalConfiguration = createGlobalConfiguration();
-        try {
-            this.getGlobalConfiguration().initialize();
-            logger.info("Initialize " + globalConfiguration.getInfo() + "...");
-            this.globalConfiguration.start();
-            logger.info("Starting " + globalConfiguration.getInfo() + "...");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
+        this.getGlobalConfiguration().initialize();
+        logger.info("Initialize " + globalConfiguration.getInfo() + "...");
+
+        this.globalConfiguration.start();
+        logger.info("Starting " + globalConfiguration.getInfo() + "...");
 
         registerComponent(globalConfiguration);
 
@@ -104,21 +103,17 @@ public class ComponentManager extends LifecycleProxy {
     }
 
     @Override
-    protected void doStart() {
-        try {
-            for (Lifecycle component : components) {
+    protected void doStart() throws Exception {
+        for (Lifecycle component : components) {
 
-                if (component.getState() != LifecycleState.NEW) {
-                    continue;
-                }
-
-                logger.info("Initialize " + component.getInfo() + "...");
-                component.initialize();
-                logger.info("Starting " + component.getInfo() + "...");
-                component.start();
+            if (component.getState() != LifecycleState.NEW) {
+                continue;
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+            logger.info("Initialize " + component.getInfo() + "...");
+            component.initialize();
+            logger.info("Starting " + component.getInfo() + "...");
+            component.start();
         }
 
         logger.info("Hopper server started.");
@@ -135,7 +130,7 @@ public class ComponentManager extends LifecycleProxy {
     }
 
     @Override
-    protected void doShutdown() {
+    protected void doShutdown() throws Exception {
         for (int i = components.size() - 1; i >= 0; i--) {
             Lifecycle component = components.get(i);
             component.shutdown();

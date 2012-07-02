@@ -4,6 +4,7 @@ import com.hopper.server.ComponentManagerFactory;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.io.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,27 +84,26 @@ public class Message {
      * {@link Serializer#serialize(DataOutput)} for serializing; otherwise, if
      * <tt>body</tt> is a byte array instance, writes it directly to stream.
      */
-    public byte[] serialize() {
+    public ChannelBuffer serialize() {
 
-        LengthOutputStream lengthOutputStream = new LengthOutputStream();
-        DataOutputStream dos = new DataOutputStream(lengthOutputStream);
+        BufferDataOutput buffer = new BufferDataOutput();
 
         try {
-            dos.writeInt(id);
-            dos.writeInt(verb.type);
+            buffer.writeInt(id);
+            buffer.writeInt(verb.type);
 
             if (body instanceof Serializer) {
-                ((Serializer) body).serialize(dos);
+                ((Serializer) body).serialize(buffer);
             } else if (body instanceof byte[]) {
-                dos.write((byte[]) body);
+                buffer.write((byte[]) body);
             }
         } catch (IOException e) {
             // nothing
         }
 
-        lengthOutputStream.complete();
+        buffer.complete();
 
-        return lengthOutputStream.toFullByteArray();
+        return buffer.buffer();
     }
 
     /**

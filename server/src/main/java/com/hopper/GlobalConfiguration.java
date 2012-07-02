@@ -64,20 +64,16 @@ public class GlobalConfiguration extends LifecycleProxy {
     private InnerConfig innerConfig;
 
     @Override
-    protected void doInit() {
+    protected void doInit() throws Exception {
         // Get the configuration file path
         String configPath = System.getProperty(DEFAULT_SYSTEM_PROPERTY, defaultYAML);
 
-        try {
-            InputStream in = read(configPath);
-            Yaml yaml = new Yaml();
-            Map<String, Object> yamlMap = (Map<String, Object>) yaml.load(in);
-            this.innerConfig = new InnerConfig(yamlMap);
+        InputStream in = read(configPath);
+        Yaml yaml = new Yaml();
+        Map<String, Object> yamlMap = (Map<String, Object>) yaml.load(in);
+        this.innerConfig = new InnerConfig(yamlMap);
 
-            logger.info("Used the configuration file:{}", configPath);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load yaml configuration file:" + configPath, e);
-        }
+        logger.info("Used the configuration file:{}", configPath);
     }
 
     public ServerMode getServerMode() {

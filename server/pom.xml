@@ -40,6 +40,26 @@
                 <artifactId>snakeyaml</artifactId>
                 <version>1.10</version>
             </dependency>
+            <dependency>
+                <groupId>commons-modeler</groupId>
+                <artifactId>commons-modeler</artifactId>
+                <version>2.0.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-digester</groupId>
+                        <artifactId>commons-digester</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>commons-digester</groupId>
+                <artifactId>commons-digester</artifactId>
+                <version>2.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -76,6 +96,14 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-modeler</groupId>
+            <artifactId>commons-modeler</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-digester</groupId>
+            <artifactId>commons-digester</artifactId>
         </dependency>
     </dependencies>
 

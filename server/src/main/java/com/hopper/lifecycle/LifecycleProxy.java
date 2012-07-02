@@ -55,7 +55,7 @@ public abstract class LifecycleProxy implements Lifecycle {
     /**
      * Real work will delegate to implementations
      */
-    protected void doInit() {
+    protected void doInit() throws Exception {
     }
 
     @Override
@@ -85,7 +85,7 @@ public abstract class LifecycleProxy implements Lifecycle {
     /**
      * Subclass will do real starting works
      */
-    protected void doStart() {
+    protected void doStart() throws Exception {
     }
 
     @Override
@@ -111,7 +111,7 @@ public abstract class LifecycleProxy implements Lifecycle {
         fireLifecycleEvent(event);
     }
 
-    protected void doPause() {
+    protected void doPause() throws Exception {
     }
 
     @Override
@@ -137,7 +137,7 @@ public abstract class LifecycleProxy implements Lifecycle {
         fireLifecycleEvent(event);
     }
 
-    protected void doResume() {
+    protected void doResume() throws Exception {
     }
 
     @Override
@@ -163,7 +163,7 @@ public abstract class LifecycleProxy implements Lifecycle {
     /**
      * Subclass will do real shut down works
      */
-    protected void doShutdown() {
+    protected void doShutdown() throws Exception {
     }
 
     @Override
