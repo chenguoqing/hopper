@@ -183,7 +183,6 @@ public class ComponentManager extends LifecycleProxy {
 
     private ScheduleManager createScheduleManager() {
         ScheduleManager scheduleManager = new ScheduleManager();
-        scheduleManager.setScheduleThreadCount(globalConfiguration.getScheduleThreadCount());
         return scheduleManager;
     }
 

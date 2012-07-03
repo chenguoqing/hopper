@@ -4,6 +4,7 @@ import com.hopper.GlobalConfiguration;
 import com.hopper.cache.CacheManager;
 import com.hopper.future.DefaultLatchFuture;
 import com.hopper.future.LatchFuture;
+import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleException;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManager;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -110,9 +112,16 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
     @Override
     public void connect() {
+        final ExecutorService bossThreadPool = stageManager.newClientBossExecutor(Stage.CLIENT_BOSS,
+                dest.address.getHostAddress());
+        final ExecutorService workerThreadPool = stageManager.newClientWorkExecutor(Stage.CLIENT_WORKER,
+                dest.address.getHostAddress());
+
+        startThreadPool(bossThreadPool);
+        startThreadPool(workerThreadPool);
+
         // Configure the client.
-        this.bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(stageManager.getThreadPool(Stage
-                .CLIENT_BOSS), stageManager.getThreadPool(Stage.CLIENT_WORKER)));
+        this.bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(bossThreadPool, workerThreadPool));
 
         // set customs pipeline factory
         bootstrap.setPipelineFactory(new SenderPipelineFactory());
@@ -146,6 +155,17 @@ public class NettyConnection extends LifecycleProxy implements Connection {
         }
     }
 
+    private void startThreadPool(ExecutorService threadPool) {
+        if (threadPool instanceof Lifecycle) {
+            try {
+                ((Lifecycle) threadPool).initialize();
+                ((Lifecycle) threadPool).start();
+            } catch (LifecycleException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     @Override
     protected void doShutdown() {
         if (channel != null && bootstrap != null) {
@@ -154,7 +174,9 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
             // If the invocation is within IO thread
             if (DeadLockProofWorker.PARENT.get() != null) {
-                componentManager.getStageManager().getThreadPool(Stage.SHUTDOWN_OUTGOING_CONNECTION).execute(shutdownTask);
+                Thread t = new Thread(shutdownTask);
+                t.setDaemon(true);
+                t.start();
 
                 // If the invocation from user codes
             } else {

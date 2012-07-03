@@ -19,10 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * {@link DataSyncService} provides supports for data synchronization between nodes.
@@ -46,7 +43,7 @@ public class DataSyncService extends LifecycleProxy {
     /**
      * Data synchronization thread pool
      */
-    private ThreadPoolExecutor threadPool;
+    private ExecutorService threadPool;
 
     @Override
     protected void doInit() {
