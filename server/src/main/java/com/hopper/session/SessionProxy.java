@@ -2,10 +2,10 @@ package com.hopper.session;
 
 import com.hopper.future.LatchFuture;
 import com.hopper.lifecycle.LifecycleListener;
-import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.server.ComponentManagerFactory;
 
-public abstract class SessionProxy extends LifecycleProxy implements Session {
+public abstract class SessionProxy extends LifecycleMBeanProxy implements Session {
     /**
      * Singleton SessionManager instance
      */

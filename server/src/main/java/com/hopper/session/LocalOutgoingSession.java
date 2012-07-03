@@ -83,6 +83,11 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
     }
 
     @Override
+    protected String getObjectNameKeyProperties() {
+        return "type=Session,direction=outgoing,id=" + getId();
+    }
+
+    @Override
     public void background() {
         if (getConnection() == null || !isAlive()) {
             throw new IllegalStateException("Not bound connection or connetction has been closed.");

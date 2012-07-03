@@ -37,7 +37,7 @@ public class StageManager extends LifecycleProxy {
         states.put(Stage.RPC_BOSS, newCachedThreadPoolMBean(Stage.RPC_BOSS, null));
         states.put(Stage.RPC_WORKER, newCachedThreadPoolMBean(Stage.RPC_WORKER, null));
         states.put(Stage.SCHEDULE, newScheduledThreadPoolMBean(Stage.SCHEDULE, null));
-        states.put(Stage.SYNC, new ThreadPoolMBean(newDataSyncThreadPool(), Stage.SYNC.name()));
+        states.put(Stage.SYNC, new ThreadPoolMBean(newDataSyncThreadPool(), Stage.SYNC, null));
     }
 
     @Override
@@ -80,7 +80,7 @@ public class StageManager extends LifecycleProxy {
 
     private ExecutorService newCachedThreadPoolMBean(Stage stage, String name) {
         ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        return new ThreadPoolMBean(threadPool, name == null ? stage.name() : stage.name() + "-" + name);
+        return new ThreadPoolMBean(threadPool, stage, name);
     }
 
     private ExecutorService newScheduledThreadPoolMBean(Stage stage, String name) {
@@ -93,8 +93,7 @@ public class StageManager extends LifecycleProxy {
 
         ScheduledThreadPoolExecutor scheduleExecutor = new ScheduledThreadPoolExecutor(scheduleThreadCount, new RenamingThreadFactory());
 
-        return new ScheduledThreadPoolMBean(scheduleExecutor, name == null ? stage.name() : stage.name()
-                + "-" + name);
+        return new ScheduledThreadPoolMBean(scheduleExecutor, stage, name);
     }
 
     static class RenamingThreadFactory implements ThreadFactory {

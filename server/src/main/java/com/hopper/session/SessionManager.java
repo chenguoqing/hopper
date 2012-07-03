@@ -1,7 +1,7 @@
 package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
-import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author chenguoqing
  */
-public class SessionManager extends LifecycleProxy {
+public class SessionManager extends LifecycleMBeanProxy {
     /**
      * Logger
      */
@@ -284,5 +284,10 @@ public class SessionManager extends LifecycleProxy {
     @Override
     public String getInfo() {
         return "Session Manager";
+    }
+
+    @Override
+    protected String getObjectNameKeyProperties() {
+        return "type=SessionManager";
     }
 }

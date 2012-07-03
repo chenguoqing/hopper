@@ -8,8 +8,8 @@ import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
-import com.hopper.verb.handler.HeartBeat;
 import com.hopper.verb.VerbMappings;
+import com.hopper.verb.handler.HeartBeat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,5 +149,10 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
     @Override
     public List<String> getBoundMultiplexerSessions() {
         return Collections.unmodifiableList(multiplexerSessions);
+    }
+
+    @Override
+    protected String getObjectNameKeyProperties() {
+        return "type=Session,direction=incoming,id=" + getId();
     }
 }

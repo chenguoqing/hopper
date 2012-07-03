@@ -1,7 +1,7 @@
 package com.hopper.cache;
 
 import com.hopper.lifecycle.Lifecycle;
-import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.stage.ThreadRenamingRunnable;
 import com.hopper.utils.ScheduleManager;
 import org.jboss.netty.util.internal.ConcurrentHashMap;
@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * @author chenguoqing
  */
-public class CacheManager extends LifecycleProxy implements Lifecycle {
+public class CacheManager extends LifecycleMBeanProxy implements Lifecycle {
     /**
      * Caches entries
      */
@@ -106,6 +106,11 @@ public class CacheManager extends LifecycleProxy implements Lifecycle {
 
     public int size() {
         return caches.size();
+    }
+
+    @Override
+    protected String getObjectNameKeyProperties() {
+        return "type=Cache";
     }
 
     class EvictTask extends ThreadRenamingRunnable {

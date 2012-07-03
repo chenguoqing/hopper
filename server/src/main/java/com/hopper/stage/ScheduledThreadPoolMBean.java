@@ -7,8 +7,8 @@ import java.util.concurrent.*;
  */
 public class ScheduledThreadPoolMBean extends ThreadPoolMBean implements ScheduledExecutorService {
 
-    public ScheduledThreadPoolMBean(ThreadPoolExecutor threadPool, String name) {
-        super(threadPool, name);
+    public ScheduledThreadPoolMBean(ThreadPoolExecutor threadPool, Stage stage, String name) {
+        super(threadPool, stage, name);
     }
 
     @Override

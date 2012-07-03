@@ -2,7 +2,7 @@ package com.hopper.server;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
-import com.hopper.lifecycle.LifecycleProxy;
+import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.session.ClientSession;
 import com.hopper.session.SessionManager;
 import com.hopper.stage.Stage;
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
  * The default implementation of {@link Server}, {@link DefaultServer} starts the socket connections and joins the
  * server to group(starting the leader election)
  */
-public class DefaultServer extends LifecycleProxy implements Server {
+public class DefaultServer extends LifecycleMBeanProxy implements Server {
 
     private static Logger logger = LoggerFactory.getLogger(DefaultServer.class);
     /**
@@ -303,6 +303,11 @@ public class DefaultServer extends LifecycleProxy implements Server {
                 .LifecycleState.RUNNING || componentManager.getState() != LifecycleState.RUNNING) {
             throw new ServiceUnavailableException();
         }
+    }
+
+    @Override
+    protected String getObjectNameKeyProperties() {
+        return "type=Server";
     }
 
     /**

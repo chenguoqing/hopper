@@ -20,24 +20,33 @@ public class ThreadPoolMBean extends LifecycleMBeanProxy implements ExecutorServ
      */
     protected final ThreadPoolExecutor threadPool;
 
-    /**
-     * Thread pool name
-     */
+    private final Stage stage;
+
     private final String name;
 
-    public ThreadPoolMBean(ThreadPoolExecutor threadPool, String name) {
+    public ThreadPoolMBean(ThreadPoolExecutor threadPool, Stage stage, String name) {
         this.threadPool = threadPool;
+        this.stage = stage;
         this.name = name;
     }
 
     @Override
     protected String getObjectNameKeyProperties() {
-        return "type=ThreadPool,name=" + name;
+        StringBuilder sb = new StringBuilder("type=ThreadPool");
+        sb.append(",");
+        sb.append("stage=").append(stage.name());
+
+        if (name != null) {
+            sb.append(",");
+            sb.append("name=").append(name);
+        }
+
+        return sb.toString();
     }
 
     @Override
     public String getInfo() {
-        return "thread pool-" + name;
+        return "Thread pool-" + name == null ? stage.name() : stage.name() + "-" + name;
     }
 
     public void setCorePoolSize(int corePoolSize) {
