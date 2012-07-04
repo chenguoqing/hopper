@@ -27,7 +27,7 @@ public class BufferDataOutput implements DataOutput {
      */
     public BufferDataOutput(int size) {
         this.buffer = ChannelBuffers.dynamicBuffer(4 + size);
-        buffer.writeInt(4);
+        buffer.writerIndex(4);
     }
 
     @Override
@@ -194,6 +194,7 @@ public class BufferDataOutput implements DataOutput {
         }
 
         buffer.markWriterIndex();
+        buffer.writerIndex(writeIndex);
         buffer.writeShort(utflen);
         buffer.resetWriterIndex();
     }

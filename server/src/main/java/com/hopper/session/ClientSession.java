@@ -1,6 +1,5 @@
 package com.hopper.session;
 
-import com.hopper.GlobalConfiguration;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.thrift.BidDirectNotify;
 
@@ -39,5 +38,10 @@ public class ClientSession extends SessionProxy implements Session {
 
     public void heartBeat() {
         lastHeartBeat.set(System.currentTimeMillis());
+    }
+
+    @Override
+    protected String getObjectNameKeyProperties() {
+        return "type=ClientSession,id=" + getId();
     }
 }
