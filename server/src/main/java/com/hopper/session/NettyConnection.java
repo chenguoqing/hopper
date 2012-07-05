@@ -13,6 +13,7 @@ import com.hopper.server.Endpoint;
 import com.hopper.stage.Stage;
 import com.hopper.stage.StageManager;
 import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.timeout.TimeoutException;
@@ -325,7 +326,17 @@ public class NettyConnection extends LifecycleMBeanProxy implements Connection {
 
             if (e.getMessage() instanceof Message) {
                 Message message = (Message) e.getMessage();
-                e.getChannel().write(message.serialize());
+                final ChannelBuffer channelBuffer = message.serialize();
+                ChannelBuffer copy = channelBuffer.copy();
+                byte[] bytes = new byte[copy.readableBytes()];
+                copy.readBytes(bytes);
+                System.out.println("Sending message to " + e.getChannel().getRemoteAddress());
+                for (Byte b : bytes) {
+                    System.out.print(b);
+                    System.out.print(" ");
+                }
+                System.out.println();
+                e.getChannel().write(channelBuffer);
             } else {
                 ctx.sendDownstream(e);
             }

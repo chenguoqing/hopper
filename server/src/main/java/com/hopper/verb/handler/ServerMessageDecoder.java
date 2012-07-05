@@ -11,17 +11,21 @@ public class ServerMessageDecoder extends FrameDecoder {
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
 
-        // Read the message size
-        if (buffer.readableBytes() < 4) {
+        // Read the message size and body
+        if (buffer.readableBytes() < 4 || buffer.readableBytes() < 4 + buffer.getInt(0)) {
             return null;
         }
 
-        int size = buffer.getInt(0);
+        ChannelBuffer copy = buffer.copy();
+        byte[] bytes = new byte[copy.readableBytes()];
+        copy.readBytes(bytes);
 
-        // Read the message body
-        if (buffer.readableBytes() < 4 + size) {
-            return null;
+        System.out.println("Received the data from " + channel.getRemoteAddress());
+        for (byte b : bytes) {
+            System.out.print(b);
+            System.out.print(" ");
         }
+        System.out.println();
 
         // Deserialize the message instance
         Message message = new Message();

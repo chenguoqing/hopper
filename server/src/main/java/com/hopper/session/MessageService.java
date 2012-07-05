@@ -99,12 +99,17 @@ public class MessageService {
                         }
                     }
                 });
-
-                latch.await(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
             } catch (Exception e) {
                 logger.error("Failed to send message to " + endpoint, e);
             }
         }
+
+        try {
+            latch.await(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            logger.warn("Time out for waiting the return result.");
+        }
+
         return replies;
     }
 

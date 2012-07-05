@@ -21,6 +21,9 @@ public class ChannelBound {
             channelBound.set(new ChannelWithLatch(channel));
         } else {
             ChannelWithLatch latch = channelBound.get();
+            if (channel != latch.channel) {
+                throw new IllegalStateException("Can not bound different channel to current thread.");
+            }
             latch.counter.incrementAndGet();
         }
     }
@@ -32,7 +35,7 @@ public class ChannelBound {
         ChannelWithLatch latch = channelBound.get();
         if (latch != null) {
             latch.counter.decrementAndGet();
-            if (latch.counter.get() == 0) {
+            if (latch.counter.get() <= 0) {
                 channelBound.remove();
             }
         }

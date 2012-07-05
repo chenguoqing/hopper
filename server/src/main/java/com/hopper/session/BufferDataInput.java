@@ -105,8 +105,7 @@ public class BufferDataInput implements DataInput {
     }
 
     public int avaliable() {
-        int len = size - buffer.readerIndex();
-        return len > 0 ? len : 0;
+        return buffer.readableBytes();
     }
 
     @Override
