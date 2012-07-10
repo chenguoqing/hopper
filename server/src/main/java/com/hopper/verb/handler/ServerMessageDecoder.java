@@ -16,17 +16,6 @@ public class ServerMessageDecoder extends FrameDecoder {
             return null;
         }
 
-        ChannelBuffer copy = buffer.copy();
-        byte[] bytes = new byte[copy.readableBytes()];
-        copy.readBytes(bytes);
-
-        System.out.println("Received the data from " + channel.getRemoteAddress());
-        for (byte b : bytes) {
-            System.out.print(b);
-            System.out.print(" ");
-        }
-        System.out.println();
-
         // Deserialize the message instance
         Message message = new Message();
 

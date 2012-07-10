@@ -14,18 +14,18 @@ public class AcceptVerbHandler implements VerbHandler {
     @Override
     public void doVerb(Message message) {
 
-        Accept accpet = (Accept) message.getBody();
+        Accept accept = (Accept) message.getBody();
 
-        if (accpet.getEpoch() < paxos.getEpoch()) {
+        if (accept.getEpoch() < paxos.getEpoch()) {
             sendResponse(message.getId(), Accepted.REJECT_EPOCH);
-        } else if (accpet.getBallot() < paxos.getRnd()) {
+        } else if (accept.getBallot() < paxos.getRnd()) {
             sendResponse(message.getId(), Accepted.REJECT_BALLOT);
         } else {
             paxos.paxosLock.writeLock().lock();
             try {
-                paxos.setRnd(accpet.getBallot());
-                paxos.setVrnd(accpet.getBallot());
-                paxos.setVval(accpet.getVval());
+                paxos.setRnd(accept.getBallot());
+                paxos.setVrnd(accept.getBallot());
+                paxos.setVval(accept.getVval());
             } finally {
                 paxos.paxosLock.writeLock().unlock();
             }

@@ -3,11 +3,9 @@ package com.hopper.quorum;
 import com.hopper.GlobalConfiguration;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
-import com.hopper.server.Endpoint;
 import com.hopper.server.Server.ElectionState;
 import com.hopper.session.Message;
 import com.hopper.session.MessageService;
-import com.hopper.session.OutgoingSession;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
 import org.slf4j.Logger;
@@ -130,8 +128,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
     /**
      * Whether current node can initialize a new election? It will communication
-     * with all endpoints, if majority of them believe they can, it can initial;
-     * otherwise, <b>must</b> be waiting.
+     * with all endpoints, if majority believe they can, it can initial; otherwise, <b>must</b> be waiting.
      */
     private boolean canInitElection(final List<QueryLeader> replyResult) throws NoQuorumException,
             PaxosRejectedException {
@@ -156,7 +153,7 @@ public class DefaultLeaderElection implements LeaderElection {
             throw new PaxosRejectedException(PaxosRejectedException.INSTANCE_REJECT);
         }
 
-        int numMissingLeader = 0;
+        int numMissingLeader = 1;
 
         // All results that missing leader or epochs are less than localHighestEpoch will be taken as "missing leader"
         for (QueryLeader queryResult : queryResults) {
@@ -168,7 +165,7 @@ public class DefaultLeaderElection implements LeaderElection {
         replyResult.addAll(queryResults);
 
         // If majority misses leader, must re-start election
-        return numMissingLeader >= config.getQuorumSize() - 1;
+        return numMissingLeader >= config.getQuorumSize();
     }
 
     private List<QueryLeader> queryLeaders() {
@@ -361,11 +358,11 @@ public class DefaultLeaderElection implements LeaderElection {
                 MessageService.WAITING_MODE_ALL);
 
         // No majority are alive
-        if (replies.size() < config.getQuorumSize()) {
+        if (replies.size() < config.getQuorumSize() - 1) {
             throw new NoQuorumException();
         }
 
-        int numAccepted = 0;
+        int numAccepted = 1;
         int rejectedRnd = -1;
         int rejectedEpoch = -1;
 
@@ -381,8 +378,8 @@ public class DefaultLeaderElection implements LeaderElection {
         }
 
         // Majority has reached consensus, send LEARN message
-        if (numAccepted >= config.getQuorumSize() - 1) {
-            Message learnMessage = makeLearnMessage();
+        if (numAccepted >= config.getQuorumSize()) {
+            Message learnMessage = makeLearnMessage(leader);
 
             // Send Learn message to all nodes
             componentManager.getMessageService().sendLearnMessage(learnMessage);
@@ -401,7 +398,7 @@ public class DefaultLeaderElection implements LeaderElection {
     /**
      * Make a learn message
      */
-    private Message makeLearnMessage() {
+    private Message makeLearnMessage(int leader) {
 
         Message message = new Message();
         message.setVerb(Verb.PAXOS_LEARN);
@@ -409,8 +406,10 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Learn learn = new Learn();
         learn.setEpoch(paxos.getEpoch());
-        learn.setProposer(componentManager.getDefaultServer().getRpcEndPoint().serverId);
-        learn.setVval(paxos.getVval());
+        learn.setProposer(componentManager.getDefaultServer().getServerEndpoint().serverId);
+        learn.setVval(leader);
+
+        message.setBody(learn);
 
         return message;
     }

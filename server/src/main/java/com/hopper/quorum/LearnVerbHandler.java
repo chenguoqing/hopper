@@ -95,8 +95,6 @@ public class LearnVerbHandler implements VerbHandler {
         // clear learned instances
         learnedInstances.clear();
 
-        logger.debug("Election for instance {} has completed, elected leader:{}", epoch, newLeader);
-
         try {
             if (server.isLeader()) {
                 takeLeadership();

@@ -80,6 +80,8 @@ public class ServerMessageHandler extends SimpleChannelHandler {
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+
+        logger.debug("Received message {} from {}", e.getMessage(), ctx.getChannel().getRemoteAddress());
         try {
             // bound channel to thread local
             ChannelBound.bound(ctx.getChannel());

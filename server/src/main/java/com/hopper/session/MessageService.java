@@ -43,6 +43,8 @@ public class MessageService {
      */
     public void sendLearnMessage(final Message message) {
 
+        logger.debug("Send learn message {} to quorum", message);
+
         for (Endpoint endpoint : config.getGroupEndpoints()) {
 
             // If the endpoint is local, executes the message directly
@@ -54,7 +56,7 @@ public class MessageService {
                 OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
                 session.sendOneway(message);
             } catch (Exception e) {
-                logger.error("Failed to connect to " + endpoint, e);
+                logger.debug("Failed to send message to " + endpoint, e);
             }
         }
     }
@@ -100,14 +102,14 @@ public class MessageService {
                     }
                 });
             } catch (Exception e) {
-                logger.error("Failed to send message to " + endpoint, e);
+                logger.debug("Failed to send message to {} ", endpoint, e);
             }
         }
 
         try {
             latch.await(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.warn("Time out for waiting the return result.");
+            logger.debug("Time out for waiting the return result.");
         }
 
         return replies;
@@ -126,7 +128,7 @@ public class MessageService {
             OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
-            logger.error("Failed to send one-way message {} to {}.", new Object[]{message, endpoint, e});
+            logger.debug("Failed to send one-way message {} to {}.", new Object[]{message, endpoint, e});
         }
     }
 

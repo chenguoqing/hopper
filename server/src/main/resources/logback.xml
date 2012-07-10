@@ -3,7 +3,7 @@
     <property name="default_pattern" value="%date [%thread] %-5level %logger{30} - %msg%n"/>
 
     <property name="log.basedir" value="/var/logs/hopper1"/>
-    <property name="log.root.level" value="DEBUG"/>
+    <property name="log.root.level" value="INFO"/>
     <property name="log.hopper.level" value="DEBUG"/>
     <property name="log.appender" value="STDOUT"/>
 
@@ -25,9 +25,9 @@
         </rollingPolicy>
     </appender>
 
-    <logger name="com.hopper">
+<!--    <logger name="com.hopper">
         <level value="${log.hopper.level}"/>
-    </logger>
+    </logger>-->
 
     <root>
         <level value="${log.root.level}"/>

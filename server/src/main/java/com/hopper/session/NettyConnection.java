@@ -327,15 +327,6 @@ public class NettyConnection extends LifecycleMBeanProxy implements Connection {
             if (e.getMessage() instanceof Message) {
                 Message message = (Message) e.getMessage();
                 final ChannelBuffer channelBuffer = message.serialize();
-                ChannelBuffer copy = channelBuffer.copy();
-                byte[] bytes = new byte[copy.readableBytes()];
-                copy.readBytes(bytes);
-                System.out.println("Sending message to " + e.getChannel().getRemoteAddress());
-                for (Byte b : bytes) {
-                    System.out.print(b);
-                    System.out.print(" ");
-                }
-                System.out.println();
                 e.getChannel().write(channelBuffer);
             } else {
                 ctx.sendDownstream(e);

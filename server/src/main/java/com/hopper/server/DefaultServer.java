@@ -211,7 +211,6 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
         if (serverId < 0) {
             throw new IllegalArgumentException("leader id must be greater than 0.");
         }
-
         synchronized (leaderLock) {
             this.leader = serverId;
 
