@@ -36,6 +36,7 @@ public class Test {
     private static boolean isRunning(int c) {
         return c < SHUTDOWN;
     }
+
     /**
      * Attempt to CAS-increment the workerCount field of ctl.
      */
@@ -45,7 +46,8 @@ public class Test {
 
     public static void main(String[] args) {
 
-        new Test().test();
+//        new Test().test();
+        new Test().printThreadStack();
 
     }
 
@@ -64,4 +66,15 @@ public class Test {
 
     }
 
+    private void printThreadStack() {
+        StackTraceElement[] traceElements = Thread.currentThread().getStackTrace();
+        if (traceElements == null) {
+            return;
+        }
+
+        for (StackTraceElement element : traceElements) {
+            System.out.println(element.getClassName() + "," + element.getMethodName());
+        }
+
+    }
 }

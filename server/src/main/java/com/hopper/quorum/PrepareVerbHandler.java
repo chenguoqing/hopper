@@ -5,11 +5,15 @@ import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The handler for processing Prepare paxos message
  */
 public class PrepareVerbHandler implements VerbHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(PrepareVerbHandler.class);
 
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
@@ -17,14 +21,20 @@ public class PrepareVerbHandler implements VerbHandler {
 
     @Override
     public void doVerb(Message message) {
+        logger.info("Received the prepare request {}", message);
+
         Prepare prepare = (Prepare) message.getBody();
 
         // local epoch  is greater
         if (paxos.getEpoch() > prepare.getEpoch()) {
+            logger.info("Reject the prepare because of lower epoch. Current Epoch:{},received Epoch:{}",
+                    paxos.getEpoch(), prepare.getEpoch());
             sendPromise(message.getId(), Promise.REJECT_EPOCH);
 
             // local ballot is greater
         } else if (paxos.getRnd() >= prepare.getBallot()) {
+            logger.info("Reject the prepare because of lower ballot. Current ballot:{},received ballot:{}",
+                    paxos.getRnd(), prepare.getBallot());
             sendPromise(message.getId(), Promise.REJECT_BALLOT);
 
             // target's greater
@@ -36,6 +46,7 @@ public class PrepareVerbHandler implements VerbHandler {
             if (paxos.getRnd() < prepare.getBallot()) {
                 paxos.setRnd(prepare.getBallot());
             }
+            logger.info("Promise the prepare request");
             sendPromise(message.getId(), Promise.PROMISE);
         }
     }
@@ -56,6 +67,7 @@ public class PrepareVerbHandler implements VerbHandler {
 
         reply.setBody(promise);
 
+        logger.info("Send promise response {}", reply);
         componentManager.getMessageService().responseOneway(reply);
     }
 }

@@ -5,6 +5,7 @@ import com.hopper.lifecycle.LifecycleEvent.EventType;
 import com.hopper.lifecycle.LifecycleListener;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
+import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
 import com.hopper.utils.ScheduleManager;
 import com.hopper.verb.Verb;
@@ -51,7 +52,10 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
 
         ClientSession[] clientSessions = sessionManager.getAllClientSessions();
 
-        if (clientSessions != null && server.isKnownLeader() && !server.isLeader()) {
+        Endpoint destEndpoint = getConnection().getDestEndpoint();
+
+        if (clientSessions != null && clientSessions.length > 0 && server.isKnownLeader() && !server.isLeader() &&
+                server.getLeader() != destEndpoint.serverId) {
 
             Message message = new Message();
             message.setId(Message.nextId());

@@ -57,14 +57,17 @@ public class LearnVerbHandler implements VerbHandler {
 
         Learn learn = (Learn) message.getBody();
 
+        logger.info("Received the learn message {}", message);
+
         // Ignoring the smaller epoch or learned instance
         if (learn.getEpoch() < paxos.getEpoch() || learnedInstances.contains(learn.getEpoch())) {
+            logger.info("Discard the learn message {}", message);
             return;
         }
 
         learnedInstances.add(learn.getEpoch());
 
-        logger.debug("The election instance {} has chosen leader {}", learn.getEpoch(), learn.getVval());
+        logger.info("The election instance {} has chosen leader {}", learn.getEpoch(), learn.getVval());
 
         // TODO:
         if (learn.getEpoch() > paxos.getEpoch()) {
@@ -72,9 +75,9 @@ public class LearnVerbHandler implements VerbHandler {
         }
 
         try {
-            logger.debug("Start data synchronization...");
+            logger.info("Start data synchronization...");
             learnElectedLeader(learn.getEpoch(), server.getLeader(), learn.getVval());
-            logger.debug("Success to synchronize data.");
+            logger.info("Success to synchronize data.");
         } catch (Exception e) {
             logger.error("Failed to synchronize data, leader:{}", learn.getVval(), e);
             componentManager.getLeaderElection().startElecting();
@@ -97,9 +100,11 @@ public class LearnVerbHandler implements VerbHandler {
 
         try {
             if (server.isLeader()) {
+                logger.info("Current server has been chosen as leader, takes leader ship...");
                 takeLeadership();
                 server.setElectionState(Server.ElectionState.LEADING);
             } else {
+                logger.info("Current server is follower, accept the new leader {}", newLeader);
                 acceptLeader(olderLeader, newLeader);
                 server.setElectionState(Server.ElectionState.FOLLOWING);
             }
@@ -114,25 +119,48 @@ public class LearnVerbHandler implements VerbHandler {
      */
     private void takeLeadership() throws Exception {
         componentManager.getDefaultServer().takeLeadership();
+        long t = System.currentTimeMillis();
         startLeaderDataSync();
+        long syncTime = System.currentTimeMillis() - t;
+
+        long rpcPeriod = componentManager.getGlobalConfiguration().getRetryPeriod();
+        long waitingPeriod = 2 * rpcPeriod;
+
+        // Although the election process has completed, but the followers might not communicate to leader
+        // immediately, so the election monitor might start election progress again. To avoid the case,
+        // it allows setting a barrier with a period for election monitor.
+        if (syncTime < waitingPeriod) {
+            componentManager.getElectionMonitor().setBarrier(waitingPeriod - syncTime);
+        }
     }
 
     /**
      * Leader starts data synchronization
      */
     private void startLeaderDataSync() throws Exception {
+        logger.info("Starting leader data synchronization...");
+
         Message message = new Message();
         message.setVerb(Verb.QUERY_MAX_XID);
         message.setId(Message.nextId());
 
+        logger.info("Send query max xid {}", message);
+
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_QUORUM);
 
+        logger.info("Received the query result {}", replies);
         int repliesNum = replies.size();
 
         // No majority response, starts a new election
         if (repliesNum < config.getQuorumSize() - 1) {
+            logger.info("No majority nodes response query maxid, retry election...");
             throw new NoQuorumException();
+        }
+
+        boolean debug = true;
+        if (debug) {
+            return;
         }
 
         List<QueryMaxXid> maxXidResult = new ArrayList<QueryMaxXid>();

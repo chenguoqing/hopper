@@ -42,7 +42,14 @@ public class DefaultLeaderElection implements LeaderElection {
             return;
         }
 
-        componentManager.getDefaultServer().setElectionState(ElectionState.LOOKING);
+        synchronized (this) {
+            if (componentManager.getDefaultServer().getElectionState() == ElectionState.LOOKING) {
+                return;
+            }
+            componentManager.getDefaultServer().setElectionState(ElectionState.LOOKING);
+        }
+
+        printThreadStack();
 
         Thread electionThread = new Thread(new Runnable() {
             @Override
@@ -51,9 +58,23 @@ public class DefaultLeaderElection implements LeaderElection {
             }
         });
 
-        electionThread.setName("election-thread");
+        electionThread.setName("election-thread-" + electionThread.getId());
         electionThread.setDaemon(true);
         electionThread.start();
+    }
+
+    private void printThreadStack() {
+        StackTraceElement[] traceElements = Thread.currentThread().getStackTrace();
+        if (traceElements == null) {
+            return;
+        }
+
+        System.out.println("=====================stack=================");
+        for (StackTraceElement traceElement : traceElements) {
+            System.out.printf(">>> %s.%s (%d)", traceElement.getClassName(), traceElement.getMethodName(),
+                    traceElement.getLineNumber());
+            System.out.println();
+        }
     }
 
     public void asynElecting() {
@@ -64,20 +85,26 @@ public class DefaultLeaderElection implements LeaderElection {
         do {
             repeated++;
 
-            logger.debug("Retrying to start election  [{}]...", repeated);
+            logger.info("Retrying to start election  [{}]...", repeated);
 
             try {
                 List<QueryLeader> replyResult = new ArrayList<QueryLeader>();
 
                 boolean initElection = canInitElection(replyResult);
 
+                logger.info("Can initialize a new election round? {}", initElection);
+
                 // Can initialize a new election?
                 if (initElection) {
-                    // Await completion for current running election
+                    // Await current running election completion
                     awaitIfNecessary();
 
                     // Start paxos progress normally
                     startPaxos();
+
+                    // If Paxos progress has complete successfully, it should exit the loop
+                    retry = false;
+
                 } else {
 
                     // Retrieve the candidate leader
@@ -92,34 +119,34 @@ public class DefaultLeaderElection implements LeaderElection {
                             candidateLeader);
                 }
             } catch (NoQuorumException e) {
-                logger.debug("No enough nodes are alive, waiting for other nodes joining...");
+                logger.info("No enough nodes are alive, waiting for other nodes joining...");
                 retry = waitingNextElection(config.getPeriodForJoin());
             } catch (PaxosRejectedException e) {
                 // If ballot is lower, it indicates other nodes are in progress, so it must wait for a moment
                 if (e.reject == PaxosRejectedException.BALLOT_REJECT) {
-                    logger.debug("Current ballot is lower, re-starts the paxos progress just a moment");
+                    logger.info("Current ballot is lower, re-starts the paxos progress just for a moment");
                     retry = waitingNextElection(config.getRetryElectionPeriod());
                     // If instance number is lower, it indicates other nodes had undergone some elections
                 } else {
-                    logger.debug("Current instance is lower, re-starts the paxos immediately.");
+                    logger.info("Current instance is lower, re-starts the paxos immediately.");
                     retry = true;
                 }
             } catch (ElectionTerminatedException e) {
                 retry = false;
             } catch (TestLeaderFailureException e) {
-                logger.debug("Failed to test candidate leader:{},waiting {} milliseconds for the next election",
+                logger.info("Failed to test candidate leader:{},waiting {} milliseconds for the next election",
                         new Object[]{e.leader, config.getPeriodForJoin(), e});
 
                 retry = waitingNextElection(config.getPeriodForJoin());
             } catch (TimeoutException e) {
-                logger.debug("Timeout for get result,waiting {} milliseconds for next election",
+                logger.info("Timeout for get result,waiting {} milliseconds for next election",
                         config.getPeriodForJoin(), e);
                 retry = waitingNextElection(config.getPeriodForJoin());
             } catch (InterruptedException e) {
-                logger.debug("Stop current election instance because of interrupt.");
+                logger.info("Stop current election instance because of interrupt.");
                 retry = false;
             } catch (Exception e) {
-                logger.debug("Unknown exception occurred, waiting {} milliseconds for the next election",
+                logger.info("Unknown exception occurred, waiting {} milliseconds for the next election",
                         config.getPeriodForJoin(), e);
                 retry = waitingNextElection(config.getPeriodForJoin());
             }
@@ -133,10 +160,12 @@ public class DefaultLeaderElection implements LeaderElection {
     private boolean canInitElection(final List<QueryLeader> replyResult) throws NoQuorumException,
             PaxosRejectedException {
 
+        logger.info(">>>Query leaders...");
         List<QueryLeader> queryResults = queryLeaders();
 
         // No majority nodes are alive
         if (queryResults.size() < config.getQuorumSize() - 1) {
+            logger.info(">>>Not get majority response for query leader.");
             throw new NoQuorumException();
         }
 
@@ -173,8 +202,10 @@ public class DefaultLeaderElection implements LeaderElection {
         message.setVerb(Verb.QUERY_LEADER);
         message.setId(Message.nextId());
 
+        logger.info(">>>Send query leader request {}", message);
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_ALL);
+        logger.info(">>>Query leader results {}", replies);
 
         List<QueryLeader> leaders = new ArrayList<QueryLeader>(replies.size());
 
@@ -213,6 +244,7 @@ public class DefaultLeaderElection implements LeaderElection {
      */
     private void startPaxos() {
 
+        logger.info("Staring phase1...");
         int leader = phase1();
 
         // If the serverId from Phase1b is not the local server, it indicating there are some contention and
@@ -223,8 +255,12 @@ public class DefaultLeaderElection implements LeaderElection {
             }
         }
 
+        logger.info("Phase1 has completed, get leader = {}", leader);
+
+        logger.info("Starting phase2...");
         // starting phase2
         phase2(leader);
+        logger.info("Phase2 has completed.");
     }
 
     /**
@@ -233,7 +269,9 @@ public class DefaultLeaderElection implements LeaderElection {
     private int phase1() {
 
         // Executing Phase1a(Prepare)
+        logger.info("Staring prepare...");
         List<Message> replies = prepare();
+        logger.info("Get response from prepare {}", replies);
 
         int promiseCount = 0;
         int rejectBallot = -1;
@@ -285,11 +323,13 @@ public class DefaultLeaderElection implements LeaderElection {
         if (rejectEpoch > 0) {
             reject = PaxosRejectedException.INSTANCE_REJECT;
             paxos.updateInstance(rejectEpoch);
+            logger.info("The epoch is lower, the instance will restart.");
 
             // local ballot is smaller
         } else if (rejectBallot > 0) {
             reject = PaxosRejectedException.BALLOT_REJECT;
             paxos.setRnd(rejectBallot);
+            logger.info("The ballot is lower, the instance will restart.");
         }
 
         // restart phase1
@@ -325,9 +365,13 @@ public class DefaultLeaderElection implements LeaderElection {
         prepare.setEpoch(paxos.getEpoch());
         message.setBody(prepare);
 
+        logger.info("Send prepare message {}", message);
+
         // Receive the promise(Phase1b) message
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_QUORUM);
+
+        logger.info("Received the promise message {}", replies);
 
         // if no majority responses, it can't work
         if (replies.size() < config.getQuorumSize() - 1) {
@@ -354,8 +398,11 @@ public class DefaultLeaderElection implements LeaderElection {
 
         message.setBody(accept);
 
+        logger.info("Send accept message {}", message);
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_ALL);
+
+        logger.info("Received accepted message {}", replies);
 
         // No majority are alive
         if (replies.size() < config.getQuorumSize() - 1) {
@@ -381,15 +428,18 @@ public class DefaultLeaderElection implements LeaderElection {
         if (numAccepted >= config.getQuorumSize()) {
             Message learnMessage = makeLearnMessage(leader);
 
+            logger.info("It has agreed on the value {}, send learn message {}", leader, learnMessage);
             // Send Learn message to all nodes
             componentManager.getMessageService().sendLearnMessage(learnMessage);
             return;
         }
 
         if (rejectedEpoch != -1) {
+            logger.info("The epoch is lower, the instance will restart.");
             paxos.updateInstance(rejectedEpoch);
             throw new PaxosRejectedException(PaxosRejectedException.INSTANCE_REJECT);
         } else if (rejectedRnd != -1) {
+            logger.info("The ballot is lower, the instance will restart.");
             paxos.setRnd(rejectedRnd);
             throw new PaxosRejectedException(PaxosRejectedException.BALLOT_REJECT);
         }

@@ -50,6 +50,7 @@ public class MessageService {
             // If the endpoint is local, executes the message directly
             if (config.isLocalEndpoint(endpoint)) {
                 VerbMappings.getVerbHandler(Verb.PAXOS_LEARN).doVerb(message);
+                continue;
             }
 
             try {
