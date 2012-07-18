@@ -11,10 +11,7 @@ import com.hopper.verb.VerbMappings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -70,6 +67,7 @@ public class DefaultLeaderElection implements LeaderElection {
         }
 
         System.out.println("=====================stack=================");
+        System.out.println(new Date());
         for (StackTraceElement traceElement : traceElements) {
             System.out.printf(">>> %s.%s (%d)", traceElement.getClassName(), traceElement.getMethodName(),
                     traceElement.getLineNumber());
@@ -245,7 +243,14 @@ public class DefaultLeaderElection implements LeaderElection {
     private void startPaxos() {
 
         logger.info("Staring phase1...");
-        int leader = phase1();
+        final int currentBallotId = paxos.getRnd();
+        // generate a ballot id
+        final int serverBallotId = config.getServerBallotId(config.getLocalServerEndpoint().serverId);
+        int newBallot = BallotGenerator.generateBallot(serverBallotId, config.getGroupEndpoints().length, currentBallotId);
+
+        paxos.setRnd(newBallot);
+
+        int leader = phase1(newBallot);
 
         // If the serverId from Phase1b is not the local server, it indicating there are some contention and
         // other servers may have completed Phase1, current node should abandon the subsequent election steps.
@@ -259,18 +264,18 @@ public class DefaultLeaderElection implements LeaderElection {
 
         logger.info("Starting phase2...");
         // starting phase2
-        phase2(leader);
+        phase2(newBallot, leader);
         logger.info("Phase2 has completed.");
     }
 
     /**
      * Executes paxos Phase1
      */
-    private int phase1() {
+    private int phase1(int ballotId) {
 
         // Executing Phase1a(Prepare)
         logger.info("Staring prepare...");
-        List<Message> replies = prepare();
+        List<Message> replies = prepare(ballotId);
         logger.info("Get response from prepare {}", replies);
 
         int promiseCount = 0;
@@ -342,7 +347,7 @@ public class DefaultLeaderElection implements LeaderElection {
      * @throws NoQuorumException           If no enough no-fault nodes are alive
      * @throws ElectionTerminatedException If election has been terminated
      */
-    private List<Message> prepare() throws NoQuorumException, ElectionTerminatedException {
+    private List<Message> prepare(int ballotId) throws NoQuorumException, ElectionTerminatedException {
 
         if (componentManager.getDefaultServer().getElectionState() != ElectionState.LOOKING) {
             throw new ElectionTerminatedException();
@@ -355,13 +360,7 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Prepare prepare = new Prepare();
 
-        // generate a ballot id
-        final int serverBallotId = config.getServerBallotId(config.getLocalServerEndpoint().serverId);
-        int ballot = BallotGenerator.generateBallot(serverBallotId, config.getGroupEndpoints().length, paxos.getRnd());
-
-        paxos.setRnd(ballot);
-
-        prepare.setBallot(ballot);
+        prepare.setBallot(ballotId);
         prepare.setEpoch(paxos.getEpoch());
         message.setBody(prepare);
 
@@ -381,7 +380,7 @@ public class DefaultLeaderElection implements LeaderElection {
         return replies;
     }
 
-    private void phase2(int leader) {
+    private void phase2(int ballotId, int leader) {
 
         if (componentManager.getDefaultServer().getElectionState() != ElectionState.LOOKING) {
             throw new ElectionTerminatedException();
@@ -394,7 +393,7 @@ public class DefaultLeaderElection implements LeaderElection {
         Accept accept = new Accept();
         accept.setEpoch(paxos.getEpoch());
         accept.setVval(leader);
-        accept.setBallot(paxos.getRnd());
+        accept.setBallot(ballotId);
 
         message.setBody(accept);
 

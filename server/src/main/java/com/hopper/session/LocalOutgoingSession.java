@@ -12,6 +12,8 @@ import com.hopper.verb.Verb;
 import com.hopper.verb.handler.BatchMultiplexerSessions;
 import com.hopper.verb.handler.HeartBeat;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class LocalOutgoingSession extends SessionProxy implements OutgoingSession, LifecycleListener {
 
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
@@ -25,7 +27,7 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
      */
     private final Runnable heartBeatTask = new HeartBeatTask();
 
-    private volatile boolean isStartedBackground;
+    private final AtomicBoolean staredBackground = new AtomicBoolean(false);
 
     @Override
     public boolean isAlive() {
@@ -83,7 +85,7 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
 
         scheduleManager.removeTask(heartBeatTask);
 
-        isStartedBackground = false;
+        staredBackground.set(false);
     }
 
     @Override
@@ -94,13 +96,11 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
     @Override
     public void background() {
         if (getConnection() == null || !isAlive()) {
-            throw new IllegalStateException("Not bound connection or connetction has been closed.");
+            throw new IllegalStateException("Not bound connection or connection has been closed.");
         }
 
-        if (!isStartedBackground) {
-            isStartedBackground = true;
-            scheduleManager.schedule(heartBeatTask, componentManager.getGlobalConfiguration().getPingPeriod(),
-                    componentManager.getGlobalConfiguration().getPingPeriod());
+        if (staredBackground.compareAndSet(false, true)) {
+            scheduleManager.schedule(heartBeatTask, 0, componentManager.getGlobalConfiguration().getPingPeriod());
         }
     }
 

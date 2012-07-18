@@ -123,12 +123,13 @@ public class LearnVerbHandler implements VerbHandler {
         startLeaderDataSync();
         long syncTime = System.currentTimeMillis() - t;
 
-        long rpcPeriod = componentManager.getGlobalConfiguration().getRetryPeriod();
+        long rpcPeriod = componentManager.getGlobalConfiguration().getRpcTimeout();
         long waitingPeriod = 2 * rpcPeriod;
 
         // Although the election process has completed, but the followers might not communicate to leader
         // immediately, so the election monitor might start election progress again. To avoid the case,
         // it allows setting a barrier with a period for election monitor.
+        logger.info("Sync time={}, waiting time={}", syncTime, (waitingPeriod - syncTime));
         if (syncTime < waitingPeriod) {
             componentManager.getElectionMonitor().setBarrier(waitingPeriod - syncTime);
         }
@@ -239,11 +240,11 @@ public class LearnVerbHandler implements VerbHandler {
 
     private void acceptLeader(int olderLeader, int newLeader) throws Exception {
 
-        // Inactive older leader
-        inactiveOlderLeader(olderLeader);
-
         // Active new leader
         activeNewLeader(newLeader);
+
+        // Inactive older leader
+        inactiveOlderLeader(olderLeader);
 
         // transfer all client sessions to new leader
         transferClientSession(newLeader);
@@ -253,7 +254,7 @@ public class LearnVerbHandler implements VerbHandler {
      * Inactive the older leader, close all bound sessions
      */
     private void inactiveOlderLeader(int oldLeader) {
-        if (oldLeader < 0) {
+        if (oldLeader < 0 || oldLeader == componentManager.getGlobalConfiguration().getLocalServerEndpoint().serverId) {
             return;
         }
 
@@ -269,6 +270,7 @@ public class LearnVerbHandler implements VerbHandler {
         OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(leaderEndpoint);
 
         // start heart beat
+        logger.info("Active new leader {}...", leader);
         session.background();
     }
 

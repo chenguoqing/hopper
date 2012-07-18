@@ -38,12 +38,14 @@ public class Accept implements Serializer {
 
     @Override
     public void serialize(DataOutput out) throws IOException {
+        out.writeInt(epoch);
         out.writeInt(ballot);
         out.writeInt(vval);
     }
 
     @Override
     public void deserialize(DataInput in) throws IOException {
+        this.epoch = in.readInt();
         this.ballot = in.readInt();
         this.vval = in.readInt();
     }

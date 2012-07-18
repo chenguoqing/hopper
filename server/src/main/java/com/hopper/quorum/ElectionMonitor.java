@@ -60,7 +60,7 @@ public class ElectionMonitor extends LifecycleProxy implements LifecycleListener
 
             IncomingSession[] sessions = componentManager.getSessionManager().getAllIncomingSessions();
 
-            int missingCounter = groupSize - sessions.length;
+            int missingCounter = groupSize - sessions.length - 1;
 
             for (IncomingSession session : sessions) {
                 if (!session.isAlive()) {
