@@ -19,7 +19,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * {@link DataSyncService} provides supports for data synchronization between nodes.
@@ -88,7 +91,7 @@ public class DataSyncService extends LifecycleProxy {
         }
 
         for (StateNodeSnapshot snapshot : difference.addedList) {
-            StateNode node = new StateNode(snapshot.key, snapshot.version);
+            StateNode node = newStateNode(snapshot.key, snapshot.version);
             node.update(snapshot);
 
             storage.put(node);
@@ -139,6 +142,15 @@ public class DataSyncService extends LifecycleProxy {
         }
 
         return futures;
+    }
+
+    private StateNode newStateNode(String key, long initialVersion) {
+        StateNode node = new StateNode(key, initialVersion);
+        node.setScheduleManager(componentManager.getScheduleManager());
+        ExecutorService notifyExecutorService = componentManager.getStageManager().getThreadPool(Stage.STATE_CHANGE);
+        node.setNotifyExecutorService(notifyExecutorService);
+
+        return node;
     }
 
     /**

@@ -10,9 +10,9 @@ import com.hopper.session.ClientConnection;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
 import com.hopper.session.SessionIdGenerator;
-import com.hopper.storage.OwnerNoMatchException;
+import com.hopper.storage.NotMatchOwnerException;
+import com.hopper.storage.NotMatchStatusException;
 import com.hopper.storage.StateStorage;
-import com.hopper.storage.StatusNoMatchException;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
 import com.hopper.verb.handler.BatchMultiplexerSessions;
@@ -289,9 +289,9 @@ public class HopperServiceImpl implements HopperService.Iface {
                 task.mutation();
             } catch (NoQuorumException e) {
                 throw new RetryException(config.getRetryPeriod());
-            } catch (StatusNoMatchException e) {
+            } catch (NotMatchStatusException e) {
                 throw new CASException(1);
-            } catch (OwnerNoMatchException e) {
+            } catch (NotMatchOwnerException e) {
                 throw new CASException(2);
             }
         } else {

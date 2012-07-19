@@ -2,7 +2,7 @@ package com.hopper.storage;
 
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
-import com.hopper.stage.Stage;
+import com.hopper.utils.ScheduleManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -90,6 +90,9 @@ public class StateNode {
      */
     private final LinkedList<String> stateChangeListeners = new LinkedList<String>();
 
+    private ScheduleManager scheduleManager;
+    private ExecutorService notifyExecutorService;
+
     /**
      * Constructor
      */
@@ -105,16 +108,24 @@ public class StateNode {
         this.version = initalVersion;
     }
 
+    public void setScheduleManager(ScheduleManager scheduleManager) {
+        this.scheduleManager = scheduleManager;
+    }
+
+    public void setNotifyExecutorService(ExecutorService notifyExecutorService) {
+        this.notifyExecutorService = notifyExecutorService;
+    }
+
     public void setStatus(int expectStatus, int newStatus, String owner, int lease) {
         nodeLock.writeLock().lock();
         try {
             if (expectStatus != this.status) {
-                throw new StatusNoMatchException(expectStatus, status);
+                throw new NotMatchStatusException(expectStatus, status);
             }
 
             // Invalidate owner
             if (this.owner != null && owner != null && !this.owner.equals(owner)) {
-                throw new OwnerNoMatchException(this.owner, owner);
+                throw new NotMatchOwnerException(this.owner, owner);
             }
             final int oldStatus = this.status;
             this.status = newStatus;
@@ -123,13 +134,12 @@ public class StateNode {
             this.lastModified = System.currentTimeMillis();
 
             // Remove the old task
-            componentManager.getScheduleManager().removeTask(task);
+            scheduleManager.removeTask(task);
 
+            this.lease = lease;
             if (lease > 0) {
-                this.lease = lease;
-
                 // add new task
-                componentManager.getScheduleManager().schedule(task, lease);
+                scheduleManager.schedule(task, lease);
             }
 
             // fire state change
@@ -174,12 +184,12 @@ public class StateNode {
             }
 
             if (expectStatus != this.status) {
-                throw new StatusNoMatchException(expectStatus, this.status);
+                throw new NotMatchStatusException(expectStatus, this.status);
             }
 
             // Invalidate owner
             if (this.owner != null && !this.owner.equals(owner)) {
-                throw new OwnerNoMatchException(owner, this.owner);
+                throw new NotMatchOwnerException(owner, this.owner);
             }
 
             // Remove the old task
@@ -189,7 +199,7 @@ public class StateNode {
             this.lastModified = System.currentTimeMillis();
 
             // add new task
-            componentManager.getScheduleManager().schedule(task, lease);
+            scheduleManager.schedule(task, lease);
 
         } finally {
             nodeLock.writeLock().unlock();
@@ -200,7 +210,7 @@ public class StateNode {
         nodeLock.writeLock().lock();
         try {
             if (this.status != expectStatus) {
-                throw new StatusNoMatchException(expectStatus, status);
+                throw new NotMatchStatusException(expectStatus, status);
             }
             stateChangeListeners.add(sessionId);
         } finally {
@@ -314,7 +324,7 @@ public class StateNode {
 
             // start tasks with remaining times
         } else {
-            componentManager.getScheduleManager().schedule(task, now - lastModified);
+            scheduleManager.schedule(task, now - lastModified);
         }
     }
 
@@ -322,7 +332,7 @@ public class StateNode {
      * Remove the invalidate task from schedule manager immediately.
      */
     void removeInvalidateTask() {
-        componentManager.getScheduleManager().removeTask(task);
+        scheduleManager.removeTask(task);
     }
 
     boolean shouldPurge() {
@@ -334,13 +344,13 @@ public class StateNode {
      * Fire all state change listeners (asynchronous)
      */
     private void fireStateChangeListeners(int oldStatus, int newStatus) {
-        ExecutorService threadPool = componentManager.getStageManager().getThreadPool(Stage.STATE_CHANGE);
+
 
         String sessionId = stateChangeListeners.poll();
 
         while (sessionId != null) {
             Runnable task = new StateChangeNotifyTask(oldStatus, newStatus, sessionId);
-            threadPool.execute(task);
+            notifyExecutorService.execute(task);
             sessionId = stateChangeListeners.poll();
         }
     }

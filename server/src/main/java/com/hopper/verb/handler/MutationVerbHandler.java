@@ -5,10 +5,11 @@ import com.hopper.quorum.NoQuorumException;
 import com.hopper.server.*;
 import com.hopper.session.Message;
 import com.hopper.session.MessageService;
-import com.hopper.storage.OwnerNoMatchException;
+import com.hopper.stage.Stage;
+import com.hopper.storage.NotMatchOwnerException;
+import com.hopper.storage.NotMatchStatusException;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
-import com.hopper.storage.StatusNoMatchException;
 import com.hopper.thrift.ChannelBound;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * MutationVerbHandler processes state related operations
@@ -76,8 +78,8 @@ public class MutationVerbHandler implements VerbHandler {
         server.assertServiceAvailable();
 
         // Local modification first
-        StateNode node = new StateNode(key, StateNode.TYPE_TEMP, StateNode.DEFAULT_STATUS,
-                StateNode.DEFAULT_INVALIDATE_STATUS, componentManager.getLeaderElection().getPaxos().getEpoch());
+        StateNode node = newStateNode(key, initStatus, invalidateStatus, componentManager.getLeaderElection().getPaxos().getEpoch());
+
         storage.put(node);
 
         if (server.isLeader()) {
@@ -97,9 +99,9 @@ public class MutationVerbHandler implements VerbHandler {
             logger.warn("No quorum nodes are alive, drops the create request.");
         } catch (ServiceUnavailableException e) {
             logger.warn("The server is unavailable, drops the create request.");
-        } catch (StatusNoMatchException e) {
+        } catch (NotMatchStatusException e) {
             replyMutation(MutationReply.STATUS_CAS);
-        } catch (OwnerNoMatchException e) {
+        } catch (NotMatchOwnerException e) {
             replyMutation(MutationReply.OWNER_CAS);
         }
     }
@@ -108,8 +110,8 @@ public class MutationVerbHandler implements VerbHandler {
      * Update the status bound with key with CAS condition
      */
     public void updateStatus(String key, int expectStatus, int newStatus, String owner,
-                             int lease) throws ServiceUnavailableException, StatusNoMatchException,
-            OwnerNoMatchException {
+                             int lease) throws ServiceUnavailableException, NotMatchStatusException,
+            NotMatchOwnerException {
 
         // check server state
         server.assertServiceAvailable();
@@ -140,9 +142,9 @@ public class MutationVerbHandler implements VerbHandler {
             logger.warn("No quorum nodes are alive, drops the updateLease request.");
         } catch (NoQuorumException e) {
             logger.warn("The server is unavailable, drops the updateLease request.");
-        } catch (StatusNoMatchException e) {
+        } catch (NotMatchStatusException e) {
             replyMutation(MutationReply.STATUS_CAS);
-        } catch (OwnerNoMatchException e) {
+        } catch (NotMatchOwnerException e) {
             replyMutation(MutationReply.OWNER_CAS);
         }
     }
@@ -151,8 +153,8 @@ public class MutationVerbHandler implements VerbHandler {
      * Update the lease property bound with key with CAS condition
      */
     public void updateLease(String key, int expectStatus, String owner,
-                            int lease) throws ServiceUnavailableException, StatusNoMatchException,
-            OwnerNoMatchException {
+                            int lease) throws ServiceUnavailableException, NotMatchStatusException,
+            NotMatchOwnerException {
         // check server state
         server.assertServiceAvailable();
 
@@ -181,7 +183,7 @@ public class MutationVerbHandler implements VerbHandler {
             logger.warn("No quorum nodes are alive, drops the updateLease request.");
         } catch (NoQuorumException e) {
             logger.warn("The server is unavailable, drops the updateLease request.");
-        } catch (StatusNoMatchException e) {
+        } catch (NotMatchStatusException e) {
             replyMutation(MutationReply.STATUS_CAS);
         }
     }
@@ -211,8 +213,15 @@ public class MutationVerbHandler implements VerbHandler {
         if (node == null) {
             synchronized (key) {
                 node = storage.get(key);
-                node = new StateNode(key, componentManager.getLeaderElection().getPaxos().getEpoch());
-                storage.put(node);
+                if (node == null) {
+                    node = newStateNode(key, StateNode.DEFAULT_STATUS, StateNode.DEFAULT_INVALIDATE_STATUS,
+                            componentManager.getLeaderElection()
+                                    .getPaxos().getEpoch());
+                    node.setScheduleManager(componentManager.getScheduleManager());
+                    ExecutorService notifyExecutorService = componentManager.getStageManager().getThreadPool(Stage.STATE_CHANGE);
+                    node.setNotifyExecutorService(notifyExecutorService);
+                    storage.put(node);
+                }
             }
         }
 
@@ -248,5 +257,14 @@ public class MutationVerbHandler implements VerbHandler {
         // send response
         Endpoint endpoint = config.getEndpoint(ChannelBound.get().getRemoteAddress());
         componentManager.getMessageService().sendOneway(response, endpoint.serverId);
+    }
+
+    private StateNode newStateNode(String key, int initialStatus, int invalidateStatus, long initialVersion) {
+        StateNode node = new StateNode(key, StateNode.TYPE_TEMP, initialStatus, invalidateStatus, initialVersion);
+        node.setScheduleManager(componentManager.getScheduleManager());
+        ExecutorService notifyExecutorService = componentManager.getStageManager().getThreadPool(Stage.STATE_CHANGE);
+        node.setNotifyExecutorService(notifyExecutorService);
+
+        return node;
     }
 }

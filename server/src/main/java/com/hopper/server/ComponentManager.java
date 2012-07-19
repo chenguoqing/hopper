@@ -15,6 +15,7 @@ import com.hopper.storage.StateStorage;
 import com.hopper.storage.TreeStorage;
 import com.hopper.storage.merkle.MapStorage;
 import com.hopper.sync.DataSyncService;
+import com.hopper.utils.DefaultScheduleManager;
 import com.hopper.utils.ScheduleManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -182,7 +183,7 @@ public class ComponentManager extends LifecycleProxy {
     }
 
     private ScheduleManager createScheduleManager() {
-        ScheduleManager scheduleManager = new ScheduleManager();
+        ScheduleManager scheduleManager = new DefaultScheduleManager();
         return scheduleManager;
     }
 
