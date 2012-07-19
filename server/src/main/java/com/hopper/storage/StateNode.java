@@ -197,6 +197,7 @@ public class StateNode {
 
             this.lease = lease;
             this.lastModified = System.currentTimeMillis();
+            this.version++;
 
             // add new task
             scheduleManager.schedule(task, lease);

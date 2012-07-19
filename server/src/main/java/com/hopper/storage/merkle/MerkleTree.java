@@ -47,15 +47,13 @@ public class MerkleTree implements Serializer {
         if (hashDepth > 30) {
             throw new IllegalArgumentException("hashDepth muse be less than 31.");
         }
-        long rangeSize = Math.abs((long)range.getRight() - (long)range.getLeft());
+        long rangeSize = Math.abs((long) range.getRight() - (long) range.getLeft());
 
         int hashSize = 2 << hashDepth;
 
         if (rangeSize < hashSize) {
             throw new IllegalArgumentException("HashRange[" + range.getLeft() + "," + range.getRight() + "] is less " +
-                    "than hash " +
-                    "depth" +
-                    " " + hashDepth);
+                    "than hash depth" + hashDepth);
         }
     }
 
@@ -133,8 +131,8 @@ public class MerkleTree implements Serializer {
             throw new NullPointerException();
         }
 
-        HashRange leafRange = findAndCreateLeafRange(MurmurHash.hash(stateNode.key));
-        leafRange.put(stateNode);
+        HashRange range = findAndCreateLeafRange(MurmurHash.hash(stateNode.key));
+        range.put(stateNode);
     }
 
     /**

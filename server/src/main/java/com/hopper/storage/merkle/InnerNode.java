@@ -25,6 +25,9 @@ public class InnerNode implements MerkleNode {
      */
     private HashRange range;
 
+    private int keyHash;
+    private int valueHash;
+
     public InnerNode(HashRange range) {
         this.range = range;
         range.setMerkleNode(this);
@@ -32,31 +35,48 @@ public class InnerNode implements MerkleNode {
 
     @Override
     public int getKeyHash() {
-        if (left == null) {
-            return right.getKeyHash();
-        } else if (right == null) {
-            return left.getKeyHash();
-        }
-        return left.getKeyHash() ^ right.getKeyHash();
+        return keyHash;
     }
 
     @Override
     public int getValueHash() {
-        if (left == null) {
-            return right.getValueHash();
-        } else if (right == null) {
-            return left.getValueHash();
-        }
-        return left.getValueHash() ^ right.getValueHash();
+        return valueHash;
     }
 
     @Override
     public void hash() {
+        Integer leftKeyHash = null;
+        Integer leftValueHash = null;
+
         if (left != null) {
             left.hash();
+            leftKeyHash = left.getKeyHash();
+            leftValueHash = left.getValueHash();
         }
+
+        Integer rightKeyHash = null;
+        Integer rightValueHash = null;
+
         if (right != null) {
             right.hash();
+            rightKeyHash = right.getKeyHash();
+            rightValueHash = right.getValueHash();
+        }
+
+        if (leftKeyHash != null && rightKeyHash != null) {
+            this.keyHash = leftKeyHash ^ rightKeyHash;
+        } else if (leftKeyHash == null && rightKeyHash == null) {
+            this.keyHash = 0;
+        } else {
+            this.keyHash = leftKeyHash != null ? leftKeyHash : rightKeyHash;
+        }
+
+        if (leftValueHash != null && rightValueHash != null) {
+            this.valueHash = leftValueHash ^ rightValueHash;
+        } else if (leftValueHash == null && rightValueHash == null) {
+            this.valueHash = 0;
+        } else {
+            this.valueHash = leftValueHash != null ? leftValueHash : rightValueHash;
         }
     }
 
