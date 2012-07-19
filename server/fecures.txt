@@ -1,0 +1,7 @@
+1. Test leader election on multiple nodes environment
+2. Add jmx codes
+3. Fix the issues that election with long period when connection can't to be established
+4. Test data synchronization
+5. Test avoiding duplicate synchronization when data synchronization
+6. Test merkle tree
+7. Data in-consistence test
