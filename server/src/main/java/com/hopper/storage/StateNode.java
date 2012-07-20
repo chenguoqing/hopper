@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class StateNode {
+public class StateNode implements KeyVersionObject {
     /**
      * Serial Version UID
      */
@@ -251,6 +251,12 @@ public class StateNode {
         }
     }
 
+    @Override
+    public String getKey() {
+        return key;
+    }
+
+    @Override
     public long getVersion() {
         nodeLock.readLock().lock();
         try {

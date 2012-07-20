@@ -1,7 +1,8 @@
 package com.hopper.storage.merkle;
 
 import com.hopper.session.Serializer;
-import com.hopper.storage.StateNode;
+import com.hopper.storage.KeyVersionObject;
+import com.hopper.storage.ObjectLookup;
 import com.hopper.utils.MurmurHash;
 
 import java.io.DataInput;
@@ -12,11 +13,11 @@ import java.io.IOException;
  * {@link MerkleTree} inteface represents a logical merkle-tree, it will construct the real tree node/leaf on runtime
  * (lazy-creation). About the storage design, see {@link com.hopper.storage.StateStorage}.
  */
-public class MerkleTree implements Serializer {
+public class MerkleTree<T extends KeyVersionObject> implements Serializer {
     /**
      * The full range for current tree
      */
-    private final HashRange range;
+    private final HashRange<T> range;
     /**
      * Tree height
      */
@@ -26,17 +27,25 @@ public class MerkleTree implements Serializer {
      */
     private final MerkleNode root;
 
+    private ObjectLookup objectLookup;
+
     public MerkleTree(byte hashDepth) {
-        this(new HashRange(Integer.MIN_VALUE, Integer.MAX_VALUE), hashDepth);
+        this(new HashRange<T>(Integer.MIN_VALUE, Integer.MAX_VALUE), hashDepth);
     }
 
-    public MerkleTree(HashRange range, byte hashDepth) {
+    public MerkleTree(HashRange<T> range, byte hashDepth) {
         // Check range and hash depth
         checkRange(range, hashDepth);
+
+        range.setObjectLookup(objectLookup);
 
         this.range = range;
         this.hashDepth = hashDepth;
         this.root = new InnerNode(range);
+    }
+
+    public void setObjectLookup(ObjectLookup objectLookup) {
+        this.objectLookup = objectLookup;
     }
 
     /**
@@ -72,7 +81,7 @@ public class MerkleTree implements Serializer {
      * Find a leaf range by hash, if it doesn't exists, create it first. The method will cause to lazy loading the
      * entire tree nodes. The mechanism can significant save space.
      */
-    private HashRange findAndCreateLeafRange(int hash) {
+    private HashRange<T> findAndCreateLeafRange(int hash) {
         MerkleNode node = root;
         int depth = 0;
 
@@ -126,13 +135,13 @@ public class MerkleTree implements Serializer {
     /**
      * The method should only be invoked by StateStorage.
      */
-    public void put(StateNode stateNode) {
-        if (stateNode == null) {
+    public void put(T obj) {
+        if (obj == null) {
             throw new NullPointerException();
         }
 
-        HashRange range = findAndCreateLeafRange(MurmurHash.hash(stateNode.key));
-        range.put(stateNode);
+        HashRange<T> range = findAndCreateLeafRange(MurmurHash.hash(obj.getKey()));
+        range.put(obj);
     }
 
     /**

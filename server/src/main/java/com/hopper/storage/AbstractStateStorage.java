@@ -19,7 +19,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
     /**
      * merkle tree reference
      */
-    protected final MerkleTree tree;
+    protected final MerkleTree<StateNode> tree;
     /**
      * Monotonically increasing xid
      */
@@ -35,7 +35,8 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
      * Constructor for initializing the merkle tree uniquely
      */
     public AbstractStateStorage() {
-        this.tree = new MerkleTree(componentManager.getGlobalConfiguration().getMerkleTreeDepth());
+        this.tree = new MerkleTree<StateNode>(componentManager.getGlobalConfiguration().getMerkleTreeDepth());
+        this.tree.setObjectLookup(componentManager.getStateStorage());
     }
 
     @Override
@@ -60,6 +61,11 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
         tree.remove(key);
 
         return old;
+    }
+
+    @Override
+    public StateNode lookup(String key) {
+        return get(key);
     }
 
     protected abstract StateNode doRemove(String key);

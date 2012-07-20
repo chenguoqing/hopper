@@ -54,6 +54,5 @@ public class RequireDiff implements Serializer {
         this.tree = new MerkleTree(ComponentManagerFactory.getComponentManager().getGlobalConfiguration()
                 .getMerkleTreeDepth());
         tree.deserialize(in);
-        tree.loadHash();
     }
 }

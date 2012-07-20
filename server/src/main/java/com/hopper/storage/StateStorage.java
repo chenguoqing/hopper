@@ -20,7 +20,7 @@ import java.util.Collection;
  * MerkleTree is the underlying component of StateStorage, that splits all date into some hash ranges by data key's
  * hash, it only maintains some key references not the data self.
  */
-public interface StateStorage extends Lifecycle {
+public interface StateStorage extends Lifecycle, ObjectLookup<StateNode> {
 
     /**
      * Add state node

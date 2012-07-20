@@ -1,6 +1,6 @@
 package com.hopper.storage.merkle;
 
-import com.hopper.storage.StateNode;
+import com.hopper.storage.KeyVersionObject;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -11,24 +11,24 @@ import java.util.List;
 /**
  * The implementation of MerkleNode, it represents a inner node(not leaf)
  */
-public class InnerNode implements MerkleNode {
+public class InnerNode<T extends KeyVersionObject> implements MerkleNode<T> {
     /**
      * Left sub tree
      */
-    private MerkleNode left;
+    private MerkleNode<T> left;
     /**
      * Right sub tree
      */
-    private MerkleNode right;
+    private MerkleNode<T> right;
     /**
      * Associated range
      */
-    private HashRange range;
+    private HashRange<T> range;
 
     private int keyHash;
     private int valueHash;
 
-    public InnerNode(HashRange range) {
+    public InnerNode(HashRange<T> range) {
         this.range = range;
         range.setMerkleNode(this);
     }
@@ -80,48 +80,48 @@ public class InnerNode implements MerkleNode {
         }
     }
 
-    public void setLeft(MerkleNode left) {
+    public void setLeft(MerkleNode<T> left) {
         this.left = left;
     }
 
     @Override
-    public MerkleNode getLeft() {
+    public MerkleNode<T> getLeft() {
         return left;
     }
 
-    public void setRight(MerkleNode right) {
+    public void setRight(MerkleNode<T> right) {
         this.right = right;
     }
 
     @Override
-    public MerkleNode getRight() {
+    public MerkleNode<T> getRight() {
         return right;
     }
 
     @Override
-    public HashRange getRange() {
+    public HashRange<T> getRange() {
         return range;
     }
 
     @Override
-    public List<StateNode> getStateNodes() {
-        List<StateNode> nodeList = new ArrayList<StateNode>();
+    public List<T> getStateNodes() {
+        List<T> nodeList = new ArrayList<T>();
 
-        getStateNodes(this, nodeList);
+        getBoundObjects(this, nodeList);
         return nodeList;
     }
 
-    private void getStateNodes(MerkleNode node, final List<StateNode> nodeList) {
+    private void getBoundObjects(MerkleNode<T> node, final List<T> nodeList) {
         if (node instanceof Leaf) {
-            nodeList.addAll(range.getStateNodes());
+            nodeList.addAll(range.getBoundObjects());
         }
 
         if (left != null) {
-            getStateNodes(left, nodeList);
+            getBoundObjects(left, nodeList);
         }
 
         if (right != null) {
-            getStateNodes(right, nodeList);
+            getBoundObjects(right, nodeList);
         }
     }
 

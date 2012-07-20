@@ -1,11 +1,8 @@
 package com.hopper.storage.merkle;
 
-import com.hopper.GlobalConfiguration;
-import com.hopper.server.ComponentManager;
-import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Serializer;
-import com.hopper.storage.StateNode;
-import com.hopper.storage.StateStorage;
+import com.hopper.storage.KeyVersionObject;
+import com.hopper.storage.ObjectLookup;
 import com.hopper.utils.ByteUtils;
 import com.hopper.utils.MurmurHash;
 
@@ -22,8 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * {@link HashRange} represents a hash interval [left,right),it holds some StateNode(keys only) instances which key's
  * hash value belongs to this interval.
  */
-public class HashRange implements Serializer {
-    private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+public class HashRange<T extends KeyVersionObject> implements Serializer {
     /**
      * HashRange left position
      */
@@ -33,13 +29,9 @@ public class HashRange implements Serializer {
      */
     private int right;
     /**
-     * GlobalConfiguration instance
-     */
-    private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
-    /**
      * StateNode will be delegate to StateStorage
      */
-    private final StateStorage storage = componentManager.getStateStorage();
+    private ObjectLookup<T> objectFinder;
     /**
      * All associated StateNode keys
      */
@@ -50,6 +42,10 @@ public class HashRange implements Serializer {
     private MerkleNode merkleNode;
 
     public HashRange() {
+    }
+
+    public void setObjectLookup(ObjectLookup<T> objectFinder) {
+        this.objectFinder = objectFinder;
     }
 
     /**
@@ -102,9 +98,9 @@ public class HashRange implements Serializer {
         return new HashRange(midPos, right);
     }
 
-    public void put(StateNode stateNode) {
+    public void put(T stateNode) {
         checkNode();
-        keyVersionMap.putIfAbsent(stateNode.key, new AtomicLong(stateNode.getVersion()));
+        keyVersionMap.putIfAbsent(stateNode.getKey(), new AtomicLong(stateNode.getVersion()));
     }
 
     /**
@@ -118,10 +114,10 @@ public class HashRange implements Serializer {
     /**
      * Retrieve all StateNode
      */
-    public List<StateNode> getStateNodes() {
-        List<StateNode> nodes = new ArrayList<StateNode>(keyVersionMap.size());
+    public List<T> getBoundObjects() {
+        List<T> nodes = new ArrayList<T>(keyVersionMap.size());
         for (String key : keyVersionMap.keySet()) {
-            nodes.add(storage.get(key));
+            nodes.add((T) objectFinder.lookup(key));
         }
         return nodes;
     }
@@ -192,7 +188,7 @@ public class HashRange implements Serializer {
     public void loadVersions() {
         for (String key : keyVersionMap.keySet()) {
             AtomicLong version = keyVersionMap.get(key);
-            StateNode node = storage.get(key);
+            T node = (T) objectFinder.lookup(key);
 
             version.set(node.getVersion());
         }
