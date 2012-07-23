@@ -13,7 +13,7 @@ import com.hopper.session.SessionManager;
 import com.hopper.stage.StageManager;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.TreeStorage;
-import com.hopper.storage.merkle.MapStorage;
+import com.hopper.utils.merkle.MapStorage;
 import com.hopper.sync.DataSyncService;
 import com.hopper.utils.DefaultScheduleManager;
 import com.hopper.utils.ScheduleManager;

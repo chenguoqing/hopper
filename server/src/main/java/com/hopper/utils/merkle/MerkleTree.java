@@ -1,8 +1,6 @@
-package com.hopper.storage.merkle;
+package com.hopper.utils.merkle;
 
 import com.hopper.session.Serializer;
-import com.hopper.storage.KeyVersionObject;
-import com.hopper.storage.ObjectLookup;
 import com.hopper.utils.MurmurHash;
 
 import java.io.DataInput;
@@ -13,11 +11,7 @@ import java.io.IOException;
  * {@link MerkleTree} inteface represents a logical merkle-tree, it will construct the real tree node/leaf on runtime
  * (lazy-creation). About the storage design, see {@link com.hopper.storage.StateStorage}.
  */
-public class MerkleTree<T extends KeyVersionObject> implements Serializer {
-    /**
-     * The full range for current tree
-     */
-    private final HashRange<T> range;
+public class MerkleTree<T extends MerkleObjectRef> implements Serializer {
     /**
      * Tree height
      */
@@ -25,34 +19,33 @@ public class MerkleTree<T extends KeyVersionObject> implements Serializer {
     /**
      * Tree root
      */
-    private final MerkleNode root;
+    private MerkleNode root;
 
-    private ObjectLookup objectLookup;
+    private MerkleObjectReferenceable objectReferenceable;
+
+    private boolean readonly;
 
     public MerkleTree(byte hashDepth) {
-        this(new HashRange<T>(Integer.MIN_VALUE, Integer.MAX_VALUE), hashDepth);
+        this(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE), hashDepth);
     }
 
-    public MerkleTree(HashRange<T> range, byte hashDepth) {
+    public MerkleTree(Range range, byte hashDepth) {
         // Check range and hash depth
         checkRange(range, hashDepth);
 
-        range.setObjectLookup(objectLookup);
-
-        this.range = range;
         this.hashDepth = hashDepth;
         this.root = new InnerNode(range);
     }
 
-    public void setObjectLookup(ObjectLookup objectLookup) {
-        this.objectLookup = objectLookup;
+    public void setObjectReferenceable(MerkleObjectReferenceable objectReferenceable) {
+        this.objectReferenceable = objectReferenceable;
     }
 
     /**
      * Check whether the range size [left,right) can covers the hash depth size(2<sup>hashDepth</sup>). Or,
      * whether or not the range can be split to <code>hashDepth</code> levels.
      */
-    private void checkRange(HashRange range, byte hashDepth) {
+    private void checkRange(Range range, byte hashDepth) {
         if (hashDepth > 30) {
             throw new IllegalArgumentException("hashDepth muse be less than 31.");
         }
@@ -70,6 +63,9 @@ public class MerkleTree<T extends KeyVersionObject> implements Serializer {
      * Lazy-calculate tree's hash
      */
     public void loadHash() {
+        if (readonly) {
+            throw new IllegalStateException("Forbidden to calculate hash for readonly tree.");
+        }
         this.root.hash();
     }
 
@@ -81,20 +77,20 @@ public class MerkleTree<T extends KeyVersionObject> implements Serializer {
      * Find a leaf range by hash, if it doesn't exists, create it first. The method will cause to lazy loading the
      * entire tree nodes. The mechanism can significant save space.
      */
-    private HashRange<T> findAndCreateLeafRange(int hash) {
-        MerkleNode node = root;
+    private Leaf<T> findAndCreateLeaf(int hash) {
+        MerkleNode<T> node = root;
         int depth = 0;
 
         while (!(node instanceof Leaf)) {
 
             if (node.getRange().contains(hash)) {
-                node = createSubMerkleNode(node, node.getRange(), depth++, true);
+                node = createMerkleNode(node, node.getRange().getLeftRange(), depth++, true);
             } else {
-                node = createSubMerkleNode(node, node.getRange(), depth++, false);
+                node = createMerkleNode(node, node.getRange().getRightRange(), depth++, false);
             }
         }
 
-        return node.getRange();
+        return (Leaf<T>) node;
     }
 
     /**
@@ -107,7 +103,7 @@ public class MerkleTree<T extends KeyVersionObject> implements Serializer {
      * @param isLeft Is left node?
      * @return Child node instance
      */
-    private MerkleNode createSubMerkleNode(MerkleNode parent, HashRange range, int depth, boolean isLeft) {
+    private MerkleNode createMerkleNode(MerkleNode<T> parent, Range range, int depth, boolean isLeft) {
         MerkleNode child = isLeft ? parent.getLeft() : parent.getRight();
 
         if (child == null) {
@@ -116,6 +112,7 @@ public class MerkleTree<T extends KeyVersionObject> implements Serializer {
                 if (child == null) {
                     if (depth == hashDepth) {
                         child = new Leaf(range);
+                        ((Leaf<T>) child).setObjectReferenceable(objectReferenceable);
                     } else {
                         child = new InnerNode(range);
                     }
@@ -136,23 +133,29 @@ public class MerkleTree<T extends KeyVersionObject> implements Serializer {
      * The method should only be invoked by StateStorage.
      */
     public void put(T obj) {
+        if (readonly) {
+            throw new IllegalStateException("Forbidden to put for readonly tree.");
+        }
         if (obj == null) {
             throw new NullPointerException();
         }
 
-        HashRange<T> range = findAndCreateLeafRange(MurmurHash.hash(obj.getKey()));
-        range.put(obj);
+        Leaf<T> leaf = findAndCreateLeaf(MurmurHash.hash(obj.getKey()));
+        leaf.put(obj);
     }
 
     /**
      * The method should only be invoked by StateStorage.
      */
     public void remove(String key) {
+        if (readonly) {
+            throw new IllegalStateException("Forbidden to remove for readonly tree.");
+        }
         if (key == null) {
             throw new NullPointerException();
         }
-        HashRange leafRange = findAndCreateLeafRange(MurmurHash.hash(key));
-        leafRange.remove(key);
+        Leaf<T> leaf = findAndCreateLeaf(MurmurHash.hash(key));
+        leaf.remove(key);
     }
 
     /**
@@ -201,11 +204,22 @@ public class MerkleTree<T extends KeyVersionObject> implements Serializer {
 
     @Override
     public void serialize(DataOutput out) throws IOException {
+        out.writeInt(root.getRange().getLeft());
+        out.writeInt(root.getRange().getRight());
         root.serialize(out);
     }
 
     @Override
     public void deserialize(DataInput in) throws IOException {
+        // Lock the tree
+        readonly = true;
+
+        int left = in.readInt();
+        int right = in.readInt();
+        Range range = new Range(left, right);
+        this.root = new InnerNode(range);
         root.deserialize(in);
+
+        root.hash();
     }
 }

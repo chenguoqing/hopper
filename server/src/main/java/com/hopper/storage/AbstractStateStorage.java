@@ -3,7 +3,7 @@ package com.hopper.storage;
 import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
-import com.hopper.storage.merkle.MerkleTree;
+import com.hopper.utils.merkle.MerkleTree;
 
 import java.io.*;
 import java.util.Collection;
@@ -36,7 +36,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
      */
     public AbstractStateStorage() {
         this.tree = new MerkleTree<StateNode>(componentManager.getGlobalConfiguration().getMerkleTreeDepth());
-        this.tree.setObjectLookup(componentManager.getStateStorage());
+        this.tree.setObjectReferenceable(componentManager.getStateStorage());
     }
 
     @Override
@@ -64,7 +64,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
     }
 
     @Override
-    public StateNode lookup(String key) {
+    public StateNode find(String key) {
         return get(key);
     }
 

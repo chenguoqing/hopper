@@ -3,6 +3,7 @@ package com.hopper.storage;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.utils.ScheduleManager;
+import com.hopper.utils.merkle.MerkleObjectRef;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -11,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class StateNode implements KeyVersionObject {
+public class StateNode implements MerkleObjectRef {
     /**
      * Serial Version UID
      */

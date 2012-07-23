@@ -1,4 +1,4 @@
-package com.hopper.storage.merkle;
+package com.hopper.utils.merkle;
 
 import com.hopper.session.Serializer;
 import com.hopper.storage.StateNode;
@@ -43,8 +43,8 @@ public class Difference implements Serializer {
 
 
     public void updated(Leaf node1, Leaf node2) {
-        List<StateNode> stateNodes1 = node1.getStateNodes();
-        List<StateNode> stateNodes2 = node2.getStateNodes();
+        List<StateNode> stateNodes1 = node1.getObjectRefs();
+        List<StateNode> stateNodes2 = node2.getObjectRefs();
 
         Collections.sort(stateNodes1, new Comparator<StateNode>() {
             @Override
@@ -134,7 +134,7 @@ public class Difference implements Serializer {
 
     private List<StateNodeSnapshot> getStateNodeSnapshots(MerkleNode node) {
 
-        List<StateNode> nodes = node.getStateNodes();
+        List<StateNode> nodes = node.getObjectRefs();
 
         List<StateNodeSnapshot> snapshots = new ArrayList<StateNodeSnapshot>(nodes.size());
         for (StateNode state : nodes) {

@@ -2,7 +2,7 @@ package com.hopper.sync;
 
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Serializer;
-import com.hopper.storage.merkle.MerkleTree;
+import com.hopper.utils.merkle.MerkleTree;
 
 import java.io.DataInput;
 import java.io.DataOutput;

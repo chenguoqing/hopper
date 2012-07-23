@@ -1,4 +1,4 @@
-package com.hopper.storage.merkle;
+package com.hopper.utils.merkle;
 
 import com.hopper.lifecycle.LifecycleException;
 import com.hopper.lifecycle.LifecycleListener;

@@ -1,7 +1,8 @@
 package com.hopper.storage;
 
 import com.hopper.lifecycle.Lifecycle;
-import com.hopper.storage.merkle.MerkleTree;
+import com.hopper.utils.merkle.MerkleObjectReferenceable;
+import com.hopper.utils.merkle.MerkleTree;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -20,7 +21,7 @@ import java.util.Collection;
  * MerkleTree is the underlying component of StateStorage, that splits all date into some hash ranges by data key's
  * hash, it only maintains some key references not the data self.
  */
-public interface StateStorage extends Lifecycle, ObjectLookup<StateNode> {
+public interface StateStorage extends Lifecycle, MerkleObjectReferenceable {
 
     /**
      * Add state node

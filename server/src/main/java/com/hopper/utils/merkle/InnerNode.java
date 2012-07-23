@@ -1,6 +1,4 @@
-package com.hopper.storage.merkle;
-
-import com.hopper.storage.KeyVersionObject;
+package com.hopper.utils.merkle;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -11,7 +9,7 @@ import java.util.List;
 /**
  * The implementation of MerkleNode, it represents a inner node(not leaf)
  */
-public class InnerNode<T extends KeyVersionObject> implements MerkleNode<T> {
+public class InnerNode<T extends MerkleObjectRef> implements MerkleNode<T> {
     /**
      * Left sub tree
      */
@@ -23,14 +21,13 @@ public class InnerNode<T extends KeyVersionObject> implements MerkleNode<T> {
     /**
      * Associated range
      */
-    private HashRange<T> range;
+    private final Range range;
 
     private int keyHash;
     private int valueHash;
 
-    public InnerNode(HashRange<T> range) {
+    public InnerNode(Range range) {
         this.range = range;
-        range.setMerkleNode(this);
     }
 
     @Override
@@ -99,36 +96,26 @@ public class InnerNode<T extends KeyVersionObject> implements MerkleNode<T> {
     }
 
     @Override
-    public HashRange<T> getRange() {
+    public Range getRange() {
         return range;
     }
 
     @Override
-    public List<T> getStateNodes() {
+    public List<T> getObjectRefs() {
         List<T> nodeList = new ArrayList<T>();
 
-        getBoundObjects(this, nodeList);
-        return nodeList;
-    }
-
-    private void getBoundObjects(MerkleNode<T> node, final List<T> nodeList) {
-        if (node instanceof Leaf) {
-            nodeList.addAll(range.getBoundObjects());
-        }
-
         if (left != null) {
-            getBoundObjects(left, nodeList);
+            nodeList.addAll(left.getObjectRefs());
         }
 
         if (right != null) {
-            getBoundObjects(right, nodeList);
+            nodeList.addAll(right.getObjectRefs());
         }
+        return nodeList;
     }
 
     @Override
     public void serialize(DataOutput out) throws IOException {
-        // Serialize the range
-        range.serialize(out);
 
         out.writeByte(getChildFlag(left));
         out.writeByte(getChildFlag(right));
@@ -148,13 +135,11 @@ public class InnerNode<T extends KeyVersionObject> implements MerkleNode<T> {
 
     @Override
     public void deserialize(DataInput in) throws IOException {
-        this.range = new HashRange();
-        range.deserialize(in);
         byte leftFlag = in.readByte();
         byte rightFlag = in.readByte();
 
-        this.left = createNodeByFlag(leftFlag, range);
-        this.right = createNodeByFlag(rightFlag, range);
+        this.left = createNodeByFlag(leftFlag, range.getLeftRange());
+        this.right = createNodeByFlag(rightFlag, range.getRightRange());
 
         if (left != null) {
             left.deserialize(in);
@@ -165,14 +150,16 @@ public class InnerNode<T extends KeyVersionObject> implements MerkleNode<T> {
         }
     }
 
-    private MerkleNode createNodeByFlag(byte flag, HashRange range) {
+    private MerkleNode createNodeByFlag(byte flag, Range range) {
 
         if (flag == 1) {
-            return new InnerNode(range);
+            return new InnerNode<T>(range);
         }
 
         if (flag == 2) {
-            return new Leaf(range);
+            Leaf<T> leaf = new Leaf<T>(range);
+            leaf.setReadonly(true);
+            return leaf;
         }
 
         return null;

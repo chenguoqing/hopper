@@ -1,4 +1,4 @@
-package com.hopper.storage;
+package com.hopper.utils.merkle;
 
 /**
  * Created with IntelliJ IDEA.
@@ -7,7 +7,7 @@ package com.hopper.storage;
  * Time: 下午1:31
  * To change this template use File | Settings | File Templates.
  */
-public interface KeyVersionObject {
+public interface MerkleObjectRef {
     String getKey();
 
     long getVersion();

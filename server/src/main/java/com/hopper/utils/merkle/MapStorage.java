@@ -1,4 +1,4 @@
-package com.hopper.storage.merkle;
+package com.hopper.utils.merkle;
 
 import com.hopper.storage.AbstractStateStorage;
 import com.hopper.storage.StateNode;

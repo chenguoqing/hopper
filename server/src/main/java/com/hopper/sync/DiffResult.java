@@ -1,7 +1,7 @@
 package com.hopper.sync;
 
 import com.hopper.session.Serializer;
-import com.hopper.storage.merkle.Difference;
+import com.hopper.utils.merkle.Difference;
 
 import java.io.DataInput;
 import java.io.DataOutput;
