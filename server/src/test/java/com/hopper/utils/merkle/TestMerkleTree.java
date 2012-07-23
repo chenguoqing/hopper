@@ -54,8 +54,8 @@ public class TestMerkleTree {
         StateNode node9 = newStateNode("/a/b/c_6", 10);
         StateNode node10 = newStateNode("/a/b/c_7", 10);
 
-        MerkleTree tree1 = new MerkleTree((byte) 15);
-        MerkleTree tree2 = new MerkleTree((byte) 15);
+        MerkleTree tree1 = new MerkleTree((byte) 15, StateNode.class);
+        MerkleTree tree2 = new MerkleTree((byte) 15, StateNode.class);
 
         tree1.put(node1);
         tree1.put(node2);

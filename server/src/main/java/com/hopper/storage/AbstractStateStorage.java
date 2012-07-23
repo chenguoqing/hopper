@@ -35,7 +35,8 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
      * Constructor for initializing the merkle tree uniquely
      */
     public AbstractStateStorage() {
-        this.tree = new MerkleTree<StateNode>(componentManager.getGlobalConfiguration().getMerkleTreeDepth());
+        this.tree = new MerkleTree<StateNode>(componentManager.getGlobalConfiguration().getMerkleTreeDepth(),
+                StateNode.class);
         this.tree.setObjectReferenceable(componentManager.getStateStorage());
     }
 

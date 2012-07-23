@@ -24,17 +24,18 @@ public class MerkleTree<T extends MerkleObjectRef> implements Serializer {
     private MerkleObjectReferenceable objectReferenceable;
 
     private boolean readonly;
+    private final Class<T> clazz;
 
-    public MerkleTree(byte hashDepth) {
-        this(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE), hashDepth);
+    public MerkleTree(byte hashDepth, Class<T> clazz) {
+        this(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE), hashDepth, clazz);
     }
 
-    public MerkleTree(Range range, byte hashDepth) {
+    public MerkleTree(Range range, byte hashDepth, Class<T> clazz) {
         // Check range and hash depth
         checkRange(range, hashDepth);
-
         this.hashDepth = hashDepth;
         this.root = new InnerNode(range);
+        this.clazz = clazz;
     }
 
     public void setObjectReferenceable(MerkleObjectReferenceable objectReferenceable) {
@@ -113,6 +114,7 @@ public class MerkleTree<T extends MerkleObjectRef> implements Serializer {
                     if (depth == hashDepth) {
                         child = new Leaf(range);
                         ((Leaf<T>) child).setObjectReferenceable(objectReferenceable);
+                        ((Leaf<T>) child).setClazz(clazz);
                     } else {
                         child = new InnerNode(range);
                     }

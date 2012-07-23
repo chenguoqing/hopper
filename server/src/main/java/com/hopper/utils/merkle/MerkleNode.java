@@ -21,7 +21,7 @@ public interface MerkleNode<T extends MerkleObjectRef> extends Serializer {
     /**
      * Return the value hash
      */
-    int getValueHash();
+    int getVersionHash();
 
     /**
      * Lazy-calculate the node's hash value, this caused to recursion invocation.
@@ -31,12 +31,12 @@ public interface MerkleNode<T extends MerkleObjectRef> extends Serializer {
     /**
      * Return left node
      */
-    MerkleNode getLeft();
+    MerkleNode<T> getLeft();
 
     /**
      * Return right node
      */
-    MerkleNode getRight();
+    MerkleNode<T> getRight();
 
     /**
      * Retrieve bound {@link Range}

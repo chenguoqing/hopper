@@ -18,17 +18,27 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
 
     private final ConcurrentMap<String, AtomicLong> keyVersionMap = new ConcurrentHashMap<String, AtomicLong>();
+    private final List<T> objRefs = new ArrayList<T>();
     private MerkleObjectReferenceable objectReferenceable;
+    private Class<T> clazz;
     /**
      * Associated range
      */
     private int keyHash;
-    private int valueHash;
+    private int versionHash;
 
     private boolean readonly;
 
     public Leaf(Range range) {
         super(range);
+    }
+
+    public Class<T> getClazz() {
+        return clazz;
+    }
+
+    public void setClazz(Class<T> clazz) {
+        this.clazz = clazz;
     }
 
     public boolean isReadonly() {
@@ -65,8 +75,8 @@ public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
     }
 
     @Override
-    public int getValueHash() {
-        return valueHash;
+    public int getVersionHash() {
+        return versionHash;
     }
 
     @Override
@@ -75,9 +85,11 @@ public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
             return;
         }
 
+        this.objRefs.addAll(_getObjectRefs());
+
         loadVersions();
         this.keyHash = keyHash();
-        this.valueHash = versionHash();
+        this.versionHash = versionHash();
     }
 
     /**
@@ -113,6 +125,10 @@ public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
 
     @Override
     public List<T> getObjectRefs() {
+        return objRefs;
+    }
+
+    private List<T> _getObjectRefs() {
         List<T> nodes = new ArrayList<T>(keyVersionMap.size());
         for (String key : keyVersionMap.keySet()) {
             nodes.add((T) objectReferenceable.find(key));
@@ -134,12 +150,28 @@ public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
     @Override
     public void serialize(DataOutput out) throws IOException {
         out.writeInt(keyHash);
-        out.writeInt(valueHash);
+        out.writeInt(versionHash);
+
+        out.writeInt(objRefs.size());
+        for (T obj : objRefs) {
+            obj.serialize(out);
+        }
     }
 
     @Override
     public void deserialize(DataInput in) throws IOException {
         this.keyHash = in.readInt();
-        this.valueHash = in.readInt();
+        this.versionHash = in.readInt();
+
+        int size = in.readInt();
+        for (int i = 0; i < size; i++) {
+            try {
+                T instance = clazz.newInstance();
+                instance.deserialize(in);
+                this.objRefs.add(instance);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

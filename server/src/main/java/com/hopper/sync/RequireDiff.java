@@ -53,7 +53,7 @@ public class RequireDiff implements Serializer {
     public void deserialize(DataInput in) throws IOException {
         this.maxXid = in.readLong();
         this.tree = new MerkleTree(ComponentManagerFactory.getComponentManager().getGlobalConfiguration()
-                .getMerkleTreeDepth());
+                .getMerkleTreeDepth(), StateNode.class);
         tree.deserialize(in);
     }
 }

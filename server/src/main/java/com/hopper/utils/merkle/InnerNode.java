@@ -36,7 +36,7 @@ public class InnerNode<T extends MerkleObjectRef> implements MerkleNode<T> {
     }
 
     @Override
-    public int getValueHash() {
+    public int getVersionHash() {
         return valueHash;
     }
 
@@ -48,7 +48,7 @@ public class InnerNode<T extends MerkleObjectRef> implements MerkleNode<T> {
         if (left != null) {
             left.hash();
             leftKeyHash = left.getKeyHash();
-            leftValueHash = left.getValueHash();
+            leftValueHash = left.getVersionHash();
         }
 
         Integer rightKeyHash = null;
@@ -57,7 +57,7 @@ public class InnerNode<T extends MerkleObjectRef> implements MerkleNode<T> {
         if (right != null) {
             right.hash();
             rightKeyHash = right.getKeyHash();
-            rightValueHash = right.getValueHash();
+            rightValueHash = right.getVersionHash();
         }
 
         if (leftKeyHash != null && rightKeyHash != null) {
@@ -177,6 +177,6 @@ public class InnerNode<T extends MerkleObjectRef> implements MerkleNode<T> {
 
         MerkleNode target = (MerkleNode) obj;
 
-        return getKeyHash() == target.getKeyHash() && this.getValueHash() == target.getValueHash();
+        return getKeyHash() == target.getKeyHash() && this.getVersionHash() == target.getVersionHash();
     }
 }
