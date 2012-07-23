@@ -1,8 +1,6 @@
 package com.hopper.utils.merkle;
 
 import com.hopper.session.Serializer;
-import com.hopper.storage.StateNode;
-import com.hopper.storage.StateNodeSnapshot;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -15,85 +13,94 @@ import java.util.List;
 /**
  * {@link Difference} represents a comparison result of two merkle-trees..
  */
-public class Difference implements Serializer {
+public class Difference<T extends MerkleObjectRef> implements Serializer {
 
     /**
      * Holden the state nodes that should be added
      */
-    public final List<StateNodeSnapshot> addedList = new ArrayList<StateNodeSnapshot>();
+    public final List<T> addedList = new ArrayList<T>();
     /**
      * Holden the state nodes that should be removed
      */
-    public final List<StateNodeSnapshot> removedList = new ArrayList<StateNodeSnapshot>();
+    public final List<T> removedList = new ArrayList<T>();
     /**
      * Holden the state nodes that should be updated
      */
-    public final List<StateNodeSnapshot> updatedList = new ArrayList<StateNodeSnapshot>();
+    public final List<T> updatedList = new ArrayList<T>();
 
-    public void added(MerkleNode node) {
-        addedList.addAll(getStateNodeSnapshots(node));
+    private Class<T> clazz;
+
+    public Class<T> getClazz() {
+        return clazz;
+    }
+
+    public void setClazz(Class<T> clazz) {
+        this.clazz = clazz;
+    }
+
+    public void added(MerkleNode<T> node) {
+        addedList.addAll(node.getObjectRefs());
     }
 
     /**
      * All state nodes associated with <code>node</code> should be removed.
      */
-    public void removed(MerkleNode node) {
-        removedList.addAll(getStateNodeSnapshots(node));
+    public void removed(MerkleNode<T> node) {
+        removedList.addAll(node.getObjectRefs());
     }
 
+    public void updated(Leaf<T> node1, Leaf<T> node2) {
+        List<T> refs1 = node1.getObjectRefs();
+        List<T> refs2 = node2.getObjectRefs();
 
-    public void updated(Leaf node1, Leaf node2) {
-        List<StateNode> stateNodes1 = node1.getObjectRefs();
-        List<StateNode> stateNodes2 = node2.getObjectRefs();
-
-        Collections.sort(stateNodes1, new Comparator<StateNode>() {
+        Collections.sort(refs1, new Comparator<T>() {
             @Override
-            public int compare(StateNode o1, StateNode o2) {
-                return o1.key.compareTo(o2.key);
+            public int compare(T o1, T o2) {
+                return compareStateNode(o1, o2);
             }
         });
 
-        Collections.sort(stateNodes2, new Comparator<StateNode>() {
+        Collections.sort(refs2, new Comparator<T>() {
             @Override
-            public int compare(StateNode o1, StateNode o2) {
-                return o1.key.compareTo(o2.key);
+            public int compare(T o1, T o2) {
+                return compareStateNode(o1, o2);
             }
         });
 
         int i = 0;
         int j = 0;
 
-        while (i < stateNodes1.size() && j < stateNodes2.size()) {
+        while (i < refs1.size() && j < refs2.size()) {
 
-            StateNode n1 = stateNodes1.get(i);
-            StateNode n2 = stateNodes2.get(j);
+            T n1 = refs1.get(i);
+            T n2 = refs2.get(j);
 
             int r = compareStateNode(n1, n2);
 
             if (r < 0) {
-                addedList.add(new StateNodeSnapshot(n1));
+                addedList.add(n1);
                 i++;
             } else if (r == 0) {
                 if (n1.getVersion() > n2.getVersion()) {
-                    updatedList.add(new StateNodeSnapshot(n1));
+                    updatedList.add(n1);
                     i++;
                     j++;
                 }
             } else {
-                removedList.add(new StateNodeSnapshot(n2));
+                removedList.add(n2);
                 j++;
             }
         }
 
-        if (i < stateNodes1.size()) {
-            addedList.addAll(wrapStateNodeList(stateNodes1, i));
-        } else if (j < stateNodes2.size()) {
-            removedList.addAll(wrapStateNodeList(stateNodes2, j));
+        if (i < refs1.size()) {
+            addedList.addAll(refs1.subList(i, refs1.size()));
+        } else if (j < refs2.size()) {
+            removedList.addAll(refs2.subList(j, refs2.size()));
         }
     }
 
-    private int compareStateNode(StateNode node1, StateNode node2) {
-        return node1.key.compareTo(node2.key);
+    private int compareStateNode(T node1, T node2) {
+        return node1.getKey().compareTo(node2.getKey());
     }
 
     public boolean hasDifferences() {
@@ -117,40 +124,22 @@ public class Difference implements Serializer {
         readList(removedList, size, in);
     }
 
-    private void serializeList(List<StateNodeSnapshot> stateNodeList, DataOutput out) throws IOException {
+    private void serializeList(List<T> stateNodeList, DataOutput out) throws IOException {
         out.writeInt(stateNodeList.size());
-        for (StateNodeSnapshot snapshot : stateNodeList) {
+        for (T snapshot : stateNodeList) {
             snapshot.serialize(out);
         }
     }
 
-    private void readList(List<StateNodeSnapshot> snapshots, int size, DataInput in) throws IOException {
+    private void readList(final List<T> nodeList, int size, DataInput in) throws IOException {
         for (int i = 0; i < size; i++) {
-            StateNodeSnapshot snapshot = new StateNodeSnapshot();
-            snapshot.deserialize(in);
-            snapshots.add(snapshot);
+            try {
+                T instance = clazz.newInstance();
+                instance.deserialize(in);
+                nodeList.add(instance);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
-    }
-
-    private List<StateNodeSnapshot> getStateNodeSnapshots(MerkleNode node) {
-
-        List<StateNode> nodes = node.getObjectRefs();
-
-        List<StateNodeSnapshot> snapshots = new ArrayList<StateNodeSnapshot>(nodes.size());
-        for (StateNode state : nodes) {
-            snapshots.add(new StateNodeSnapshot(state));
-        }
-
-        return snapshots;
-    }
-
-    private List<StateNodeSnapshot> wrapStateNodeList(List<StateNode> stateNodeList, int offset) {
-        List<StateNodeSnapshot> snapshots = new ArrayList<StateNodeSnapshot>();
-
-        for (int i = offset; i < stateNodeList.size(); i++) {
-            snapshots.add(new StateNodeSnapshot(stateNodeList.get(i)));
-        }
-
-        return snapshots;
     }
 }

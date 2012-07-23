@@ -88,8 +88,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
         DataOutput out = new DataOutputStream(fout);
 
         for (StateNode node : nodes) {
-            StateNodeSnapshot nodeSnapshot = new StateNodeSnapshot(node);
-            nodeSnapshot.serialize(out);
+            node.serialize(out);
         }
 
         fout.flush();
@@ -128,7 +127,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
     }
 
     @Override
-    public MerkleTree getHashTree() {
+    public MerkleTree<StateNode> getHashTree() {
         return tree;
     }
 

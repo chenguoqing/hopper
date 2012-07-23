@@ -77,7 +77,7 @@ public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
 
         loadVersions();
         this.keyHash = keyHash();
-        this.valueHash = valueHash();
+        this.valueHash = versionHash();
     }
 
     /**
@@ -92,8 +92,27 @@ public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
         }
     }
 
+    public int keyHash() {
+        int hash = 0;
+
+        for (String key : keyVersionMap.keySet()) {
+            hash ^= MurmurHash.hash(key);
+        }
+        return hash;
+    }
+
+    public int versionHash() {
+        int hash = 0;
+
+        for (AtomicLong version : keyVersionMap.values()) {
+            byte[] b = ByteUtils.long2Bytes(version.get());
+            hash ^= MurmurHash.hash(b);
+        }
+        return hash;
+    }
+
     @Override
-    public List getObjectRefs() {
+    public List<T> getObjectRefs() {
         List<T> nodes = new ArrayList<T>(keyVersionMap.size());
         for (String key : keyVersionMap.keySet()) {
             nodes.add((T) objectReferenceable.find(key));
@@ -110,25 +129,6 @@ public class Leaf<T extends MerkleObjectRef> extends InnerNode<T> {
      */
     public void remove(String key) {
         this.keyVersionMap.remove(key);
-    }
-
-    public int keyHash() {
-        int hash = 0;
-
-        for (String key : keyVersionMap.keySet()) {
-            hash ^= MurmurHash.hash(key);
-        }
-        return hash;
-    }
-
-    public int valueHash() {
-        int hash = 0;
-
-        for (AtomicLong version : keyVersionMap.values()) {
-            byte[] b = ByteUtils.long2Bytes(version.get());
-            hash ^= MurmurHash.hash(b);
-        }
-        return hash;
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.hopper.sync;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
+import com.hopper.storage.StateNode;
 import com.hopper.utils.merkle.Difference;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
@@ -15,7 +16,7 @@ public class ApplyDiffVerbHandler implements VerbHandler {
 
     @Override
     public void doVerb(Message message) {
-        Difference difference = (Difference) message.getBody();
+        Difference<StateNode> difference = (Difference<StateNode>) message.getBody();
 
         DiffResult result = new DiffResult();
         result.setMaxXid(componentManager.getStateStorage().getMaxXid());

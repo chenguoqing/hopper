@@ -164,8 +164,8 @@ public class MerkleTree<T extends MerkleObjectRef> implements Serializer {
      * @param target target merkle tree
      * @return Comparison result will be wrapped as Difference instance
      */
-    public Difference difference(MerkleTree target) {
-        Difference difference = new Difference();
+    public Difference difference(MerkleTree<T> target) {
+        Difference<T> difference = new Difference<T>();
         difference(root, target.root, difference);
         return difference;
     }
@@ -177,7 +177,7 @@ public class MerkleTree<T extends MerkleObjectRef> implements Serializer {
      * @param node2      node1 as the source
      * @param difference Difference instance that holds the comparison result
      */
-    private void difference(MerkleNode node1, MerkleNode node2, final Difference difference) {
+    private void difference(MerkleNode<T> node1, MerkleNode<T> node2, final Difference<T> difference) {
 
         if (node1 == null && node2 == null) {
             return;

@@ -9,7 +9,6 @@ import com.hopper.server.Endpoint;
 import com.hopper.session.Message;
 import com.hopper.stage.Stage;
 import com.hopper.storage.StateNode;
-import com.hopper.storage.StateNodeSnapshot;
 import com.hopper.storage.StateStorage;
 import com.hopper.utils.merkle.Difference;
 import com.hopper.utils.merkle.MerkleTree;
@@ -84,27 +83,27 @@ public class DataSyncService extends LifecycleProxy {
             return;
         }
 
-        Difference difference = diff.getDifference();
+        Difference<StateNode> difference = diff.getDifference();
 
         if (!difference.hasDifferences()) {
             return;
         }
 
-        for (StateNodeSnapshot snapshot : difference.addedList) {
-            StateNode node = newStateNode(snapshot.key, snapshot.version);
+        for (StateNode snapshot : difference.addedList) {
+            StateNode node = newStateNode(snapshot.key, snapshot.getVersion());
             node.update(snapshot);
 
             storage.put(node);
         }
 
-        for (StateNodeSnapshot snapshot : difference.removedList) {
+        for (StateNode snapshot : difference.removedList) {
             storage.remove(snapshot.key);
         }
 
-        for (StateNodeSnapshot snapshot : difference.updatedList) {
+        for (StateNode snapshot : difference.updatedList) {
             StateNode node = storage.get(snapshot.key);
             if (node != null) {
-                if (snapshot.version > node.getVersion()) {
+                if (snapshot.getVersion() > node.getVersion()) {
                     node.update(snapshot);
                 }
             }
@@ -158,7 +157,6 @@ public class DataSyncService extends LifecycleProxy {
      * server, and requires the remote server to return the diff data.
      */
     private class RequireRemoteDiffTask implements Callable<DiffResult> {
-        final GlobalConfiguration config = ComponentManagerFactory.getComponentManager().getGlobalConfiguration();
         final int remoteServerId;
 
         private RequireRemoteDiffTask(int remoteServerId) {
@@ -205,7 +203,7 @@ public class DataSyncService extends LifecycleProxy {
 
             Message reply = future.get(config.getRpcTimeout(), TimeUnit.MILLISECONDS);
 
-            MerkleTree tree = (MerkleTree) reply.getBody();
+            MerkleTree<StateNode> tree = (MerkleTree<StateNode>) reply.getBody();
 
             storage.getHashTree().loadHash();
 
@@ -213,7 +211,7 @@ public class DataSyncService extends LifecycleProxy {
             request.setVerb(Verb.APPLY_DIFF);
             request.setId(Message.nextId());
 
-            Difference difference = storage.getHashTree().difference(tree);
+            Difference<StateNode> difference = storage.getHashTree().difference(tree);
             request.setBody(difference);
 
             future = componentManager.getMessageService().send(request, remoteServer.serverId);

@@ -2,6 +2,7 @@ package com.hopper.sync;
 
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Serializer;
+import com.hopper.storage.StateNode;
 import com.hopper.utils.merkle.MerkleTree;
 
 import java.io.DataInput;
@@ -19,7 +20,7 @@ public class RequireDiff implements Serializer {
     /**
      * Merkle tree instance
      */
-    private MerkleTree tree;
+    private MerkleTree<StateNode> tree;
 
     public long getMaxXid() {
         return maxXid;
@@ -29,11 +30,11 @@ public class RequireDiff implements Serializer {
         this.maxXid = maxXid;
     }
 
-    public MerkleTree getTree() {
+    public MerkleTree<StateNode> getTree() {
         return tree;
     }
 
-    public void setTree(MerkleTree tree) {
+    public void setTree(MerkleTree<StateNode> tree) {
         this.tree = tree;
     }
 

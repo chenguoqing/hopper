@@ -1,6 +1,7 @@
 package com.hopper.sync;
 
 import com.hopper.session.Serializer;
+import com.hopper.storage.StateNode;
 import com.hopper.utils.merkle.Difference;
 
 import java.io.DataInput;
@@ -18,7 +19,7 @@ public class DiffResult implements Serializer {
     /**
      * Difference result
      */
-    private Difference difference;
+    private Difference<StateNode> difference;
 
     public long getMaxXid() {
         return maxXid;
@@ -32,7 +33,7 @@ public class DiffResult implements Serializer {
         return difference;
     }
 
-    public void setDifference(Difference difference) {
+    public void setDifference(Difference<StateNode> difference) {
         this.difference = difference;
     }
 

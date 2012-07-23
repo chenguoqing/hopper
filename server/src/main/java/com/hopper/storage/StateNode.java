@@ -2,9 +2,13 @@ package com.hopper.storage;
 
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
+import com.hopper.session.Serializer;
 import com.hopper.utils.ScheduleManager;
 import com.hopper.utils.merkle.MerkleObjectRef;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class StateNode implements MerkleObjectRef {
+public class StateNode implements MerkleObjectRef, Serializer {
     /**
      * Serial Version UID
      */
@@ -50,12 +54,12 @@ public class StateNode implements MerkleObjectRef {
     /**
      * Unique key
      */
-    public final String key;
+    public String key;
 
     /**
      * Node type
      */
-    public final int type;
+    public int type;
 
     /**
      * Invalidate status
@@ -267,7 +271,7 @@ public class StateNode implements MerkleObjectRef {
         }
     }
 
-    public void update(StateNodeSnapshot snapshot) {
+    public void update(StateNode snapshot) {
         if (snapshot.version <= version) {
             return;
         }
@@ -352,14 +356,45 @@ public class StateNode implements MerkleObjectRef {
      * Fire all state change listeners (asynchronous)
      */
     private void fireStateChangeListeners(int oldStatus, int newStatus) {
-
-
         String sessionId = stateChangeListeners.poll();
 
         while (sessionId != null) {
             Runnable task = new StateChangeNotifyTask(oldStatus, newStatus, sessionId);
             notifyExecutorService.execute(task);
             sessionId = stateChangeListeners.poll();
+        }
+    }
+
+    @Override
+    public void serialize(DataOutput out) throws IOException {
+        out.writeUTF(key);
+        out.writeInt(type);
+        out.writeInt(status);
+        out.writeUTF(owner);
+        out.writeInt(lease);
+        out.writeLong(lastModified);
+        out.writeLong(version);
+        out.writeInt(stateChangeListeners.size());
+        for (String sessionId : stateChangeListeners) {
+            out.writeUTF(sessionId);
+        }
+    }
+
+    @Override
+    public void deserialize(DataInput in) throws IOException {
+
+        this.key = in.readUTF();
+        this.type = in.readInt();
+        this.status = in.readInt();
+        this.owner = in.readUTF();
+        this.lease = in.readInt();
+        this.lastModified = in.readLong();
+        this.version = in.readLong();
+
+        int listenerSize = in.readInt();
+        for (int i = 0; i < listenerSize; i++) {
+            String sessionId = in.readUTF();
+            this.stateChangeListeners.add(sessionId);
         }
     }
 

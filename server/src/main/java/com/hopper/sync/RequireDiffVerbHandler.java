@@ -3,6 +3,7 @@ package com.hopper.sync;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
+import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
 import com.hopper.utils.merkle.Difference;
 import com.hopper.utils.merkle.MerkleTree;
@@ -22,9 +23,10 @@ public class RequireDiffVerbHandler implements VerbHandler {
     public void doVerb(Message message) {
         RequireDiff requireDiff = (RequireDiff) message.getBody();
 
-        MerkleTree targetTree = requireDiff.getTree();
+        MerkleTree<StateNode> targetTree = requireDiff.getTree();
         storage.getHashTree().loadHash();
-        Difference difference = storage.getHashTree().difference(targetTree);
+        Difference<StateNode> difference = storage.getHashTree().difference(targetTree);
+        difference.setClazz(StateNode.class);
 
         DiffResult result = new DiffResult();
         result.setMaxXid(storage.getMaxXid());

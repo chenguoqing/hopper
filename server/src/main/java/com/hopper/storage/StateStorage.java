@@ -49,7 +49,7 @@ public interface StateStorage extends Lifecycle, MerkleObjectReferenceable {
     /**
      * Retrieve the root of hash tree
      */
-    MerkleTree getHashTree();
+    MerkleTree<StateNode> getHashTree();
 
     /**
      * Retrieve all saved state nodes

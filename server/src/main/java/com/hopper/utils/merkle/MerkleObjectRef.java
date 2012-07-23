@@ -1,5 +1,7 @@
 package com.hopper.utils.merkle;
 
+import com.hopper.session.Serializer;
+
 /**
  * Created with IntelliJ IDEA.
  * User: chenguoqing
@@ -7,7 +9,7 @@ package com.hopper.utils.merkle;
  * Time: 下午1:31
  * To change this template use File | Settings | File Templates.
  */
-public interface MerkleObjectRef {
+public interface MerkleObjectRef extends Serializer {
     String getKey();
 
     long getVersion();
