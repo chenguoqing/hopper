@@ -2,7 +2,8 @@ package com.hopper.storage;
 
 import com.hopper.lifecycle.LifecycleException;
 import com.hopper.lifecycle.LifecycleListener;
-import com.hopper.utils.ScheduleManager;
+import com.hopper.util.ScheduleManager;
+
 import junit.framework.Assert;
 import org.junit.Test;
 

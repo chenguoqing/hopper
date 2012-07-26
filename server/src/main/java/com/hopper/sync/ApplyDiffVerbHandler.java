@@ -4,7 +4,7 @@ import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Message;
 import com.hopper.storage.StateNode;
-import com.hopper.utils.merkle.Difference;
+import com.hopper.util.merkle.Difference;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 

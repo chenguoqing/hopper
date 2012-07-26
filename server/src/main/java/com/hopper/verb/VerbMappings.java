@@ -2,8 +2,8 @@ package com.hopper.verb;
 
 import com.hopper.quorum.*;
 import com.hopper.session.Serializer;
-import com.hopper.utils.merkle.Difference;
-import com.hopper.utils.merkle.MerkleTree;
+import com.hopper.util.merkle.Difference;
+import com.hopper.util.merkle.MerkleTree;
 import com.hopper.sync.*;
 import com.hopper.verb.handler.*;
 

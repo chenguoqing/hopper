@@ -3,7 +3,7 @@ package com.hopper.sync;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.session.Serializer;
 import com.hopper.storage.StateNode;
-import com.hopper.utils.merkle.MerkleTree;
+import com.hopper.util.merkle.MerkleTree;
 
 import java.io.DataInput;
 import java.io.DataOutput;

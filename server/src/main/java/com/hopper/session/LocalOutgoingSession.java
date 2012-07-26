@@ -7,7 +7,7 @@ import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
-import com.hopper.utils.ScheduleManager;
+import com.hopper.util.ScheduleManager;
 import com.hopper.verb.Verb;
 import com.hopper.verb.handler.BatchMultiplexerSessions;
 import com.hopper.verb.handler.HeartBeat;

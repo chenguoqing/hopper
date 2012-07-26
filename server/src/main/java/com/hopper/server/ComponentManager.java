@@ -13,10 +13,10 @@ import com.hopper.session.SessionManager;
 import com.hopper.stage.StageManager;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.TreeStorage;
-import com.hopper.utils.merkle.MapStorage;
+import com.hopper.util.DefaultScheduleManager;
+import com.hopper.util.ScheduleManager;
+import com.hopper.util.merkle.MapStorage;
 import com.hopper.sync.DataSyncService;
-import com.hopper.utils.DefaultScheduleManager;
-import com.hopper.utils.ScheduleManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

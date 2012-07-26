@@ -3,7 +3,8 @@ package com.hopper.cache;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.stage.ThreadRenamingRunnable;
-import com.hopper.utils.ScheduleManager;
+import com.hopper.util.ScheduleManager;
+
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 import java.util.ArrayList;
