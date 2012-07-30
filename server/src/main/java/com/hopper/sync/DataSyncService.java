@@ -176,7 +176,8 @@ public class DataSyncService extends LifecycleProxy {
 
         RequireDiff diff = new RequireDiff();
         diff.setMaxXid(storage.getMaxXid());
-        diff.setTree(storage.getHashTree());
+        storage.getMerkleTree().loadHash();
+        diff.setTree(storage.getMerkleTree());
 
         message.setBody(diff);
 
@@ -205,13 +206,13 @@ public class DataSyncService extends LifecycleProxy {
 
             MerkleTree<StateNode> tree = (MerkleTree<StateNode>) reply.getBody();
 
-            storage.getHashTree().loadHash();
+            storage.getMerkleTree().loadHash();
 
             request = new Message();
             request.setVerb(Verb.APPLY_DIFF);
             request.setId(Message.nextId());
 
-            Difference<StateNode> difference = storage.getHashTree().difference(tree);
+            Difference<StateNode> difference = storage.getMerkleTree().difference(tree);
             request.setBody(difference);
 
             future = componentManager.getMessageService().send(request, remoteServer.serverId);

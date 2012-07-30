@@ -24,8 +24,8 @@ public class RequireDiffVerbHandler implements VerbHandler {
         RequireDiff requireDiff = (RequireDiff) message.getBody();
 
         MerkleTree<StateNode> targetTree = requireDiff.getTree();
-        storage.getHashTree().loadHash();
-        Difference<StateNode> difference = storage.getHashTree().difference(targetTree);
+        storage.getMerkleTree().loadHash();
+        Difference<StateNode> difference = storage.getMerkleTree().difference(targetTree);
         difference.setClazz(StateNode.class);
 
         DiffResult result = new DiffResult();

@@ -128,7 +128,7 @@ public abstract class AbstractStateStorage extends LifecycleProxy implements Sta
     }
 
     @Override
-    public MerkleTree<StateNode> getHashTree() {
+    public MerkleTree<StateNode> getMerkleTree() {
         return tree;
     }
 
