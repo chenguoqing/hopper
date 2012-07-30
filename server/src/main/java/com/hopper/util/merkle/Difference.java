@@ -83,9 +83,9 @@ public class Difference<T extends MerkleObjectRef> implements Serializer {
             } else if (r == 0) {
                 if (n1.getVersion() > n2.getVersion()) {
                     updatedList.add(n1);
-                    i++;
-                    j++;
                 }
+                i++;
+                j++;
             } else {
                 removedList.add(n2);
                 j++;
