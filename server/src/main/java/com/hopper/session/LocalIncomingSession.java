@@ -151,6 +151,6 @@ public class LocalIncomingSession extends SessionProxy implements IncomingSessio
 
     @Override
     protected String getObjectNameKeyProperties() {
-        return "type=Session,direction=incoming,id=" + getId();
+        return "type=IncomingSession,id=" + getId();
     }
 }

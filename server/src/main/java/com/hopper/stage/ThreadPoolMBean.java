@@ -30,6 +30,14 @@ public class ThreadPoolMBean extends LifecycleMBeanProxy implements ExecutorServ
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public Stage getStage() {
+        return stage;
+    }
+
     @Override
     protected String getObjectNameKeyProperties() {
         StringBuilder sb = new StringBuilder("type=ThreadPool");

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<mbeans-descriptors>
+
+    <!-- Cache Manager Bean -->
+    <mbean name="Hopper Server" description="Hopper server" type="com.hopper.server.DefaultServer">
+
+        <attribute name="id" description="server id" type="int" writeable="false"/>
+
+        <attribute name="rpcEndPoint" description="the address for client connection" type="com.hopper.server.Endpoint"
+                   writeable="false"/>
+
+        <attribute name="serverEndpoint" description="the address for server connection" type="com.hopper
+        .server.Endpoint" writeable="false"/>
+
+        <attribute name="leader" description="current leader" type="int" writeable="false"/>
+
+        <operation name="close" description="close the client session" impact="INFO"/>
+    </mbean>
+
+</mbeans-descriptors>

@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<mbeans-descriptors>
+
+    <!-- Cache Manager Bean -->
+    <mbean name="ClientSession" description="client session" type="com.hopper.session.ClientSession">
+        <attribute name="id" description="client session id" type="String" writeable="false"/>
+        <operation name="close" description="close the client session" impact="INFO"/>
+    </mbean>
+
+    <!-- Incoming session -->
+    <mbean name="IncomingSession" description="local incoming session" type="com.hopper.session.LocalIncomingSession">
+        <attribute name="id" description="client session id" type="String" writeable="false"/>
+        <attribute name="sourceEndpoint" description="source endpoint" type="com.hopper.server.Endpoint"
+                   writeable="false"/>
+        <attribute name="alive" description="session is alive?" type="boolean" writeable="false"/>
+        <attribute name="boundMultiplexerSessions" description="bound multiplexer sessions" type="java.util.List"
+                   writeable="false"/>
+        <operation name="close" description="close the session" impact="INFO"/>
+    </mbean>
+
+    <!-- Outgoing session -->
+    <mbean name="OutgoingSession" description="local outgoging session" type="com.hopper.session.LocalOutgoingSession">
+        <attribute name="id" description="client session id" type="String" writeable="false"/>
+        <attribute name="destEndpoint" description="dest endpoint" type="com.hopper.server.Endpoint" writeable="false"/>
+        <attribute name="alive" description="session is alive?" type="boolean" writeable="false"/>
+        <operation name="close" description="close the session" impact="INFO"/>
+    </mbean>
+
+    <!-- session manager -->
+    <mbean name="SessionManager" description="local outgoging session" type="com.hopper.session.SessionManager">
+        <attribute name="incomingSessionCount" description="incomming session count" type="int" writeable="false"/>
+        <attribute name="outgoingSessionCount" description="outgoing session count" type="int" writeable="false"/>
+        <attribute name="clientSessionCount" description="client session count" type="int" writeable="false"/>
+    </mbean>
+
+</mbeans-descriptors>

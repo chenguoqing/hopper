@@ -1,5 +1,7 @@
 package com.hopper.server;
 
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +24,8 @@ public class Main {
         if (args.length > 1) {
             System.setProperty("configFile", args[1]);
         }
+
+        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
 
         if (args[0].equalsIgnoreCase("-start")) {
             start(args);

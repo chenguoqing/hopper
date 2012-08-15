@@ -2,12 +2,12 @@ package com.hopper.session;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.future.LatchFuture;
-import com.hopper.lifecycle.LifecycleMBeanProxy;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import org.jboss.netty.channel.Channel;
 
-public class DummyConnection extends LifecycleMBeanProxy implements Connection {
+public class DummyConnection extends LifecycleProxy implements Connection {
 
     private final GlobalConfiguration config = ComponentManagerFactory.getComponentManager().getGlobalConfiguration();
     /**
@@ -97,10 +97,5 @@ public class DummyConnection extends LifecycleMBeanProxy implements Connection {
     @Override
     public LatchFuture<Message> send(Message message) {
         return null;
-    }
-
-    @Override
-    protected String getObjectNameKeyProperties() {
-        return "type=Connection,direction=incoming,from=" + getSourceEndpoint().address.getHostAddress();
     }
 }

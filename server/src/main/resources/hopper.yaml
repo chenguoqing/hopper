@@ -44,7 +44,7 @@ shutdown_command: shutdown
 group_nodes:
     - {serverId: 1,address: 192.168.72.101,port: 7920}
     - {serverId: 2,address: 192.168.91.160,port: 7920}
-    - {serverId: 3,address: 192.168.0.103,port: 7920}
+    - {serverId: 3,address: 192.168.91.166,port: 7920}
 
 # The period for join waiting(milliseconds)
 period_for_waiting_join: 5000

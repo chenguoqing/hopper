@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<mbeans-descriptors>
+
+    <!-- Cache Manager Bean -->
+    <mbean name="CacheManager" description="internal cache manager" type="com.hopper.cache.CacheManager">
+        <attribute name="cacheSize" description="cache size" type="int" writeable="false"/>
+        <attribute name="evictPeriod" description="cache evict period(ms)"  type="long" writeable="false"/>
+    </mbean>
+
+
+</mbeans-descriptors>

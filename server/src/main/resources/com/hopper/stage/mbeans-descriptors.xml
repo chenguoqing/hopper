@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<mbeans-descriptors>
+
+    <!-- Cache Manager Bean -->
+    <mbean name="ThreadPool" description="internal cache manager" type="com.hopper.stage.ThreadPoolMBean"
+           domain="Hopper">
+        <attribute name="name" description="thread pool name" type="String" writeable="false"/>
+        <attribute name="stage" description="thread pool bound stage" type="com.hopper.stage.Stage" writeable="false"/>
+        <attribute name="corePoolSize" description="core pool size" type="int" writeable="true"/>
+        <attribute name="maximumPoolSize" description="max pool size" type="int" writeable="true"/>
+        <attribute name="keepAliveTime" description="thread alive time(ms)" type="long" writeable="true"/>
+        <attribute name="taskCount" description="task count" type="int" writeable="false"/>
+        <attribute name="completedTaskCount" description="completed task count" type="int" writeable="false"/>
+        <attribute name="largestPoolSize" description="largest task count" type="int" writeable="false"/>
+        <attribute name="activeCount" description="active task count" type="int" writeable="false"/>
+    </mbean>
+
+</mbeans-descriptors>

@@ -32,7 +32,7 @@ public class TestMerkleTree {
         TestObject node7 = new TestObject("/a/b/c7", 13);
         TestObject node8 = new TestObject("/a/b/c8", 13);
 
-        MerkleTree<TestObject> tree = new MerkleTree<>((byte) 15, TestObject.class);
+        MerkleTree<TestObject> tree = new MerkleTree<TestObject>((byte) 15, TestObject.class);
         TestObjectFactory factory = new TestObjectFactory();
         tree.setObjectFactory(factory);
         factory.nodes.put(node1.key, node1);
@@ -60,7 +60,7 @@ public class TestMerkleTree {
 
         DataInput in = new BufferDataInput(out.buffer());
 
-        MerkleTree<TestObject> tree2 = new MerkleTree<>((byte) 15, TestObject.class);
+        MerkleTree<TestObject> tree2 = new MerkleTree<TestObject>((byte) 15, TestObject.class);
         tree2.deserialize(in);
 
         assertTreeEquals(tree, tree2);
@@ -121,7 +121,7 @@ public class TestMerkleTree {
         TestObject node10 = new TestObject(key10, 13);
         TestObject node11 = new TestObject(key10, 12);
 
-        MerkleTree<TestObject> tree1 = new MerkleTree<>((byte) 15, TestObject.class);
+        MerkleTree<TestObject> tree1 = new MerkleTree<TestObject>((byte) 15, TestObject.class);
         TestObjectFactory factory1 = new TestObjectFactory();
         tree1.setObjectFactory(factory1);
         factory1.nodes.put(node1.key, node1);
@@ -145,7 +145,7 @@ public class TestMerkleTree {
 
         factory2.nodes.put(node11.key, node11);
 
-        MerkleTree<TestObject> tree2 = new MerkleTree<>((byte) 15, TestObject.class);
+        MerkleTree<TestObject> tree2 = new MerkleTree<TestObject>((byte) 15, TestObject.class);
         tree2.setObjectFactory(factory2);
 
         // same
@@ -331,7 +331,7 @@ public class TestMerkleTree {
 
     static class TestObjectFactory implements MerkleObjectFactory<TestObject> {
 
-        final Map<String, TestObject> nodes = new HashMap<>();
+        final Map<String, TestObject> nodes = new HashMap<String, TestObject>();
 
         @Override
         public TestObject find(String key) {

@@ -42,6 +42,16 @@ public interface Server extends Lifecycle {
     }
 
     /**
+     * Set the unique id
+     */
+    void setId(int id);
+
+    /**
+     * Return the unique server id
+     */
+    int getId();
+
+    /**
      * Set the address and port for accepting outer request
      */
     void setRpcEndpoint(Endpoint endpoint);

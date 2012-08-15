@@ -4,6 +4,7 @@ import com.hopper.future.LatchFuture;
 import com.hopper.lifecycle.LifecycleListener;
 import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.server.ComponentManagerFactory;
+import com.hopper.server.Endpoint;
 
 public abstract class SessionProxy extends LifecycleMBeanProxy implements Session {
     /**
@@ -95,6 +96,17 @@ public abstract class SessionProxy extends LifecycleMBeanProxy implements Sessio
     @Override
     public Connection getConnection() {
         return connection;
+    }
+
+    /**
+     * Delegate method
+     */
+    public Endpoint getSourceEndpoint() {
+        return connection == null ? null : connection.getSourceEndpoint();
+    }
+
+    public Endpoint getDestEndpoint() {
+        return connection == null ? null : connection.getDestEndpoint();
     }
 
     @Override

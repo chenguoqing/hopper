@@ -4,7 +4,6 @@ import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.stage.ThreadRenamingRunnable;
 import com.hopper.util.ScheduleManager;
-
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 import java.util.ArrayList;
@@ -46,6 +45,20 @@ public class CacheManager extends LifecycleMBeanProxy implements Lifecycle {
 
     public void setEvictPeriod(long evictPeriod) {
         this.evictPeriod = evictPeriod;
+    }
+
+    /**
+     * Invoke from JMX
+     */
+    public int getCacheSize() {
+        return caches.size();
+    }
+
+    /**
+     * Invoke from JMX
+     */
+    public long getEvictPeriod() {
+        return evictPeriod;
     }
 
     /**

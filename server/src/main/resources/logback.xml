@@ -2,9 +2,10 @@
 <configuration>
     <property name="default_pattern" value="%date [%thread] %-5level %logger{30} - %msg%n"/>
 
-    <property name="log.basedir" value="/var/logs/hopper1"/>
-    <property name="log.root.level" value="INFO"/>
+    <property name="log.basedir" value="/home/chenguoqing/logs/hopper"/>
+    <property name="log.root.level" value="DEBUG"/>
     <property name="log.hopper.level" value="DEBUG"/>
+    <property name="log.netty.level" value="DEBUG"/>
     <property name="log.appender" value="STDOUT"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -25,12 +26,13 @@
         </rollingPolicy>
     </appender>
 
-<!--    <logger name="com.hopper">
-        <level value="${log.hopper.level}"/>
-    </logger>-->
+    <logger name="com.hopper" level="${log.hopper.level}"/>
+
+    <logger name="org.jboss.netty" level="${log.netty.level}"/>
 
     <root>
         <level value="${log.root.level}"/>
         <appender-ref ref="${log.appender}"/>
+        <appender-ref ref="FILE"/>
     </root>
 </configuration>

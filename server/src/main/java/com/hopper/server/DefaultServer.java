@@ -34,6 +34,10 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
      */
     private final Object leaderLock = new Object();
     /**
+     * Unique server id
+     */
+    private int id;
+    /**
      * Outer connection rpcEndpoint
      */
     private Endpoint rpcEndpoint;
@@ -187,6 +191,16 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
     }
 
     @Override
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public int getId() {
+        return id;
+    }
+
+    @Override
     public void setRpcEndpoint(Endpoint endpoint) {
         this.rpcEndpoint = endpoint;
     }
@@ -263,7 +277,7 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
 
     @Override
     public boolean isLeader() {
-        return leader != -1 && serverEndpoint.serverId == leader;
+        return leader != -1 && id == leader;
     }
 
     @Override
@@ -273,7 +287,7 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
 
     @Override
     public boolean isFollower() {
-        return leader != -1 && serverEndpoint.serverId != -leader;
+        return leader != -1 && id != -leader;
     }
 
     @Override

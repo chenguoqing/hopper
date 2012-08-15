@@ -90,7 +90,7 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
 
     @Override
     protected String getObjectNameKeyProperties() {
-        return "type=Session,direction=outgoing,id=" + getId();
+        return "type=OutgoingSession,id=" + getId();
     }
 
     @Override

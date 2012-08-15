@@ -98,6 +98,10 @@ public class GlobalConfiguration extends LifecycleProxy {
         return _mode == null ? ElectionMode.FAIR : _mode;
     }
 
+    public int getServerId() {
+        return innerConfig.getInt("serverId", 1);
+    }
+
     /**
      * Return the server rpc timeout(milliseconds)
      */

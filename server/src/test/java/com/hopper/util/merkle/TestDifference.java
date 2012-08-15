@@ -92,7 +92,7 @@ public class TestDifference {
         leaf1.setObjectFactory(factory1);
         leaf2.setObjectFactory(factory2);
 
-        Difference<TestObject> diff = new Difference<>();
+        Difference<TestObject> diff = new Difference<TestObject>();
 
         leaf1.hash();
         leaf2.hash();

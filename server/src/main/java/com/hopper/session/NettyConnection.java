@@ -6,7 +6,7 @@ import com.hopper.future.DefaultLatchFuture;
 import com.hopper.future.LatchFuture;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleException;
-import com.hopper.lifecycle.LifecycleMBeanProxy;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author chenguoqing
  */
-public class NettyConnection extends LifecycleMBeanProxy implements Connection {
+public class NettyConnection extends LifecycleProxy implements Connection {
     private static Logger logger = LoggerFactory.getLogger(NettyConnection.class);
     /**
      * ComponentManager reference
@@ -349,11 +349,6 @@ public class NettyConnection extends LifecycleMBeanProxy implements Connection {
         }
 
         throw new RuntimeException(t);
-    }
-
-    @Override
-    protected String getObjectNameKeyProperties() {
-        return "type=Connection,direction=outgoing,to=" + dest.address.getHostAddress();
     }
 
     /**

@@ -238,10 +238,6 @@ public class SessionManager extends LifecycleMBeanProxy {
         outgoingSessions.remove(session.getConnection().getDestEndpoint());
     }
 
-    public OutgoingSession getOutgoingSession(String sessionId) {
-        return null;
-    }
-
     public OutgoingSession getOutgoingSession(Endpoint endpoint) {
         return outgoingSessions.get(endpoint);
     }
@@ -284,6 +280,18 @@ public class SessionManager extends LifecycleMBeanProxy {
     @Override
     public String getInfo() {
         return "Session Manager";
+    }
+
+    public int getIncomingSessionCount() {
+        return incomingSessions.size();
+    }
+
+    public int getOutgoingSessionCount() {
+        return outgoingSessions.size();
+    }
+
+    public int getClientSessionCount() {
+        return clientSessions.size();
     }
 
     @Override
