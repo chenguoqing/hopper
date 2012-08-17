@@ -28,7 +28,6 @@ public class TestLeaderVerbHandler implements VerbHandler {
 
         Message reply = new Message();
         reply.setVerb(Verb.TEST_LEADER_RESULT);
-        reply.setId(message.getId());
 
         reply.setBody(new byte[]{leader > 0 ? 0 : (byte) 1});
 

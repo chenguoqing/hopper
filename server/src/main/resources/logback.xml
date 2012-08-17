@@ -5,7 +5,7 @@
     <property name="log.basedir" value="/home/chenguoqing/logs/hopper"/>
     <property name="log.root.level" value="DEBUG"/>
     <property name="log.hopper.level" value="DEBUG"/>
-    <property name="log.netty.level" value="DEBUG"/>
+    <property name="log.netty.level" value="ERROR"/>
     <property name="log.appender" value="STDOUT"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

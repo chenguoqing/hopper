@@ -172,7 +172,6 @@ public class DataSyncService extends LifecycleProxy {
     private DiffResult syncDiff(int remoteServerId) throws Exception {
         Message message = new Message();
         message.setVerb(Verb.REQUIRE_DIFF);
-        message.setId(Message.nextId());
 
         RequireDiff diff = new RequireDiff();
         diff.setMaxXid(storage.getMaxXid());
@@ -198,7 +197,6 @@ public class DataSyncService extends LifecycleProxy {
         public Boolean call() throws Exception {
             Message request = new Message();
             request.setVerb(Verb.REQUIRE_TREE);
-            request.setId(Message.nextId());
 
             Future<Message> future = componentManager.getMessageService().send(request, remoteServer.serverId);
 
@@ -210,7 +208,6 @@ public class DataSyncService extends LifecycleProxy {
 
             request = new Message();
             request.setVerb(Verb.APPLY_DIFF);
-            request.setId(Message.nextId());
 
             Difference<StateNode> difference = storage.getMerkleTree().difference(tree);
             request.setBody(difference);

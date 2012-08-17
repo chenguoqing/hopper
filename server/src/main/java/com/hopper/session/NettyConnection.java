@@ -275,15 +275,15 @@ public class NettyConnection extends LifecycleProxy implements Connection {
 
             @Override
             public void operationComplete(ChannelFuture callbackFuture) throws Exception {
-                // if exception occurs when sending message,set the exception to MesageFuture for quick unlocking the
+                // if exception occurs when sending message,set the exception to MessageFuture for quick releasing the
                 // blocking threads on MessageFuture
                 if (callbackFuture.getCause() != null) {
 
-                    // if sending message failure, remove the future from cache
+                    // if sending message failure, remove the future from cache and the caller will wait until timeout
                     DefaultLatchFuture cacheFuture = cacheManager.remove(message.getId());
 
                     if (cacheFuture != null) {
-                        // set the exception for unlocking the threads waiting
+                        // set the exception for unlocking the threads
                         cacheFuture.setException(callbackFuture.getCause());
                     }
                 }

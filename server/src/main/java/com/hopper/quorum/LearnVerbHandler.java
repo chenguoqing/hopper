@@ -101,7 +101,10 @@ public class LearnVerbHandler implements VerbHandler {
         try {
             if (server.isLeader()) {
                 logger.info("Current server has been chosen as leader, takes leader ship...");
-                takeLeadership();
+
+                componentManager.getDefaultServer().takeLeadership();
+                traceLeaderDataSync();
+
                 server.setElectionState(Server.ElectionState.LEADING);
             } else {
                 logger.info("Current server is follower, accept the new leader {}", newLeader);
@@ -114,11 +117,8 @@ public class LearnVerbHandler implements VerbHandler {
         }
     }
 
-    /**
-     * Take over the leader ship
-     */
-    private void takeLeadership() throws Exception {
-        componentManager.getDefaultServer().takeLeadership();
+    private void traceLeaderDataSync() throws Exception {
+
         long t = System.currentTimeMillis();
         startLeaderDataSync();
         long syncTime = System.currentTimeMillis() - t;
@@ -143,7 +143,6 @@ public class LearnVerbHandler implements VerbHandler {
 
         Message message = new Message();
         message.setVerb(Verb.QUERY_MAX_XID);
-        message.setId(Message.nextId());
 
         logger.info("Send query max xid {}", message);
 
@@ -294,7 +293,6 @@ public class LearnVerbHandler implements VerbHandler {
         if (batchCreator.containsSessions()) {
             Message message = new Message();
             message.setVerb(Verb.BOUND_MULTIPLEXER_SESSION);
-            message.setId(Message.nextId());
             message.setBody(batchCreator);
 
             componentManager.getMessageService().sendOneway(message, newLeader);

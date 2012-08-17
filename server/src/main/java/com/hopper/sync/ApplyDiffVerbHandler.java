@@ -26,7 +26,6 @@ public class ApplyDiffVerbHandler implements VerbHandler {
 
         Message reply = new Message();
         reply.setVerb(Verb.APPLY_DIFF_RESULT);
-        reply.setId(message.getId());
         reply.setBody(new byte[]{0});
 
 

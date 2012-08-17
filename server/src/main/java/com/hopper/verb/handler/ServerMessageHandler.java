@@ -81,7 +81,9 @@ public class ServerMessageHandler extends SimpleChannelHandler {
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
 
-        logger.debug("Received message {} from {}", e.getMessage(), ctx.getChannel().getRemoteAddress());
+        if(e.getMessage() instanceof Message && ((Message)e.getMessage()).getVerb()!=Verb.HEART_BEAT){
+            logger.debug("Received message {} from {}", e.getMessage(), ctx.getChannel().getRemoteAddress());
+        }
         try {
             // bound channel to thread local
             ChannelBound.bound(ctx.getChannel());
@@ -115,7 +117,6 @@ public class ServerMessageHandler extends SimpleChannelHandler {
             }
 
             Message reply = new Message();
-            reply.setId(message.getId());
             reply.setVerb(Verb.RES_BOUND_MULTIPLEXER_SESSION);
             reply.setBody(new byte[]{0});
             // send reply

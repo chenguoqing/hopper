@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<mbeans-descriptors>
+
+    <!-- Cache Manager Bean -->
+    <mbean name="Test" description="internal cache manager" type="test.TestUser">
+        <attribute name="name" description="cache size" type="String" writeable="true"/>
+        <attribute name="phone" description="cache evict period(ms)"  type="String" writeable="false"/>
+    </mbean>
+
+
+
+</mbeans-descriptors>

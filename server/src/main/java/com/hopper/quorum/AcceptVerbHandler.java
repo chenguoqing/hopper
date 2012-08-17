@@ -43,7 +43,6 @@ public class AcceptVerbHandler implements VerbHandler {
 
     private void sendResponse(int messageId, int status) {
         Message reply = new Message();
-        reply.setId(messageId);
         reply.setVerb(Verb.PAXOS_ACCEPTED);
 
         Accepted accepted = new Accepted();

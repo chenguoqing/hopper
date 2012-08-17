@@ -34,7 +34,6 @@ public class RequireDiffVerbHandler implements VerbHandler {
 
         Message reply = new Message();
         reply.setVerb(Verb.DIFF_RESULT);
-        reply.setId(message.getId());
         reply.setBody(result);
 
         componentManager.getMessageService().responseOneway(reply);

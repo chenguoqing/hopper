@@ -20,7 +20,6 @@ public class RequireTreeVerbhandler implements VerbHandler {
 
         Message reply = new Message();
         reply.setVerb(Verb.TREE_RESULT);
-        reply.setId(message.getId());
 
         reply.setBody(storage.getMerkleTree());
 

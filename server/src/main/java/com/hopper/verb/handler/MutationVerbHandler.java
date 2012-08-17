@@ -231,7 +231,6 @@ public class MutationVerbHandler implements VerbHandler {
     private void synchronizeMutationToQuorum(Mutation mutation) {
         Message message = new Message();
         message.setVerb(Verb.MUTATION);
-        message.setId(Message.nextId());
         message.setBody(mutation);
 
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
@@ -251,7 +250,6 @@ public class MutationVerbHandler implements VerbHandler {
         reply.setStatus(replyStatus);
         Message response = new Message();
         response.setVerb(Verb.REPLY_MUTATION);
-        response.setId(Message.nextId());
         response.setBody(reply);
 
         // send response

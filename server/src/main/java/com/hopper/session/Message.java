@@ -21,6 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author chenguoqing
  */
 public class Message {
+
+    private static final String lineSeparator = System.getProperty("line.separator");
+
     /**
      * IDGenerator
      */
@@ -42,7 +45,7 @@ public class Message {
         return id;
     }
 
-    public void setId(int id) {
+    void setId(int id) {
         this.id = id;
     }
 
@@ -154,8 +157,8 @@ public class Message {
     @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append("id:").append(id).append("\r\n");
-        sb.append("verb:").append(verb).append("\r\n");
+        sb.append("id:").append(id).append(lineSeparator);
+        sb.append("verb:").append(verb).append(lineSeparator);
         sb.append("body:").append(toBodyString(body));
 
         return sb.toString();

@@ -272,7 +272,11 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
     public void takeLeadership() {
         this.leader = serverEndpoint.serverId;
         componentManager.getStateStorage().executeInvalidateTask();
-        componentManager.getStateStorage().enablePurgeThread();
+        try {
+            componentManager.getStateStorage().enablePurgeThread();
+        } catch (IllegalStateException e) {
+            logger.warn("Purge thread has startup.");
+        }
     }
 
     @Override

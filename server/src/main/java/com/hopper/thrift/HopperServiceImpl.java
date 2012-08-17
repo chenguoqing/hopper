@@ -52,7 +52,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     @Override
     public String login(String userName, String password) throws RetryException, AuthenticationException, TException {
 
-        assertServiceRunning();
+        assertServiceAvaliable();
 
         ClientSession session = componentManager.getSessionManager().getClientSession(ChannelBound.get());
 
@@ -74,7 +74,7 @@ public class HopperServiceImpl implements HopperService.Iface {
 
     @Override
     public void reLogin(String sessionId) throws RetryException, TException {
-        assertServiceRunning();
+        assertServiceAvaliable();
 
         // Register a client session with a existed session id
         registerClientSession(sessionId);
@@ -100,7 +100,6 @@ public class HopperServiceImpl implements HopperService.Iface {
         if (server.isFollower()) {
             Message message = new Message();
             message.setVerb(Verb.BOUND_MULTIPLEXER_SESSION);
-            message.setId(Message.nextId());
 
             BatchMultiplexerSessions batch = new BatchMultiplexerSessions();
             batch.add(sessionId);
@@ -131,7 +130,6 @@ public class HopperServiceImpl implements HopperService.Iface {
         if (server.isFollower()) {
             Message message = new Message();
             message.setVerb(Verb.UNBOUND_MULTIPLEXER_SESSION);
-            message.setId(Message.nextId());
 
             BatchMultiplexerSessions batch = new BatchMultiplexerSessions();
             batch.add(sessionId);
@@ -151,7 +149,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     public void create(final String key, final String owner, final int initStatus, final int invalidateStatus) throws
             RetryException, TException {
 
-        assertServiceRunning();
+        assertServiceAvaliable();
         try {
             executeMutation(new MutationTask() {
                 @Override
@@ -176,7 +174,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     @Override
     public void updateStatus(final String key, final int expectStatus, final int newStatus, final String owner,
                              final int lease) throws RetryException, CASException, TException {
-        assertServiceRunning();
+        assertServiceAvaliable();
 
         executeMutation(new MutationTask() {
             @Override
@@ -199,7 +197,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     public void expandLease(final String key, final int expectStatus, final String owner,
                             final int lease) throws RetryException, CASException, NoStateNodeException, TException {
 
-        assertServiceRunning();
+        assertServiceAvaliable();
 
         if (storage.get(key) == null) {
             throw new NoStateNodeException(key);
@@ -228,7 +226,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     @Override
     public void watch(final String key, final int expectStatus) throws RetryException, CASException,
             NoStateNodeException, TException {
-        assertServiceRunning();
+        assertServiceAvaliable();
 
         if (storage.get(key) == null) {
             throw new NoStateNodeException(key);
@@ -262,7 +260,7 @@ public class HopperServiceImpl implements HopperService.Iface {
     /**
      * Check server running state
      */
-    private void assertServiceRunning() throws RetryException {
+    private void assertServiceAvaliable() throws RetryException {
         try {
             server.assertServiceAvailable();
         } catch (ServiceUnavailableException e) {
@@ -273,7 +271,6 @@ public class HopperServiceImpl implements HopperService.Iface {
     private Message makeMutationRequest(Mutation mutation) {
         Message message = new Message();
         message.setVerb(Verb.MUTATION);
-        message.setId(Message.nextId());
         message.setBody(mutation);
         return message;
     }

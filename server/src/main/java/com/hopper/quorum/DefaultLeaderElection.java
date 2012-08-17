@@ -198,7 +198,6 @@ public class DefaultLeaderElection implements LeaderElection {
     private List<QueryLeader> queryLeaders() {
         Message message = new Message();
         message.setVerb(Verb.QUERY_LEADER);
-        message.setId(Message.nextId());
 
         logger.info(">>>Send query leader request {}", message);
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
@@ -355,7 +354,6 @@ public class DefaultLeaderElection implements LeaderElection {
 
         // send prepare(Phase1a) message
         Message message = new Message();
-        message.setId(Message.nextId());
         message.setVerb(Verb.PAXOS_PREPARE);
 
         Prepare prepare = new Prepare();
@@ -388,7 +386,6 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Message message = new Message();
         message.setVerb(Verb.PAXOS_ACCEPT);
-        message.setId(Message.nextId());
 
         Accept accept = new Accept();
         accept.setEpoch(paxos.getEpoch());
@@ -451,7 +448,6 @@ public class DefaultLeaderElection implements LeaderElection {
 
         Message message = new Message();
         message.setVerb(Verb.PAXOS_LEARN);
-        message.setId(Message.nextId());
 
         Learn learn = new Learn();
         learn.setEpoch(paxos.getEpoch());
@@ -472,7 +468,6 @@ public class DefaultLeaderElection implements LeaderElection {
         try {
             Message request = new Message();
             request.setVerb(Verb.TEST_LEADER);
-            request.setId(Message.nextId());
 
             Future<Message> future = componentManager.getMessageService().send(request, leader);
 

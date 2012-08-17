@@ -125,6 +125,9 @@ public class MessageService {
 
         logger.debug("Send one-way message {} to {}", message, endpoint);
 
+        int messageId = Message.nextId();
+        message.setId(messageId);
+
         try {
             OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
             session.sendOneway(message);
@@ -164,6 +167,9 @@ public class MessageService {
 
         logger.debug("Send one-way until message {} to {}", message, endpoint);
 
+        int messageId = Message.nextId();
+        message.setId(messageId);
+
         OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
         session.sendOnewayUntilComplete(message);
     }
@@ -174,6 +180,10 @@ public class MessageService {
     public LatchFuture<Message> send(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
         logger.debug("Send message {} to {}", message, endpoint);
+
+        int messageId = Message.nextId();
+        message.setId(messageId);
+
         OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
         return session.send(message);
     }
