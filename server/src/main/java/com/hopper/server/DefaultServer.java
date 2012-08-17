@@ -73,7 +73,7 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
     private Channel rpcChannel;
 
     @Override
-    protected void doInit() {
+    protected void doInit() throws Exception {
         if (rpcEndpoint == null) {
             throw new IllegalArgumentException("rpcEndpoint is null.");
         }
@@ -81,6 +81,8 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
         if (serverEndpoint == null) {
             throw new IllegalArgumentException("server rpcEndpoint is null.");
         }
+
+        super.doInit();
 
         componentManager = ComponentManagerFactory.getComponentManager();
     }

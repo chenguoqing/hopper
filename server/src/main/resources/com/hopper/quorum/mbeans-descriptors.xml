@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<mbeans-descriptors>
+
+    <!-- Paxos Manager Bean -->
+    <mbean name="paxos" description="paxos" type="com.hopper.quorum.Paxos">
+        <attribute name="epoch" description="epoch for next election" type="int" writeable="false"/>
+        <attribute name="rnd" description="height round for participation" type="int" writeable="false"/>
+        <attribute name="vrnd" description="height round for voting" type="int" writeable="false"/>
+        <attribute name="vval" description="the value for voting" type="int" writeable="false"/>
+    </mbean>
+
+
+</mbeans-descriptors>

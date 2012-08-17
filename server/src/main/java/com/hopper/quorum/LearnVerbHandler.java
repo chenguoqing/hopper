@@ -112,6 +112,7 @@ public class LearnVerbHandler implements VerbHandler {
                 server.setElectionState(Server.ElectionState.FOLLOWING);
             }
         } catch (Exception e) {
+            logger.error("Failed to process learn message.", e);
             server.setElectionState(Server.ElectionState.SYNC_FAILED);
             throw e;
         }

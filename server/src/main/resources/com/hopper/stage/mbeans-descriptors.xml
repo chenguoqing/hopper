@@ -3,7 +3,7 @@
 <mbeans-descriptors>
 
     <!-- Cache Manager Bean -->
-    <mbean name="ThreadPool" description="internal cache manager" type="com.hopper.stage.ThreadPoolMBean"
+    <mbean name="ThreadPool" description="thread pool" type="com.hopper.stage.ThreadPoolMBean"
            domain="Hopper">
         <attribute name="name" description="thread pool name" type="String" writeable="false"/>
         <attribute name="stage" description="thread pool bound stage" type="com.hopper.stage.Stage" writeable="false"/>

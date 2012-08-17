@@ -1,9 +1,11 @@
 package com.hopper.quorum;
 
+import com.hopper.lifecycle.Lifecycle;
+
 /**
  * Leader election interface
  */
-public interface LeaderElection {
+public interface LeaderElection extends Lifecycle {
     /**
      * Retrieve the Paxos instance bound with LeaderElection instance
      */

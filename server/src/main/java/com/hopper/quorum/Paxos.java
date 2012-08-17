@@ -1,5 +1,7 @@
 package com.hopper.quorum;
 
+import com.hopper.lifecycle.LifecycleMBeanProxy;
+
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -11,7 +13,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author chenguoqing
  */
-public class Paxos {
+public class Paxos extends LifecycleMBeanProxy {
     /**
      * Inner read/werite lock
      */
@@ -143,5 +145,15 @@ public class Paxos {
         } finally {
             paxosLock.writeLock().unlock();
         }
+    }
+
+    @Override
+    protected String getObjectNameKeyProperties() {
+        return "type=paxos";
+    }
+
+    @Override
+    public String getInfo() {
+        return "paxos";
     }
 }

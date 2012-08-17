@@ -1,6 +1,7 @@
 package com.hopper.quorum;
 
 import com.hopper.GlobalConfiguration;
+import com.hopper.lifecycle.LifecycleProxy;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Server.ElectionState;
@@ -11,12 +12,15 @@ import com.hopper.verb.VerbMappings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class DefaultLeaderElection implements LeaderElection {
+public class DefaultLeaderElection extends LifecycleProxy implements LeaderElection {
     /**
      * Logger
      */
@@ -28,6 +32,16 @@ public class DefaultLeaderElection implements LeaderElection {
      * Singleton instance
      */
     private final Paxos paxos = new Paxos();
+
+    @Override
+    protected void doInit() throws Exception {
+        paxos.initialize();
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        paxos.start();
+    }
 
     public Paxos getPaxos() {
         return paxos;
@@ -46,8 +60,6 @@ public class DefaultLeaderElection implements LeaderElection {
             componentManager.getDefaultServer().setElectionState(ElectionState.LOOKING);
         }
 
-        printThreadStack();
-
         Thread electionThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -58,21 +70,6 @@ public class DefaultLeaderElection implements LeaderElection {
         electionThread.setName("election-thread-" + electionThread.getId());
         electionThread.setDaemon(true);
         electionThread.start();
-    }
-
-    private void printThreadStack() {
-        StackTraceElement[] traceElements = Thread.currentThread().getStackTrace();
-        if (traceElements == null) {
-            return;
-        }
-
-        System.out.println("=====================stack=================");
-        System.out.println(new Date());
-        for (StackTraceElement traceElement : traceElements) {
-            System.out.printf(">>> %s.%s (%d)", traceElement.getClassName(), traceElement.getMethodName(),
-                    traceElement.getLineNumber());
-            System.out.println();
-        }
     }
 
     public void asynElecting() {
@@ -100,9 +97,6 @@ public class DefaultLeaderElection implements LeaderElection {
                     // Start paxos progress normally
                     startPaxos();
 
-                    // If Paxos progress has complete successfully, it should exit the loop
-                    retry = false;
-
                 } else {
 
                     // Retrieve the candidate leader
@@ -116,6 +110,9 @@ public class DefaultLeaderElection implements LeaderElection {
                     handler.learnElectedLeader(paxos.getEpoch(), componentManager.getDefaultServer().getLeader(),
                             candidateLeader);
                 }
+
+                retry = false;
+
             } catch (NoQuorumException e) {
                 logger.info("No enough nodes are alive, waiting for other nodes joining...");
                 retry = waitingNextElection(config.getPeriodForJoin());
@@ -126,7 +123,7 @@ public class DefaultLeaderElection implements LeaderElection {
                     retry = waitingNextElection(config.getRetryElectionPeriod());
                     // If instance number is lower, it indicates other nodes had undergone some elections
                 } else {
-                    logger.info("Current instance is lower, re-starts the paxos immediately.");
+                    logger.info("Current instance {} is lower, re-starts the paxos immediately.", paxos.getEpoch());
                     retry = true;
                 }
             } catch (ElectionTerminatedException e) {
@@ -175,7 +172,8 @@ public class DefaultLeaderElection implements LeaderElection {
         // found, re-starting the paxos progress.
         if (highestResult.getEpoch() > localHighestEpoch) {
             localHighestEpoch = highestResult.getEpoch();
-            paxos.updateInstance(localHighestEpoch);
+            paxos.closeInstance();
+            paxos.setEpoch(localHighestEpoch);
 
             throw new PaxosRejectedException(PaxosRejectedException.INSTANCE_REJECT);
         }
@@ -189,6 +187,7 @@ public class DefaultLeaderElection implements LeaderElection {
             }
         }
 
+        logger.debug("Missing count: {},local epoch:{}", numMissingLeader, localHighestEpoch);
         replyResult.addAll(queryResults);
 
         // If majority misses leader, must re-start election
@@ -510,5 +509,10 @@ public class DefaultLeaderElection implements LeaderElection {
         }
 
         return true;
+    }
+
+    @Override
+    public String getInfo() {
+        return "Default Leader election";
     }
 }

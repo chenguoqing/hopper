@@ -52,4 +52,9 @@ public class QueryLeader implements Serializer {
         this.epoch = in.readInt();
         this.leader = in.readInt();
     }
+
+    @Override
+    public String toString() {
+        return String.format("(epoch=%d,leader=%d)", epoch, leader);
+    }
 }

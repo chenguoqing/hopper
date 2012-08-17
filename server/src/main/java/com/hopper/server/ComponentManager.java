@@ -89,6 +89,8 @@ public class ComponentManager extends LifecycleProxy {
         registerComponent(dataSyncService);
 
         this.leaderElection = createLeaderElection();
+        registerComponent(leaderElection);
+
         this.connectionManager = createConnectionManager();
 
         this.messageService = createMessageService();
