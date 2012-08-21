@@ -22,11 +22,11 @@ public class AcceptVerbHandler implements VerbHandler {
         if (accept.getEpoch() < paxos.getEpoch()) {
             logger.info("Reject the accept request, because of lower epoch. Current Epoch:{},received Epoch:{}",
                     paxos.getEpoch(), accept.getEpoch());
-            sendResponse(message.getId(), Accepted.REJECT_EPOCH);
+            sendResponse(message, Accepted.REJECT_EPOCH);
         } else if (accept.getBallot() < paxos.getRnd()) {
             logger.info("Reject the accept request because of lower ballot. Current Ballot:{},received Ballot:{}",
                     paxos.getRnd(), accept.getBallot());
-            sendResponse(message.getId(), Accepted.REJECT_BALLOT);
+            sendResponse(message, Accepted.REJECT_BALLOT);
         } else {
             paxos.paxosLock.writeLock().lock();
             try {
@@ -37,13 +37,12 @@ public class AcceptVerbHandler implements VerbHandler {
                 paxos.paxosLock.writeLock().unlock();
             }
             logger.info("Accepted the accept request");
-            sendResponse(message.getId(), Accepted.ACCEPTED);
+            sendResponse(message, Accepted.ACCEPTED);
         }
     }
 
-    private void sendResponse(int messageId, int status) {
-        Message reply = new Message();
-        reply.setVerb(Verb.PAXOS_ACCEPTED);
+    private void sendResponse(Message message, int status) {
+        Message reply = message.createResponse(Verb.PAXOS_ACCEPTED);
 
         Accepted accepted = new Accepted();
         accepted.setEpoch(paxos.getEpoch());
@@ -52,7 +51,6 @@ public class AcceptVerbHandler implements VerbHandler {
 
         reply.setBody(accepted);
 
-        logger.info("Send accepted response {}", reply);
         componentManager.getMessageService().responseOneway(reply);
     }
 }

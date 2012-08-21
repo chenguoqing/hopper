@@ -24,10 +24,8 @@ public class ApplyDiffVerbHandler implements VerbHandler {
 
         componentManager.getDataSyncService().applyDiff(result);
 
-        Message reply = new Message();
-        reply.setVerb(Verb.APPLY_DIFF_RESULT);
+        Message reply = message.createResponse(Verb.APPLY_DIFF_RESULT);
         reply.setBody(new byte[]{0});
-
 
         componentManager.getMessageService().responseOneway(reply);
     }

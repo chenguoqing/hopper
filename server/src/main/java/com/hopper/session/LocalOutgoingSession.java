@@ -60,7 +60,6 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
                 server.getLeader() != destEndpoint.serverId) {
 
             Message message = new Message();
-            message.setId(Message.nextId());
             message.setVerb(Verb.UNBOUND_MULTIPLEXER_SESSION);
 
             BatchMultiplexerSessions batch = new BatchMultiplexerSessions();

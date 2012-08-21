@@ -29,13 +29,13 @@ public class PrepareVerbHandler implements VerbHandler {
         if (paxos.getEpoch() > prepare.getEpoch()) {
             logger.info("Reject the prepare because of lower epoch. Current Epoch:{},received Epoch:{}",
                     paxos.getEpoch(), prepare.getEpoch());
-            sendPromise(message.getId(), Promise.REJECT_EPOCH);
+            sendPromise(message, Promise.REJECT_EPOCH);
 
             // local ballot is greater
         } else if (paxos.getRnd() >= prepare.getBallot()) {
             logger.info("Reject the prepare because of lower ballot. Current ballot:{},received ballot:{}",
                     paxos.getRnd(), prepare.getBallot());
-            sendPromise(message.getId(), Promise.REJECT_BALLOT);
+            sendPromise(message, Promise.REJECT_BALLOT);
 
             // target's greater
         } else {
@@ -47,14 +47,13 @@ public class PrepareVerbHandler implements VerbHandler {
                 paxos.setRnd(prepare.getBallot());
             }
             logger.info("Promise the prepare request");
-            sendPromise(message.getId(), Promise.PROMISE);
+            sendPromise(message, Promise.PROMISE);
         }
     }
 
-    private void sendPromise(int messageId, int status) {
+    private void sendPromise(Message message, int status) {
 
-        Message reply = new Message();
-        reply.setVerb(Verb.PAXOS_PROMISE);
+        Message reply = message.createResponse(Verb.PAXOS_PROMISE);
 
         Promise promise = new Promise();
 

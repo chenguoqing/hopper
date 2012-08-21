@@ -43,8 +43,6 @@ public class MessageService {
      */
     public void sendLearnMessage(final Message message) {
 
-        logger.debug("Send learn message {} to quorum", message);
-
         for (Endpoint endpoint : config.getGroupEndpoints()) {
 
             // If the endpoint is local, executes the message directly
@@ -53,12 +51,7 @@ public class MessageService {
                 continue;
             }
 
-            try {
-                OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
-                session.sendOneway(message);
-            } catch (Exception e) {
-                logger.debug("Failed to send message to " + endpoint, e);
-            }
+            componentManager.getMessageService().sendOneway(message, endpoint.serverId);
         }
     }
 
@@ -69,8 +62,6 @@ public class MessageService {
      * @param waitingMode see above
      */
     public List<Message> sendMessageToQuorum(Message message, int waitingMode) {
-
-        logger.debug("Send message {} to quorum", message);
 
         int waitCount = waitingMode == WAITING_MODE_QUORUM ? config.getQuorumSize() : config.getGroupEndpoints().length;
 
@@ -117,16 +108,15 @@ public class MessageService {
     }
 
     /**
-     * Send message to <code>targetServerId</code> with ony-war mode
+     * Send message to <code>destServerId</code> with ony-way mode
      */
-
     public void sendOneway(Message message, int destServerId) {
         Endpoint endpoint = config.getEndpoint(destServerId);
 
-        logger.debug("Send one-way message {} to {}", message, endpoint);
-
         int messageId = Message.nextId();
         message.setId(messageId);
+
+        logger.debug("Send one-way message {} to {}", message, endpoint);
 
         try {
             OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
@@ -137,7 +127,8 @@ public class MessageService {
     }
 
     /**
-     * Response the message to sender(the sender will be retrieved from {@link ChannelBound)
+     * Response the message with the received message id to sender(the sender will be retrieved from {@link
+     * ChannelBound)
      */
     public void responseOneway(Message message) {
         Channel channel = ChannelBound.get();
@@ -150,13 +141,18 @@ public class MessageService {
         SocketAddress socketAddress = channel.getRemoteAddress();
         Endpoint endpoint = componentManager.getGlobalConfiguration().getEndpoint(socketAddress);
 
-        logger.debug("Responses message {} to {}", message, endpoint);
-
         if (endpoint == null) {
             throw new IllegalStateException("Not found endpoint for address:" + socketAddress);
         }
 
-        sendOneway(message, endpoint.serverId);
+        logger.debug("Responses message {} to {}", message, endpoint);
+
+        try {
+            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
+            session.sendOneway(message);
+        } catch (Exception e) {
+            logger.debug("Failed to response message {} to {}.", new Object[]{message, endpoint, e});
+        }
     }
 
     /**
@@ -175,7 +171,8 @@ public class MessageService {
     }
 
     /**
-     * Send   message to  <code>targetServerId</code> and return the future instance
+     * Send   message to  <code>destServerId</code> and return the future instance. The method will generate a new
+     * message id for preventing duplication
      */
     public LatchFuture<Message> send(Message message, int destServerId) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);

@@ -107,8 +107,8 @@ public class DefaultLeaderElection extends LifecycleProxy implements LeaderElect
 
                     // if the candidate is alive, takes it as local leader.
                     LearnVerbHandler handler = (LearnVerbHandler) VerbMappings.getVerbHandler(Verb.PAXOS_LEARN);
-                    handler.learnElectedLeader(paxos.getEpoch(), componentManager.getDefaultServer().getLeader(),
-                            candidateLeader);
+                    handler.learnElectedLeader(componentManager.getDefaultServer().getLeader(),
+                            candidateLeader, false);
                 }
 
                 retry = false;

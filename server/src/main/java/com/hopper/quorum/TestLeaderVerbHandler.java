@@ -26,12 +26,10 @@ public class TestLeaderVerbHandler implements VerbHandler {
             leader = server.getLeader();
         }
 
-        Message reply = new Message();
-        reply.setVerb(Verb.TEST_LEADER_RESULT);
+        Message reply = message.createResponse(Verb.TEST_LEADER_RESULT);
 
         reply.setBody(new byte[]{leader > 0 ? 0 : (byte) 1});
 
-        logger.info("Response the test leader request {}", reply);
         componentManager.getMessageService().responseOneway(reply);
     }
 }

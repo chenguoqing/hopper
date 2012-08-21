@@ -1,5 +1,7 @@
 package com.hopper.session;
 
+import com.hopper.GlobalConfiguration;
+import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
@@ -31,7 +33,7 @@ public class Message {
     /**
      * Message id
      */
-    private int id;
+    private int id = -1;
     /**
      * Message verb
      */
@@ -73,10 +75,13 @@ public class Message {
         if (IDGen == null) {
             synchronized (Message.class) {
                 if (IDGen == null) {
-                    int serverId = ComponentManagerFactory.getComponentManager().getGlobalConfiguration()
-                            .getLocalServerEndpoint().serverId;
+                    ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+                    GlobalConfiguration config = componentManager.getGlobalConfiguration();
+                    final int serverId = componentManager.getDefaultServer().getId();
+                    final int serverCount = config.getGroupEndpoints().length;
+                    final int ballotServerId = config.getServerBallotId(serverId);
 
-                    IDGen = new IDGenerator(serverId, serverId);
+                    IDGen = new IDGenerator(ballotServerId, serverCount);
                 }
             }
         }
@@ -172,6 +177,19 @@ public class Message {
         return ToStringBuilder.reflectionToString(body);
     }
 
+    /**
+     * Generate a response message instance with the received message id
+     */
+    public Message createResponse(Verb verb) {
+        Message response = new Message();
+        response.setId(id);
+        response.setVerb(verb);
+        return response;
+    }
+
+    /**
+     * IDGenerator will generate some unique message ids for different servers
+     */
     static class IDGenerator {
         final int increment;
         final AtomicInteger id;

@@ -18,8 +18,7 @@ public class RequireTreeVerbhandler implements VerbHandler {
     @Override
     public void doVerb(Message message) {
 
-        Message reply = new Message();
-        reply.setVerb(Verb.TREE_RESULT);
+        Message reply = message.createResponse(Verb.TREE_RESULT);
 
         reply.setBody(storage.getMerkleTree());
 

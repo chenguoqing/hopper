@@ -20,8 +20,7 @@ public class QueryLeaderVerbHandler implements VerbHandler {
 
         logger.info("Received query leader request {}", message);
 
-        Message reply = new Message();
-        reply.setVerb(Verb.REPLY_QUERY_LEADER);
+        Message reply = message.createResponse(Verb.REPLY_QUERY_LEADER);
 
         QueryLeader leader = new QueryLeader();
         leader.setEpoch(componentManager.getLeaderElection().getPaxos().getEpoch());
@@ -29,7 +28,6 @@ public class QueryLeaderVerbHandler implements VerbHandler {
 
         reply.setBody(leader);
 
-        logger.info("Response query leader request {}", reply);
         componentManager.getMessageService().responseOneway(reply);
     }
 }

@@ -32,8 +32,7 @@ public class RequireDiffVerbHandler implements VerbHandler {
         result.setMaxXid(storage.getMaxXid());
         result.setDifference(difference);
 
-        Message reply = new Message();
-        reply.setVerb(Verb.DIFF_RESULT);
+        Message reply = message.createResponse(Verb.DIFF_RESULT);
         reply.setBody(result);
 
         componentManager.getMessageService().responseOneway(reply);

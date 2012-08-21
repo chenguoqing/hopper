@@ -2,7 +2,10 @@ package com.hopper.verb.handler;
 
 import com.hopper.GlobalConfiguration;
 import com.hopper.quorum.NoQuorumException;
-import com.hopper.server.*;
+import com.hopper.server.ComponentManager;
+import com.hopper.server.ComponentManagerFactory;
+import com.hopper.server.Server;
+import com.hopper.server.ServiceUnavailableException;
 import com.hopper.session.Message;
 import com.hopper.session.MessageService;
 import com.hopper.stage.Stage;
@@ -10,7 +13,6 @@ import com.hopper.storage.NotMatchOwnerException;
 import com.hopper.storage.NotMatchStatusException;
 import com.hopper.storage.StateNode;
 import com.hopper.storage.StateStorage;
-import com.hopper.thrift.ChannelBound;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbHandler;
 import org.slf4j.Logger;
@@ -42,26 +44,25 @@ public class MutationVerbHandler implements VerbHandler {
         Mutation mutation = (Mutation) message.getBody();
 
         if (mutation.getOp() == Mutation.OP.CREATE) {
-            Mutation.Create create = (Mutation.Create) mutation.getEntity();
-            create(create);
+            create(message);
         } else if (mutation.getOp() == Mutation.OP.UPDATE_STATUS) {
-            Mutation.UpdateStatus us = (Mutation.UpdateStatus) mutation.getEntity();
-            updateStatus(us);
+            updateStatus(message);
         } else if (mutation.getOp() == Mutation.OP.UPDATE_LEASE) {
-            Mutation.UpdateLease ul = (Mutation.UpdateLease) mutation.getEntity();
-            updateLease(ul);
+            updateLease(message);
         } else if (mutation.getOp() == Mutation.OP.WATCH) {
-            Mutation.Watch watch = (Mutation.Watch) mutation.getEntity();
-            watch(watch);
+            watch(message);
         }
     }
 
-    private void create(Mutation.Create create) {
+    private void create(Message message) {
+        Mutation mutation = (Mutation) message.getBody();
+        Mutation.Create create = (Mutation.Create) mutation.getEntity();
+
         MutationReply reply = new MutationReply();
         try {
             create(create.key, create.owner, create.initStatus, create.invalidateStatus);
             // reply mutation request only the operation success
-            replyMutation(MutationReply.SUCCESS);
+            replyMutation(message, MutationReply.SUCCESS);
         } catch (NoQuorumException e) {
             logger.warn("No quorum nodes are alive, drops the create request.");
         } catch (ServiceUnavailableException e) {
@@ -91,18 +92,20 @@ public class MutationVerbHandler implements VerbHandler {
         }
     }
 
-    private void updateStatus(Mutation.UpdateStatus us) {
+    private void updateStatus(Message message) {
+        Mutation mutation = (Mutation) message.getBody();
+        Mutation.UpdateStatus us = (Mutation.UpdateStatus) mutation.getEntity();
         try {
             updateStatus(us.key, us.expectStatus, us.newStatus, us.owner, us.lease);
-            replyMutation(MutationReply.SUCCESS);
+            replyMutation(message, MutationReply.SUCCESS);
         } catch (NoQuorumException e) {
             logger.warn("No quorum nodes are alive, drops the create request.");
         } catch (ServiceUnavailableException e) {
             logger.warn("The server is unavailable, drops the create request.");
         } catch (NotMatchStatusException e) {
-            replyMutation(MutationReply.STATUS_CAS);
+            replyMutation(message, MutationReply.STATUS_CAS);
         } catch (NotMatchOwnerException e) {
-            replyMutation(MutationReply.OWNER_CAS);
+            replyMutation(message, MutationReply.OWNER_CAS);
         }
     }
 
@@ -128,24 +131,26 @@ public class MutationVerbHandler implements VerbHandler {
         }
     }
 
-    private void updateLease(Mutation.UpdateLease ul) {
+    private void updateLease(Message message) {
+        Mutation mutation = (Mutation) message.getBody();
+        Mutation.UpdateLease ul = (Mutation.UpdateLease) mutation.getEntity();
 
         if (storage.get(ul.key) == null) {
-            replyMutation(MutationReply.NODE_MISSING);
+            replyMutation(message, MutationReply.NODE_MISSING);
             return;
         }
 
         try {
             updateLease(ul.key, ul.expectStatus, ul.owner, ul.lease);
-            replyMutation(MutationReply.SUCCESS);
+            replyMutation(message, MutationReply.SUCCESS);
         } catch (ServiceUnavailableException e) {
             logger.warn("No quorum nodes are alive, drops the updateLease request.");
         } catch (NoQuorumException e) {
             logger.warn("The server is unavailable, drops the updateLease request.");
         } catch (NotMatchStatusException e) {
-            replyMutation(MutationReply.STATUS_CAS);
+            replyMutation(message, MutationReply.STATUS_CAS);
         } catch (NotMatchOwnerException e) {
-            replyMutation(MutationReply.OWNER_CAS);
+            replyMutation(message, MutationReply.OWNER_CAS);
         }
     }
 
@@ -170,21 +175,23 @@ public class MutationVerbHandler implements VerbHandler {
         }
     }
 
-    private void watch(Mutation.Watch watch) {
+    private void watch(Message message) {
+        Mutation mutation = (Mutation) message.getBody();
+        Mutation.Watch watch = (Mutation.Watch) mutation.getEntity();
         if (storage.get(watch.key) == null) {
-            replyMutation(MutationReply.NODE_MISSING);
+            replyMutation(message, MutationReply.NODE_MISSING);
             return;
         }
 
         try {
             watch(watch.sessionId, watch.key, watch.expectStatus);
-            replyMutation(MutationReply.SUCCESS);
+            replyMutation(message, MutationReply.SUCCESS);
         } catch (ServiceUnavailableException e) {
             logger.warn("No quorum nodes are alive, drops the updateLease request.");
         } catch (NoQuorumException e) {
             logger.warn("The server is unavailable, drops the updateLease request.");
         } catch (NotMatchStatusException e) {
-            replyMutation(MutationReply.STATUS_CAS);
+            replyMutation(message, MutationReply.STATUS_CAS);
         }
     }
 
@@ -245,16 +252,14 @@ public class MutationVerbHandler implements VerbHandler {
     /**
      * Reply the mutation result to sender
      */
-    private void replyMutation(int replyStatus) {
+    private void replyMutation(Message message, int replyStatus) {
         MutationReply reply = new MutationReply();
         reply.setStatus(replyStatus);
-        Message response = new Message();
-        response.setVerb(Verb.REPLY_MUTATION);
+        Message response = message.createResponse(Verb.REPLY_MUTATION);
         response.setBody(reply);
 
         // send response
-        Endpoint endpoint = config.getEndpoint(ChannelBound.get().getRemoteAddress());
-        componentManager.getMessageService().sendOneway(response, endpoint.serverId);
+        componentManager.getMessageService().responseOneway(response);
     }
 
     private StateNode newStateNode(String key, int initialStatus, int invalidateStatus, long initialVersion) {

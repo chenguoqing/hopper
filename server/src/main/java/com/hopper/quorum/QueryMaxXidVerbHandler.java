@@ -19,8 +19,7 @@ public class QueryMaxXidVerbHandler implements VerbHandler {
     public void doVerb(Message message) {
 
         logger.info("Received the query max xid request {}", message);
-        Message reply = new Message();
-        reply.setVerb(Verb.QUERY_MAX_XID_RESULT);
+        Message reply = message.createResponse(Verb.QUERY_MAX_XID_RESULT);
 
         QueryMaxXid queryMaxXid = new QueryMaxXid();
         queryMaxXid.setMaxXid(componentManager.getStateStorage().getMaxXid());

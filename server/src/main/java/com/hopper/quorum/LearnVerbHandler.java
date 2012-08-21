@@ -76,7 +76,7 @@ public class LearnVerbHandler implements VerbHandler {
 
         try {
             logger.info("Start data synchronization...");
-            learnElectedLeader(learn.getEpoch(), server.getLeader(), learn.getVval());
+            learnElectedLeader(server.getLeader(), learn.getVval(), true);
             logger.info("Success to synchronize data.");
         } catch (Exception e) {
             logger.error("Failed to synchronize data, leader:{}", learn.getVval(), e);
@@ -84,16 +84,16 @@ public class LearnVerbHandler implements VerbHandler {
         }
     }
 
-    public void learnElectedLeader(int epoch, int olderLeader, int newLeader) throws Exception {
+    public void learnElectedLeader(int olderLeader, int newLeader, boolean closeInstance) throws Exception {
 
         // running on SYNC status
         server.setElectionState(Server.ElectionState.SYNC);
 
-        // set new leader
         server.setLeader(newLeader);
 
-        // close current instance
-        paxos.closeInstance();
+        if (closeInstance) {
+            paxos.closeInstance();
+        }
 
         // clear learned instances
         learnedInstances.clear();
