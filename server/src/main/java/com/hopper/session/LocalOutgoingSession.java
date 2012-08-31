@@ -10,9 +10,6 @@ import com.hopper.server.Server;
 import com.hopper.util.ScheduleManager;
 import com.hopper.verb.Verb;
 import com.hopper.verb.handler.BatchMultiplexerSessions;
-import com.hopper.verb.handler.HeartBeat;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LocalOutgoingSession extends SessionProxy implements OutgoingSession, LifecycleListener {
 
@@ -22,12 +19,6 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
      * Schedule manager
      */
     private final ScheduleManager scheduleManager = componentManager.getScheduleManager();
-    /**
-     * Heart beat task
-     */
-    private final Runnable heartBeatTask = new HeartBeatTask();
-
-    private final AtomicBoolean staredBackground = new AtomicBoolean(false);
 
     @Override
     public boolean isAlive() {
@@ -78,46 +69,11 @@ public class LocalOutgoingSession extends SessionProxy implements OutgoingSessio
     }
 
     @Override
-    public void close() {
-
-        super.close();
-
-        scheduleManager.removeTask(heartBeatTask);
-
-        staredBackground.set(false);
-    }
-
-    @Override
     protected String getObjectNameKeyProperties() {
         return "type=OutgoingSession,id=" + getId();
     }
 
     @Override
     public void background() {
-        if (getConnection() == null || !isAlive()) {
-            throw new IllegalStateException("Not bound connection or connection has been closed.");
-        }
-
-        if (staredBackground.compareAndSet(false, true)) {
-            scheduleManager.schedule(heartBeatTask, 0, componentManager.getGlobalConfiguration().getPingPeriod());
-        }
-    }
-
-    private class HeartBeatTask implements Runnable {
-
-        @Override
-        public void run() {
-            Message message = new Message();
-            message.setId(Message.nextId());
-            message.setVerb(Verb.HEART_BEAT);
-
-            HeartBeat beat = new HeartBeat();
-            beat.setLeader(componentManager.getDefaultServer().isLeader());
-            beat.setMaxXid(componentManager.getStateStorage().getMaxXid());
-
-            message.setBody(beat);
-
-            sendOneway(message);
-        }
     }
 }

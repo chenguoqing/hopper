@@ -10,6 +10,7 @@ import com.hopper.quorum.LeaderElection;
 import com.hopper.session.ConnectionManager;
 import com.hopper.session.MessageService;
 import com.hopper.session.SessionManager;
+import com.hopper.session.SessionSnooper;
 import com.hopper.stage.StageManager;
 import com.hopper.storage.StateStorage;
 import com.hopper.storage.TreeStorage;
@@ -52,6 +53,7 @@ public class ComponentManager extends LifecycleProxy {
     private ConnectionManager connectionManager;
     private MessageService messageService;
     private ElectionMonitor electionMonitor;
+    private SessionSnooper sessionSnooper;
 
     public void registerComponent(Lifecycle component) {
         components.add(component);
@@ -97,6 +99,9 @@ public class ComponentManager extends LifecycleProxy {
 
         this.server = createServer();
         registerComponent(server);
+
+        this.sessionSnooper = createSessionSnooper();
+        registerComponent(sessionSnooper);
 
         this.electionMonitor = createElectionMonitor();
 
@@ -256,6 +261,10 @@ public class ComponentManager extends LifecycleProxy {
 
     private ElectionMonitor createElectionMonitor() {
         return new ElectionMonitor();
+    }
+
+    private SessionSnooper createSessionSnooper() {
+        return new SessionSnooper();
     }
 
     /**

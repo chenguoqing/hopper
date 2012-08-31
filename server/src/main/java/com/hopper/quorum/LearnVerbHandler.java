@@ -5,12 +5,10 @@ import com.hopper.future.LatchFuture;
 import com.hopper.future.LatchFutureListener;
 import com.hopper.server.ComponentManager;
 import com.hopper.server.ComponentManagerFactory;
-import com.hopper.server.Endpoint;
 import com.hopper.server.Server;
 import com.hopper.session.ClientSession;
 import com.hopper.session.Message;
 import com.hopper.session.MessageService;
-import com.hopper.session.OutgoingSession;
 import com.hopper.sync.DataSyncService;
 import com.hopper.sync.DiffResult;
 import com.hopper.sync.SyncException;
@@ -240,9 +238,6 @@ public class LearnVerbHandler implements VerbHandler {
 
     private void acceptLeader(int olderLeader, int newLeader) throws Exception {
 
-        // Active new leader
-        activeNewLeader(newLeader);
-
         // Inactive older leader
         inactiveOlderLeader(olderLeader);
 
@@ -260,18 +255,6 @@ public class LearnVerbHandler implements VerbHandler {
 
         // close all session
         componentManager.getSessionManager().closeServerSession(config.getEndpoint(oldLeader));
-    }
-
-    /**
-     * Start to mutation some asynchronous works for leader session (starting for heart beat)
-     */
-    private void activeNewLeader(int leader) throws Exception {
-        Endpoint leaderEndpoint = config.getEndpoint(leader);
-        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(leaderEndpoint);
-
-        // start heart beat
-        logger.info("Active new leader {}...", leader);
-        session.background();
     }
 
     /**
