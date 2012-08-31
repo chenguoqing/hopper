@@ -4,6 +4,7 @@ import com.hopper.GlobalConfiguration;
 import com.hopper.lifecycle.Lifecycle;
 import com.hopper.lifecycle.LifecycleMBeanProxy;
 import com.hopper.session.ClientSession;
+import com.hopper.session.OutgoingSession;
 import com.hopper.session.SessionManager;
 import com.hopper.stage.Stage;
 import com.hopper.thrift.HopperService;
@@ -72,6 +73,8 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
      */
     private Channel rpcChannel;
 
+    private long t = -1L;
+
     @Override
     protected void doInit() throws Exception {
         if (rpcEndpoint == null) {
@@ -115,6 +118,18 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
         this.serverChannel = serverBootstrap.bind(new InetSocketAddress(serverEndpoint.address, serverEndpoint.port));
 
         logger.info("Listen server connection on port {}", serverEndpoint.port);
+    }
+
+    private void activeEndpoints() {
+        for (Endpoint endpoint : componentManager.getGlobalConfiguration().getGroupEndpoints()) {
+            if (!componentManager.getGlobalConfiguration().isLocalEndpoint(endpoint)) {
+                try {
+                    OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
+                } catch (Exception e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+        }
     }
 
     /**
@@ -303,6 +318,12 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
 
     @Override
     public void setElectionState(ElectionState state) {
+        if (state == ElectionState.LOOKING) {
+            this.t = System.currentTimeMillis();
+        } else {
+            logger.info("Election use time %d (ms).", (System.currentTimeMillis() - t));
+            t = -1L;
+        }
         this.electionState = state;
     }
 

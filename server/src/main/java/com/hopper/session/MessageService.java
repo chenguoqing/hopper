@@ -37,6 +37,7 @@ public class MessageService {
     private final ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 
     private final GlobalConfiguration config = componentManager.getGlobalConfiguration();
+    private final SessionManager sessionManager = componentManager.getSessionManager();
 
     /**
      * Send *LEARN* message to all endpoint asynchronously
@@ -78,8 +79,7 @@ public class MessageService {
             }
 
             try {
-                LatchFuture<Message> future = send(message, endpoint.serverId);
-                future.setLatch(latch);
+                LatchFuture<Message> future = send(message, endpoint.serverId, true);
 
                 future.addListener(new LatchFutureListener<Message>() {
                     @Override
@@ -91,9 +91,12 @@ public class MessageService {
                                 logger.error("Failed to get result ", e);
                             }
                         }
+
+                        latch.countDown();
                     }
                 });
             } catch (Exception e) {
+                latch.countDown();
                 logger.debug("Failed to send message to {} ", endpoint, e);
             }
         }
@@ -119,7 +122,7 @@ public class MessageService {
         logger.debug("Send one-way message {} to {}", message, endpoint);
 
         try {
-            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
+            OutgoingSession session = sessionManager.createOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
             logger.debug("Failed to send one-way message {} to {}.", new Object[]{message, endpoint, e});
@@ -139,7 +142,7 @@ public class MessageService {
 
         // send response
         SocketAddress socketAddress = channel.getRemoteAddress();
-        Endpoint endpoint = componentManager.getGlobalConfiguration().getEndpoint(socketAddress);
+        Endpoint endpoint = config.getEndpoint(socketAddress);
 
         if (endpoint == null) {
             throw new IllegalStateException("Not found endpoint for address:" + socketAddress);
@@ -148,7 +151,7 @@ public class MessageService {
         logger.debug("Responses message {} to {}", message, endpoint);
 
         try {
-            OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
+            OutgoingSession session = sessionManager.createOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
             logger.debug("Failed to response message {} to {}.", new Object[]{message, endpoint, e});
@@ -166,7 +169,7 @@ public class MessageService {
 
         logger.debug("Send one-way until message {} to {}", message, endpoint);
 
-        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
+        OutgoingSession session = sessionManager.createOutgoingSession(endpoint);
         session.sendOnewayUntilComplete(message);
     }
 
@@ -175,6 +178,19 @@ public class MessageService {
      * message id for preventing duplication
      */
     public LatchFuture<Message> send(Message message, int destServerId) throws Exception {
+        return send(message, destServerId, false);
+    }
+
+    /**
+     * Send   message to  <code>destServerId</code> and return the future instance.
+     * <p/>
+     * The method will generate a new message id for preventing duplication
+     *
+     * @param message      the message instance
+     * @param destServerId destination server id
+     * @param validate     check if the destination session is active if true
+     */
+    public LatchFuture<Message> send(Message message, int destServerId, boolean validate) throws Exception {
         Endpoint endpoint = config.getEndpoint(destServerId);
 
         int messageId = Message.nextId();
@@ -182,12 +198,30 @@ public class MessageService {
 
         logger.debug("Send message {} to {}", message, endpoint);
 
-        OutgoingSession session = componentManager.getSessionManager().createOutgoingSession(endpoint);
+        OutgoingSession session = null;
+
+        final Endpoint destEndpoint = config.getEndpoint(destServerId);
+
+        if (validate) {
+            session = sessionManager.getOutgoingSession(destEndpoint);
+            if (session == null || session.isAlive()) {
+                throw new Exception("The session " + destEndpoint + " is inactive.");
+            }
+        } else {
+            session = sessionManager.createOutgoingSession(endpoint);
+        }
+
         return session.send(message);
     }
 
+    public boolean isAliveEndpoint(int serverId) {
+        IncomingSession incomingSession = sessionManager.getIncomingSession(serverId);
+
+        return incomingSession != null && incomingSession.isAlive();
+    }
+
     public void notifyStatusChange(String clientSessionId, int oldStatus, int newStatus) {
-        ClientSession clientSession = componentManager.getSessionManager().getClientSession(clientSessionId);
+        ClientSession clientSession = sessionManager.getClientSession(clientSessionId);
 
         if (clientSession != null) {
             try {
@@ -196,7 +230,7 @@ public class MessageService {
                 //nothing
             }
         } else {
-            OutgoingSession outgoingSession = componentManager.getSessionManager()
+            OutgoingSession outgoingSession = sessionManager
                     .getOutgoingSessionByMultiplexerSessionId(clientSessionId);
             if (outgoingSession != null) {
                 Message message = new Message();

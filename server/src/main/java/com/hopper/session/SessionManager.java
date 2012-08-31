@@ -100,7 +100,8 @@ public class SessionManager extends LifecycleMBeanProxy {
     }
 
     /**
-     * Create a {@link OutgoingSession} with endpoint
+     * Create a {@link OutgoingSession} with endpoint if the session is not exists; If the session is created and
+     * inactive, it will active it(reconnect)
      */
     public OutgoingSession createOutgoingSession(Endpoint endpoint) throws Exception {
 
@@ -129,8 +130,12 @@ public class SessionManager extends LifecycleMBeanProxy {
                 // bound the session to connection
                 ((LocalOutgoingSession) session).setConnection(connection);
 
-                session.initialize();
-                session.start();
+                try {
+                    session.initialize();
+                    session.start();
+                } finally {
+                    session.background();
+                }
 
                 // register session to SessionManager
                 addOutgoingServerSession(session);
@@ -179,6 +184,18 @@ public class SessionManager extends LifecycleMBeanProxy {
     public IncomingSession getIncomingSession(Endpoint endpoint) {
         for (IncomingSession session : getAllIncomingSessions()) {
             if (session.getConnection().getSourceEndpoint() == endpoint) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Retrieve the IncomingSession bound with <code>endpoint</code>
+     */
+    public IncomingSession getIncomingSession(int serverId) {
+        for (IncomingSession session : getAllIncomingSessions()) {
+            if (session.getConnection().getSourceEndpoint().serverId == serverId) {
                 return session;
             }
         }
