@@ -97,11 +97,11 @@ public class ComponentManager extends LifecycleProxy {
 
         this.messageService = createMessageService();
 
-        this.server = createServer();
-        registerComponent(server);
-
         this.sessionSnooper = createSessionSnooper();
         registerComponent(sessionSnooper);
+
+        this.server = createServer();
+        registerComponent(server);
 
         this.electionMonitor = createElectionMonitor();
 

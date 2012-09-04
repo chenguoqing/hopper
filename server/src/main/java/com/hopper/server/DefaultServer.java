@@ -321,7 +321,9 @@ public class DefaultServer extends LifecycleMBeanProxy implements Server {
         if (state == ElectionState.LOOKING) {
             this.t = System.currentTimeMillis();
         } else {
-            logger.info("Election use time %d (ms).", (System.currentTimeMillis() - t));
+            if (t > 0) {
+                logger.info("Election use time {} (ms).", (System.currentTimeMillis() - t));
+            }
             t = -1L;
         }
         this.electionState = state;

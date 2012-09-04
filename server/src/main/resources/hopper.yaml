@@ -47,13 +47,13 @@ group_nodes:
     - {serverId: 3,address: 192.168.91.166,port: 7920}
 
 # The period for join waiting(milliseconds)
-period_for_waiting_join: 5000
+period_for_waiting_join: 2000
 
 # minmum period for retry election(milliseconds)
-min_retry_election_period: 1000
+min_retry_election_period: 500
 
 # maximum period for retry election(milliseconds)
-max_retry_election_period: 5000
+max_retry_election_period: 2000
 
 # the period for waiting election complete(milliseconds)
 period_for_waiting_election_complete: 5000

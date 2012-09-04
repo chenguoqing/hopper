@@ -9,6 +9,7 @@ import com.hopper.server.Endpoint;
 import com.hopper.thrift.ChannelBound;
 import com.hopper.verb.Verb;
 import com.hopper.verb.VerbMappings;
+import com.hopper.verb.handler.HeartBeat;
 import com.hopper.verb.handler.NotifyStatusChange;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
@@ -96,8 +97,9 @@ public class MessageService {
                     }
                 });
             } catch (Exception e) {
-                latch.countDown();
-                logger.debug("Failed to send message to {} ", endpoint, e);
+                if (!(message.getBody() instanceof HeartBeat)) {
+                    logger.debug("Failed to send message {} to {} ", new Object[]{message, endpoint, e});
+                }
             }
         }
 
@@ -119,13 +121,17 @@ public class MessageService {
         int messageId = Message.nextId();
         message.setId(messageId);
 
-        logger.debug("Send one-way message {} to {}", message, endpoint);
+        if (!(message.getBody() instanceof HeartBeat)) {
+            logger.debug("Send one-way message {} to {}", message, endpoint);
+        }
 
         try {
             OutgoingSession session = sessionManager.createOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
-            logger.debug("Failed to send one-way message {} to {}.", new Object[]{message, endpoint, e});
+            if (!(message.getBody() instanceof HeartBeat)) {
+                logger.debug("Failed to send one-way message {} to {}.", new Object[]{message, endpoint, e});
+            }
         }
     }
 
@@ -154,7 +160,9 @@ public class MessageService {
             OutgoingSession session = sessionManager.createOutgoingSession(endpoint);
             session.sendOneway(message);
         } catch (Exception e) {
-            logger.debug("Failed to response message {} to {}.", new Object[]{message, endpoint, e});
+            if (!(message.getBody() instanceof HeartBeat)) {
+                logger.debug("Failed to response message {} to {}.", new Object[]{message, endpoint, e});
+            }
         }
     }
 
@@ -204,7 +212,7 @@ public class MessageService {
 
         if (validate) {
             session = sessionManager.getOutgoingSession(destEndpoint);
-            if (session == null || session.isAlive()) {
+            if (session == null || !session.isAlive()) {
                 throw new Exception("The session " + destEndpoint + " is inactive.");
             }
         } else {
@@ -212,12 +220,6 @@ public class MessageService {
         }
 
         return session.send(message);
-    }
-
-    public boolean isAliveEndpoint(int serverId) {
-        IncomingSession incomingSession = sessionManager.getIncomingSession(serverId);
-
-        return incomingSession != null && incomingSession.isAlive();
     }
 
     public void notifyStatusChange(String clientSessionId, int oldStatus, int newStatus) {

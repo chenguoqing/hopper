@@ -361,13 +361,11 @@ public class DefaultLeaderElection extends LifecycleProxy implements LeaderElect
         prepare.setEpoch(paxos.getEpoch());
         message.setBody(prepare);
 
-        logger.info("Send prepare message {}", message);
-
         // Receive the promise(Phase1b) message
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_QUORUM);
 
-        logger.info("Received the promise message {}", replies);
+        logger.debug("Received the promise message count:{}", replies.size());
 
         // if no majority responses, it can't work
         if (replies.size() < config.getQuorumSize() - 1) {
@@ -393,11 +391,10 @@ public class DefaultLeaderElection extends LifecycleProxy implements LeaderElect
 
         message.setBody(accept);
 
-        logger.info("Send accept message {}", message);
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_ALL);
 
-        logger.info("Received accepted message {}", replies);
+        logger.info("Received accepted message count {}", replies.size());
 
         // No majority are alive
         if (replies.size() < config.getQuorumSize() - 1) {

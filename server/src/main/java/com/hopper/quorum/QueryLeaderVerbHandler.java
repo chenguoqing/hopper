@@ -18,8 +18,6 @@ public class QueryLeaderVerbHandler implements VerbHandler {
     @Override
     public void doVerb(Message message) {
 
-        logger.info("Received query leader request {}", message);
-
         Message reply = message.createResponse(Verb.REPLY_QUERY_LEADER);
 
         QueryLeader leader = new QueryLeader();

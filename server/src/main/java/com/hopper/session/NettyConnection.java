@@ -12,6 +12,7 @@ import com.hopper.server.ComponentManagerFactory;
 import com.hopper.server.Endpoint;
 import com.hopper.stage.Stage;
 import com.hopper.stage.StageManager;
+import com.hopper.verb.Verb;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
@@ -285,6 +286,10 @@ public class NettyConnection extends LifecycleProxy implements Connection {
                     if (cacheFuture != null) {
                         // set the exception for unlocking the threads
                         cacheFuture.setException(callbackFuture.getCause());
+                    }
+                } else {
+                    if (message.getVerb() != Verb.HEART_BEAT) {
+                        logger.debug("Success to send message {} to {}", message, dest);
                     }
                 }
             }

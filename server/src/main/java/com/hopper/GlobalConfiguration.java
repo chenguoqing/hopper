@@ -166,15 +166,15 @@ public class GlobalConfiguration extends LifecycleProxy {
     }
 
     public long getPeriodForJoin() {
-        return innerConfig.getLong("period_for_waiting_join", 5000);
+        return innerConfig.getLong("period_for_waiting_join", 2000);
     }
 
     /**
      * The method will generate a random period between (1000,5000)
      */
     public long getRetryElectionPeriod() {
-        long min = innerConfig.getLong("min_retry_election_period", 1000);
-        long max = innerConfig.getLong("max_retry_election_period", 5000);
+        long min = innerConfig.getLong("min_retry_election_period", 500);
+        long max = innerConfig.getLong("max_retry_election_period", 2000);
 
         Random random = new Random();
         int r = random.nextInt((int) (max - min));

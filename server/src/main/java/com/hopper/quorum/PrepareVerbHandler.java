@@ -21,7 +21,6 @@ public class PrepareVerbHandler implements VerbHandler {
 
     @Override
     public void doVerb(Message message) {
-        logger.info("Received the prepare request {}", message);
 
         Prepare prepare = (Prepare) message.getBody();
 
@@ -46,7 +45,7 @@ public class PrepareVerbHandler implements VerbHandler {
             if (paxos.getRnd() < prepare.getBallot()) {
                 paxos.setRnd(prepare.getBallot());
             }
-            logger.info("Promise the prepare request");
+
             sendPromise(message, Promise.PROMISE);
         }
     }
@@ -65,7 +64,6 @@ public class PrepareVerbHandler implements VerbHandler {
 
         reply.setBody(promise);
 
-        logger.info("Send promise response {}", reply);
         componentManager.getMessageService().responseOneway(reply);
     }
 }

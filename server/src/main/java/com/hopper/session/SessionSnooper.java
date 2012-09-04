@@ -9,11 +9,7 @@ import com.hopper.verb.Verb;
 import com.hopper.verb.handler.HeartBeat;
 
 /**
- * Created with IntelliJ IDEA.
- * User: chenguoqing
- * Date: 12-8-31
- * Time: 下午6:22
- * To change this template use File | Settings | File Templates.
+ * Snoops the outgoing session with fixed period
  */
 public class SessionSnooper extends LifecycleProxy {
 
