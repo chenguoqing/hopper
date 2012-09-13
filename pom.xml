@@ -13,9 +13,11 @@
     <modules>
         <module>server</module>
         <module>client</module>
+        <module>common</module>
     </modules>
 
     <properties>
+        <hopper.version>0.1-SNAPSHOT</hopper.version>
         <SOURCE_VERSION>1.6</SOURCE_VERSION>
         <TARGET_VERSION>1.6</TARGET_VERSION>
         <encoding>UTF-8</encoding>

@@ -65,6 +65,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.hopper</groupId>
+            <artifactId>hopper-common</artifactId>
+            <version>${hopper.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -108,14 +113,14 @@
     </dependencies>
 
     <build>
-<!--        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <excludes>
-                    <exclude>hopper.yaml</exclude>
-                </excludes>
-            </resource>
-        </resources>-->
+        <!--        <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <excludes>
+                            <exclude>hopper.yaml</exclude>
+                        </excludes>
+                    </resource>
+                </resources>-->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

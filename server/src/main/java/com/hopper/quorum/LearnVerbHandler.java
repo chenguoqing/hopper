@@ -105,8 +105,9 @@ public class LearnVerbHandler implements VerbHandler {
 
                 server.setElectionState(Server.ElectionState.LEADING);
             } else {
-                logger.info("Current server is follower, accept the new leader {}", newLeader);
-                acceptLeader(olderLeader, newLeader);
+                logger.info("Current server is follower, accept the new leader {},transfers the client sessions to " +
+                        "new leader", newLeader);
+                transferClientSession(newLeader);
                 server.setElectionState(Server.ElectionState.FOLLOWING);
             }
         } catch (Exception e) {
@@ -143,8 +144,6 @@ public class LearnVerbHandler implements VerbHandler {
         Message message = new Message();
         message.setVerb(Verb.QUERY_MAX_XID);
 
-        logger.info("Send query max xid {}", message);
-
         List<Message> replies = componentManager.getMessageService().sendMessageToQuorum(message,
                 MessageService.WAITING_MODE_QUORUM);
 
@@ -155,11 +154,6 @@ public class LearnVerbHandler implements VerbHandler {
         if (repliesNum < config.getQuorumSize() - 1) {
             logger.info("No majority nodes response query maxid, retry election...");
             throw new NoQuorumException();
-        }
-
-        boolean debug = true;
-        if (debug) {
-            return;
         }
 
         List<QueryMaxXid> maxXidResult = new ArrayList<QueryMaxXid>();
@@ -234,27 +228,6 @@ public class LearnVerbHandler implements VerbHandler {
             }
         }
         return stales.toArray(new Integer[0]);
-    }
-
-    private void acceptLeader(int olderLeader, int newLeader) throws Exception {
-
-        // Inactive older leader
-        inactiveOlderLeader(olderLeader);
-
-        // transfer all client sessions to new leader
-        transferClientSession(newLeader);
-    }
-
-    /**
-     * Inactive the older leader, close all bound sessions
-     */
-    private void inactiveOlderLeader(int oldLeader) {
-        if (oldLeader < 0 || oldLeader == componentManager.getGlobalConfiguration().getLocalServerEndpoint().serverId) {
-            return;
-        }
-
-        // close all session
-        componentManager.getSessionManager().closeServerSession(config.getEndpoint(oldLeader));
     }
 
     /**

@@ -28,7 +28,7 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 public class ThriftServerHandler extends SimpleChannelUpstreamHandler {
     private TProcessor processor;
     private TProtocolFactory protocolFactory;
-    private int responseSize = 4096;
+    private int responseSize = 1024;
 
     /**
      * Creates a Thrift processor handler with the default binary protocol

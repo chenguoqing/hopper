@@ -10,8 +10,8 @@ import org.jboss.netty.buffer.ChannelBuffer;
  * @author <a href="http://www.pedantique.org/">Carl Bystr&ouml;m</a>
  */
 public class TNettyServerTransport extends TTransport {
-    private ChannelBuffer inputBuffer;
-    private ChannelBuffer outputBuffer;
+    private final ChannelBuffer inputBuffer;
+    private final ChannelBuffer outputBuffer;
 
     public TNettyServerTransport(ChannelBuffer input, ChannelBuffer output) {
         this.inputBuffer = input;

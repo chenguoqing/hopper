@@ -114,6 +114,8 @@ public class DataSyncService extends LifecycleProxy {
      * Pull data from remote server(remote is fresh) with asynchronization
      */
     public void syncDataFromRemote(final int serverId) {
+        logger.debug("Synchronize data from {}...", serverId);
+
         Runnable task = new Runnable() {
             @Override
             public void run() {
